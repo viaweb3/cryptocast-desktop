@@ -1,90 +1,201 @@
 /* CryptoCast Brand Colors & Styles */
 
 :root {
-  /* Primary Brand Colors */
-  --cryptocast-primary: #1E3A8A;
-  --cryptocast-primary-light: #3730A3;
-  --cryptocast-purple: #7C3AED;
-  --cryptocast-cyan: #0891B2;
+  /* Primary Brand Colors - Enhanced Dark Purple Theme */
+  --cryptocast-primary: #6B46C1;
+  --cryptocast-primary-light: #8B5CF6;
+  --cryptocast-primary-dark: #553C9A;
+  --cryptocast-purple: #9333EA;
+  --cryptocast-purple-bright: #A855F7;
+  --cryptocast-cyan: #06B6D4;
+  --cryptocast-cyan-bright: #22D3EE;
   --cryptocast-green: #10B981;
+  --cryptocast-green-bright: #34D399;
 
-  /* Secondary Colors */
-  --cryptocast-dark: #0F172A;
-  --cryptocast-dark-light: #1E293B;
-  --cryptocast-gray: #475569;
-  --cryptocast-gray-light: #94A3B8;
-  --cryptocast-white: #F8FAFC;
+  /* Secondary Colors - Darker Background */
+  --cryptocast-dark: #0A0B1E;
+  --cryptocast-dark-light: #1A1B3A;
+  --cryptocast-darker: #050714;
+  --cryptocast-gray: #6B7280;
+  --cryptocast-gray-light: #9CA3AF;
+  --cryptocast-white: #FFFFFF;
 
   /* Background Colors */
-  --cryptocast-bg-primary: #0F172A;
-  --cryptocast-bg-secondary: #1E293B;
-  --cryptocast-bg-tertiary: #334155;
+  --cryptocast-bg-primary: #0A0B1E;
+  --cryptocast-bg-secondary: #1A1B3A;
+  --cryptocast-bg-tertiary: #2D2E5F;
+  --cryptocast-bg-card: rgba(26, 27, 58, 0.8);
+  --cryptocast-bg-card-hover: rgba(45, 46, 95, 0.9);
 
   /* Text Colors */
-  --cryptocast-text-primary: #F8FAFC;
-  --cryptocast-text-secondary: #CBD5E1;
-  --cryptocast-text-muted: #94A3B8;
+  --cryptocast-text-primary: #FFFFFF;
+  --cryptocast-text-secondary: #E5E7EB;
+  --cryptocast-text-muted: #9CA3AF;
+  --cryptocast-text-dim: #6B7280;
 
   /* Status Colors */
   --cryptocast-success: #10B981;
+  --cryptocast-success-light: #34D399;
   --cryptocast-warning: #F59E0B;
+  --cryptocast-warning-light: #FCD34D;
   --cryptocast-error: #EF4444;
+  --cryptocast-error-light: #F87171;
   --cryptocast-info: #3B82F6;
+  --cryptocast-info-light: #60A5FA;
 
-  /* Gradient Backgrounds */
-  --cryptocast-gradient-primary: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 50%, #0891B2 100%);
-  --cryptocast-gradient-secondary: linear-gradient(135deg, #3730A3 0%, #7C3AED 100%);
-  --cryptocast-gradient-glow: radial-gradient(circle, #7C3AED 0%, #1E3A8A 50%, transparent 70%);
+  /* Enhanced Gradient Backgrounds */
+  --cryptocast-gradient-primary: linear-gradient(135deg, #6B46C1 0%, #9333EA 35%, #06B6D4 70%, #10B981 100%);
+  --cryptocast-gradient-secondary: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #06B6D4 100%);
+  --cryptocast-gradient-accent: linear-gradient(135deg, #9333EA 0%, #06B6D4 50%, #10B981 100%);
+  --cryptocast-gradient-card: linear-gradient(135deg, rgba(107, 70, 193, 0.1) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(6, 182, 212, 0.05) 100%);
+  --cryptocast-gradient-glow: radial-gradient(circle, #9333EA 0%, #6B46C1 40%, transparent 70%);
+  --cryptocast-gradient-shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
 
-  /* Shadow Effects */
-  --cryptocast-shadow-sm: 0 1px 2px 0 rgba(30, 58, 138, 0.05);
-  --cryptocast-shadow-md: 0 4px 6px -1px rgba(30, 58, 138, 0.1), 0 2px 4px -1px rgba(30, 58, 138, 0.06);
-  --cryptocast-shadow-lg: 0 10px 15px -3px rgba(30, 58, 138, 0.1), 0 4px 6px -2px rgba(30, 58, 138, 0.05);
-  --cryptocast-shadow-glow: 0 0 20px rgba(124, 58, 237, 0.3);
+  /* Enhanced Shadow Effects */
+  --cryptocast-shadow-sm: 0 2px 4px 0 rgba(107, 70, 193, 0.1);
+  --cryptocast-shadow-md: 0 8px 16px -4px rgba(107, 70, 193, 0.15), 0 4px 8px -2px rgba(147, 51, 234, 0.1);
+  --cryptocast-shadow-lg: 0 20px 25px -5px rgba(107, 70, 193, 0.2), 0 10px 10px -5px rgba(147, 51, 234, 0.15);
+  --cryptocast-shadow-xl: 0 25px 50px -12px rgba(107, 70, 193, 0.25), 0 16px 32px -4px rgba(147, 51, 234, 0.2);
+  --cryptocast-shadow-glow-purple: 0 0 30px rgba(147, 51, 234, 0.4), 0 0 60px rgba(107, 70, 193, 0.2);
+  --cryptocast-shadow-glow-cyan: 0 0 25px rgba(6, 182, 212, 0.4), 0 0 50px rgba(16, 185, 129, 0.2);
+  --cryptocast-shadow-glow-green: 0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(52, 211, 153, 0.2);
+
+  /* Glass Morphism Effects */
+  --cryptocast-glass-bg: rgba(26, 27, 58, 0.6);
+  --cryptocast-glass-border: rgba(147, 51, 234, 0.2);
+  --cryptocast-glass-blur: blur(12px);
 }
 
-/* Glow Effects */
+/* Enhanced Glow Effects */
 .cryptocast-glow {
-  box-shadow: var(--cryptocast-shadow-glow);
+  box-shadow: var(--cryptocast-shadow-glow-purple);
 }
 
 .cryptocast-glow-purple {
-  box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+  box-shadow: var(--cryptocast-shadow-glow-purple);
 }
 
 .cryptocast-glow-cyan {
-  box-shadow: 0 0 15px rgba(8, 145, 178, 0.5);
+  box-shadow: var(--cryptocast-shadow-glow-cyan);
 }
 
 .cryptocast-glow-green {
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+  box-shadow: var(--cryptocast-shadow-glow-green);
 }
 
-/* Brand Button Styles */
+/* Enhanced Brand Button Styles */
 .btn-cryptocast {
   background: var(--cryptocast-gradient-primary);
   border: 1px solid var(--cryptocast-purple);
   color: var(--cryptocast-white);
   font-weight: 600;
-  transition: all 0.3s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--cryptocast-shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-cryptocast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--cryptocast-gradient-shimmer);
+  transition: left 0.5s;
+}
+
+.btn-cryptocast:hover::before {
+  left: 100%;
 }
 
 .btn-cryptocast:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--cryptocast-shadow-lg), var(--cryptocast-shadow-glow);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--cryptocast-shadow-xl), var(--cryptocast-shadow-glow-purple);
+  border-color: var(--cryptocast-purple-bright);
 }
 
-/* Brand Card Styles */
+.btn-cryptocast:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Enhanced Brand Card Styles */
 .card-cryptocast {
-  background: var(--cryptocast-bg-secondary);
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  background: var(--cryptocast-glass-bg);
+  backdrop-filter: var(--cryptocast-glass-blur);
+  border: 1px solid var(--cryptocast-glass-border);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--cryptocast-shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-cryptocast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--cryptocast-gradient-card);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.card-cryptocast:hover::before {
+  opacity: 1;
 }
 
 .card-cryptocast:hover {
   border-color: var(--cryptocast-purple);
-  box-shadow: var(--cryptocast-shadow-glow);
+  box-shadow: var(--cryptocast-shadow-lg), var(--cryptocast-shadow-glow-purple);
+  transform: translateY(-4px) scale(1.01);
+  background: var(--cryptocast-bg-card-hover);
+}
+
+/* Glass Card Variant */
+.card-glass {
+  background: var(--cryptocast-glass-bg);
+  backdrop-filter: var(--cryptocast-glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: var(--cryptocast-shadow-lg);
+}
+
+/* Shimmer Effect */
+@keyframes cryptocast-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.cryptocast-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.cryptocast-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: cryptocast-shimmer 2s infinite;
 }
 
 /* Animation Classes */

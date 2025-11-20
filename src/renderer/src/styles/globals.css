@@ -38,7 +38,7 @@ body {
     text-wrap: balance;
   }
 
-  /* CryptoCast Brand Utilities */
+  /* Enhanced CryptoCast Brand Utilities */
   .bg-cryptocast-primary {
     background-color: var(--cryptocast-primary);
   }
@@ -49,6 +49,22 @@ body {
 
   .bg-cryptocast-secondary {
     background-color: var(--cryptocast-bg-secondary);
+  }
+
+  .bg-cryptocast-card {
+    background-color: var(--cryptocast-bg-card);
+  }
+
+  .bg-cryptocast-gradient {
+    background: var(--cryptocast-gradient-primary);
+  }
+
+  .bg-cryptocast-gradient-accent {
+    background: var(--cryptocast-gradient-accent);
+  }
+
+  .bg-cryptocast-gradient-card {
+    background: var(--cryptocast-gradient-card);
   }
 
   .text-cryptocast-primary {
@@ -67,7 +83,89 @@ body {
     color: var(--cryptocast-green);
   }
 
+  .text-cryptocast-white {
+    color: var(--cryptocast-white);
+  }
+
+  .text-cryptocast-secondary {
+    color: var(--cryptocast-text-secondary);
+  }
+
+  .text-cryptocast-muted {
+    color: var(--cryptocast-text-muted);
+  }
+
+  .text-cryptocast-dim {
+    color: var(--cryptocast-text-dim);
+  }
+
   .border-cryptocast-purple {
     border-color: var(--cryptocast-purple);
+  }
+
+  .border-cryptocast-glass {
+    border-color: var(--cryptocast-glass-border);
+  }
+
+  /* Shadow utilities */
+  .shadow-cryptocast {
+    box-shadow: var(--cryptocast-shadow-md);
+  }
+
+  .shadow-cryptocast-lg {
+    box-shadow: var(--cryptocast-shadow-lg);
+  }
+
+  .shadow-cryptocast-xl {
+    box-shadow: var(--cryptocast-shadow-xl);
+  }
+
+  .shadow-glow-purple {
+    box-shadow: var(--cryptocast-shadow-glow-purple);
+  }
+
+  .shadow-glow-cyan {
+    box-shadow: var(--cryptocast-shadow-glow-cyan);
+  }
+
+  .shadow-glow-green {
+    box-shadow: var(--cryptocast-shadow-glow-green);
+  }
+
+  /* Glass morphism utilities */
+  .glass {
+    background: var(--cryptocast-glass-bg);
+    backdrop-filter: var(--cryptocast-glass-blur);
+    border: 1px solid var(--cryptocast-glass-border);
+  }
+
+  .glass-hover:hover {
+    background: var(--cryptocast-bg-card-hover);
+    box-shadow: var(--cryptocast-shadow-glow-purple);
+  }
+
+  /* Transition utilities */
+  .transition-cryptocast {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Custom scrollbar */
+  .scrollbar-cryptocast::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-cryptocast::-webkit-scrollbar-track {
+    background: var(--cryptocast-bg-secondary);
+    border-radius: 4px;
+  }
+
+  .scrollbar-cryptocast::-webkit-scrollbar-thumb {
+    background: var(--cryptocast-purple);
+    border-radius: 4px;
+  }
+
+  .scrollbar-cryptocast::-webkit-scrollbar-thumb:hover {
+    background: var(--cryptocast-purple-bright);
   }
 }
