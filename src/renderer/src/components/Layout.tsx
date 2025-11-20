@@ -28,65 +28,90 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="flex h-screen bg-white">
-      {/* Sidebar - 200px width */}
-      <aside className="w-[200px] bg-sidebar flex flex-col">
+    <div className="flex h-screen bg-base-200">
+      {/* Sidebar - 180px width */}
+      <aside className="w-[180px] bg-base-100 flex flex-col border-r border-base-300">
         {/* Logo Area */}
-        <div className="p-6 border-b border-border">
-          <h1 className="text-xl font-semibold text-dark">CryptoCast</h1>
-          <p className="text-xs text-light mt-1">空投测试</p>
+        <div className="p-5 border-b border-base-300">
+          <h1 className="text-lg font-bold text-primary">CryptoCast</h1>
+          <p className="text-xs text-base-content/60 mt-1">空投测试</p>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4">
+        <nav className="flex-1 py-6 px-2">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-6 py-3 transition-all cursor-pointer ${
-                location.pathname === item.path
-                  ? 'bg-primary text-white'
-                  : 'text-medium hover:bg-sidebar-active'
-              }`}
+              className="block mb-1"
             >
-              <span className="icon-sm">{item.icon}</span>
-              <span className="text-sm font-medium">{item.label}</span>
+              <div className={`flex items-center gap-4 px-4 py-3 rounded-btn transition-all duration-200 ${
+                location.pathname === item.path
+                  ? 'bg-primary text-primary-content font-semibold'
+                  : 'hover:bg-base-200 text-base-content'
+              }`}>
+                <span className={`text-xl ${location.pathname === item.path ? '' : 'opacity-70'}`}>
+                  {item.icon}
+                </span>
+                <span className={`text-sm ${
+                  location.pathname === item.path
+                    ? 'font-semibold'
+                    : ''
+                }`}>
+                  {item.label}
+                </span>
+              </div>
             </Link>
           ))}
         </nav>
 
         {/* Price & Gas Info - Bottom Section */}
-        <div className="p-4 border-t border-border space-y-4">
+        <div className="p-4 border-t border-base-300 space-y-4">
           {/* Prices */}
-          <div className="bg-white p-4 rounded-lg border border-border">
-            <h3 className="text-xs font-semibold text-primary mb-3 uppercase tracking-wide">💰 实时价格</h3>
-            <div className="space-y-2">
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">💰</span>
+              <h3 className="text-xs font-semibold text-info uppercase tracking-wide">实时价格</h3>
+            </div>
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-medium">ETH</span>
-                <span className="text-xs font-semibold">{formatPrice(priceInfo.eth)}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <span className="text-xs font-medium">ETH</span>
+                </div>
+                <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.eth)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-medium">MATIC</span>
-                <span className="text-xs font-semibold">{formatPrice(priceInfo.matic)}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                  <span className="text-xs font-medium">MATIC</span>
+                </div>
+                <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.matic)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-medium">SOL</span>
-                <span className="text-xs font-semibold">{formatPrice(priceInfo.sol)}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <span className="text-xs font-medium">SOL</span>
+                </div>
+                <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.sol)}</span>
               </div>
             </div>
           </div>
 
           {/* Gas Prices */}
-          <div className="bg-white p-4 rounded-lg border border-border">
-            <h3 className="text-xs font-semibold text-info mb-3 uppercase tracking-wide">⚡ Gas价格</h3>
-            <div className="space-y-2">
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">⚡</span>
+              <h3 className="text-xs font-semibold text-warning uppercase tracking-wide">Gas价格</h3>
+            </div>
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-medium">Ethereum</span>
-                <span className="text-xs font-semibold text-warning">28 Gwei</span>
+                <span className="text-xs font-medium">Ethereum</span>
+                <div className="badge badge-warning badge-sm">28 Gwei</div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-medium">Polygon</span>
-                <span className="text-xs font-semibold text-success">95 Gwei</span>
+                <span className="text-xs font-medium">Polygon</span>
+                <div className="badge badge-success badge-sm">95 Gwei</div>
               </div>
             </div>
           </div>
@@ -95,27 +120,8 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-[60px] bg-white border-b border-border flex items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-semibold text-dark">
-              {navItems.find(item => item.path === location.pathname)?.label || '仪表盘'}
-            </h2>
-          </div>
-          <div className="flex items-center gap-6">
-            <button className="icon-md text-medium cursor-pointer hover:text-dark">🔔</button>
-            <button className="icon-md text-medium cursor-pointer hover:text-dark">💬</button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                A
-              </div>
-              <span className="text-sm font-medium text-dark">Admin</span>
-            </div>
-          </div>
-        </header>
-
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto px-6 py-5">
           {children}
         </div>
       </main>

@@ -379,31 +379,7 @@ export class ChainManagementService {
     }
   }
 
-  /**
-   * 获取当前优先级最高的可用Solana RPC
-   */
-  async getActiveSolanaRPC(network: string): Promise<SolanaRPC | null> {
-    try {
-      const rpcs = await this.getSolanaRPCs(network, true);
-
-      // 按优先级尝试连接
-      for (const rpc of rpcs) {
-        try {
-          const connection = new Connection(rpc.rpc_url, 'confirmed');
-          await connection.getSlot(); // 测试连接
-          return rpc;
-        } catch (error) {
-          continue;
-        }
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Failed to get active Solana RPC:', error);
-      return null;
-    }
-  }
-
+  
   /**
    * 添加Solana RPC节点
    */
@@ -489,29 +465,7 @@ export class ChainManagementService {
     }
   }
 
-  /**
-   * 健康检查所有Solana RPC（后台任务）
-   */
-  async healthCheckAllSolanaRPCs(): Promise<void> {
-    try {
-      const rpcs = await this.getSolanaRPCs();
-
-      for (const rpc of rpcs) {
-        const result = await this.testSolanaRPC(rpc.rpc_url);
-
-        const stmt = this.db.prepare(`
-          UPDATE solana_rpcs
-          SET latency = ?, last_checked = datetime('now')
-          WHERE id = ?
-        `);
-
-        stmt.run(result.success ? result.latency : null, rpc.id);
-      }
-    } catch (error) {
-      console.error('Failed to health check Solana RPCs:', error);
-    }
-  }
-
+  
   /**
    * 获取区块链信息（支持EVM和Solana）
    */

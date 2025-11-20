@@ -5,32 +5,64 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* DaisyUI Configuration */
+@layer base {
+  :root {
+    font-family: 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
 
-  color-scheme: light dark;
-  color: var(--cryptocast-text-primary);
-  background-color: var(--cryptocast-bg-primary);
+    color-scheme: light;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: var(--cryptocast-bg-primary);
-  color: var(--cryptocast-text-primary);
-}
+    /* DaisyUI Light Theme Variables */
+    --p: #2c3e50;
+    --pf: #243342;
+    --pc: #ffffff;
 
-#root {
-  width: 100vw;
-  height: 100vh;
+    --s: #e74c3c;
+    --sf: #c0392b;
+    --sc: #ffffff;
+
+    --a: #3498db;
+    --af: #2980b9;
+    --ac: #ffffff;
+
+    --in: #f39c12;
+    --inf: #e67e22;
+    --inc: #ffffff;
+
+    --su: #27ae60;
+    --suc: #ffffff;
+
+    --wa: #f1c40f;
+    --wac: #ffffff;
+
+    --er: #e74c3c;
+    --erc: #ffffff;
+
+    --nc: #34495e;
+    --n: #7f8c8d;
+    --nf: #95a5a6;
+    --b2: #ecf0f1;
+    --b3: #bdc3c7;
+    --bc: #dfe6e9;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+  }
+
+  #root {
+    width: 100vw;
+    height: 100vh;
+  }
 }
 
 @layer utilities {
@@ -38,134 +70,211 @@ body {
     text-wrap: balance;
   }
 
-  /* Enhanced CryptoCast Brand Utilities */
-  .bg-cryptocast-primary {
-    background-color: var(--cryptocast-primary);
+  /* Enhanced DaisyUI Components */
+  .card {
+    @apply bg-base-100 shadow-sm border border-base-300 transition-all duration-200;
   }
 
-  .bg-cryptocast-dark {
-    background-color: var(--cryptocast-dark);
+  .card:hover {
+    @apply shadow-md border-primary/20;
   }
 
-  .bg-cryptocast-secondary {
-    background-color: var(--cryptocast-bg-secondary);
+  .badge {
+    @apply transition-all duration-200;
   }
 
-  .bg-cryptocast-card {
-    background-color: var(--cryptocast-bg-card);
+  .btn {
+    @apply transition-all duration-200;
   }
 
-  .bg-cryptocast-gradient {
-    background: var(--cryptocast-gradient-primary);
+  .btn:active {
+    @apply scale-95;
   }
 
-  .bg-cryptocast-gradient-accent {
-    background: var(--cryptocast-gradient-accent);
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    @apply ring-2 ring-primary/20 ring-offset-2;
   }
 
-  .bg-cryptocast-gradient-card {
-    background: var(--cryptocast-gradient-card);
-  }
-
-  .text-cryptocast-primary {
-    color: var(--cryptocast-primary);
-  }
-
-  .text-cryptocast-purple {
-    color: var(--cryptocast-purple);
-  }
-
-  .text-cryptocast-cyan {
-    color: var(--cryptocast-cyan);
-  }
-
-  .text-cryptocast-green {
-    color: var(--cryptocast-green);
-  }
-
-  .text-cryptocast-white {
-    color: var(--cryptocast-white);
-  }
-
-  .text-cryptocast-secondary {
-    color: var(--cryptocast-text-secondary);
-  }
-
-  .text-cryptocast-muted {
-    color: var(--cryptocast-text-muted);
-  }
-
-  .text-cryptocast-dim {
-    color: var(--cryptocast-text-dim);
-  }
-
-  .border-cryptocast-purple {
-    border-color: var(--cryptocast-purple);
-  }
-
-  .border-cryptocast-glass {
-    border-color: var(--cryptocast-glass-border);
-  }
-
-  /* Shadow utilities */
-  .shadow-cryptocast {
-    box-shadow: var(--cryptocast-shadow-md);
-  }
-
-  .shadow-cryptocast-lg {
-    box-shadow: var(--cryptocast-shadow-lg);
-  }
-
-  .shadow-cryptocast-xl {
-    box-shadow: var(--cryptocast-shadow-xl);
-  }
-
-  .shadow-glow-purple {
-    box-shadow: var(--cryptocast-shadow-glow-purple);
-  }
-
-  .shadow-glow-cyan {
-    box-shadow: var(--cryptocast-shadow-glow-cyan);
-  }
-
-  .shadow-glow-green {
-    box-shadow: var(--cryptocast-shadow-glow-green);
-  }
-
-  /* Glass morphism utilities */
-  .glass {
-    background: var(--cryptocast-glass-bg);
-    backdrop-filter: var(--cryptocast-glass-blur);
-    border: 1px solid var(--cryptocast-glass-border);
-  }
-
-  .glass-hover:hover {
-    background: var(--cryptocast-bg-card-hover);
-    box-shadow: var(--cryptocast-shadow-glow-purple);
-  }
-
-  /* Transition utilities */
-  .transition-cryptocast {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Custom scrollbar */
-  .scrollbar-cryptocast::-webkit-scrollbar {
+  /* Custom scrollbar using DaisyUI colors */
+  .scrollbar-daisy::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
-  .scrollbar-cryptocast::-webkit-scrollbar-track {
-    background: var(--cryptocast-bg-secondary);
+  .scrollbar-daisy::-webkit-scrollbar-track {
+    @apply bg-base-200;
     border-radius: 4px;
   }
 
-  .scrollbar-cryptocast::-webkit-scrollbar-thumb {
-    background: var(--cryptocast-purple);
+  .scrollbar-daisy::-webkit-scrollbar-thumb {
+    @apply bg-base-300;
     border-radius: 4px;
   }
 
-  .scrollbar-cryptocast::-webkit-scrollbar-thumb:hover {
-    background: var(--cryptocast-purple-bright);
+  .scrollbar-daisy::-webkit-scrollbar-thumb:hover {
+    @apply bg-base-400;
+  }
+
+  /* Animation utilities */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Glass morphism effects */
+  .glass {
+    @apply bg-base-100/80 backdrop-blur-sm border border-base-200/50;
+  }
+
+  /* Brand integration with DaisyUI */
+  .brand-gradient {
+    background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 50%, #ff6b6b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Loading states */
+  .loading-skeleton {
+    @apply animate-pulse bg-base-200 rounded;
+  }
+
+  /* Status indicators */
+  .status-online {
+    @apply w-2 h-2 rounded-full bg-success;
+  }
+
+  .status-offline {
+    @apply w-2 h-2 rounded-full bg-error;
+  }
+
+  .status-pending {
+    @apply w-2 h-2 rounded-full bg-warning;
+  }
+}
+
+@layer components {
+  /* Custom DaisyUI component variants */
+  .btn-gradient {
+    @apply btn text-white;
+    background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
+    border: none;
+  }
+
+  .btn-gradient:hover {
+    background: linear-gradient(135deg, #357abd 0%, #6651d3 100%);
+  }
+
+  .card-glass {
+    @apply card glass;
+  }
+
+  .input-group {
+    @apply join;
+  }
+
+  .input-group-item {
+    @apply join-item;
+  }
+
+  /* Table enhancements */
+  .table-modern {
+    @apply table table-zebra table-hover;
+  }
+
+  .table-modern thead th {
+    @apply bg-base-200 font-semibold text-xs uppercase tracking-wider;
+  }
+
+  .table-modern tbody tr:hover {
+    @apply bg-base-200/50;
+  }
+
+  /* Form layouts */
+  .form-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  .form-section {
+    @apply card card-compact bg-base-100 shadow-sm;
+  }
+
+  .form-section .card-body {
+    @apply p-4;
+  }
+
+  /* Navigation enhancements */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 hover:bg-base-200;
+  }
+
+  .nav-item.active {
+    @apply bg-primary text-primary-content;
+  }
+
+  /* Modal enhancements */
+  .modal-modern {
+    @apply modal-box rounded-lg shadow-2xl border border-base-300;
+  }
+
+  /* Alert enhancements */
+  .alert-modern {
+    @apply alert border-l-4;
+  }
+
+  .alert-success-modern {
+    @apply alert-modern alert-success border-l-success;
+  }
+
+  .alert-warning-modern {
+    @apply alert-modern alert-warning border-l-warning;
+  }
+
+  .alert-error-modern {
+    @apply alert-modern alert-error border-l-error;
+  }
+
+  .alert-info-modern {
+    @apply alert-modern alert-info border-l-info;
   }
 }

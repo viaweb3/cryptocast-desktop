@@ -84,30 +84,11 @@ export class FileService {
     }
   }
 
-  async exportReport(campaignId: string, format: 'csv' | 'json' | 'pdf' = 'csv'): Promise<{ success: boolean; filePath: string }> {
+  async exportReport(campaignId: string, format: 'csv' = 'csv'): Promise<{ success: boolean; filePath: string }> {
     try {
       const reportData = await this.generateReportData(campaignId);
-
-      let filePath: string;
-      let fileName: string;
-
-      switch (format) {
-        case 'csv':
-          fileName = `campaign_${campaignId}_report.csv`;
-          filePath = await this.exportCSVReport(reportData, fileName);
-          break;
-        case 'json':
-          fileName = `campaign_${campaignId}_report.json`;
-          filePath = await this.exportJSONReport(reportData, fileName);
-          break;
-        case 'pdf':
-          fileName = `campaign_${campaignId}_report.pdf`;
-          filePath = await this.exportPDFReport(reportData, fileName);
-          break;
-        default:
-          throw new Error(`Unsupported export format: ${format}`);
-      }
-
+      const fileName = `campaign_${campaignId}_report.csv`;
+      const filePath = await this.exportCSVReport(reportData, fileName);
       return { success: true, filePath };
     } catch (error) {
       console.error('Failed to export report:', error);
@@ -229,111 +210,7 @@ export class FileService {
     });
   }
 
-  private async exportJSONReport(reportData: ReportData, fileName: string): Promise<string> {
-    try {
-      const filePath = path.join(this.getDownloadsDirectory(), fileName);
-      const jsonData = JSON.stringify(reportData, null, 2);
-      fs.writeFileSync(filePath, jsonData, 'utf-8');
-      return filePath;
-    } catch (error) {
-      throw new Error(`Failed to write JSON file: ${error}`);
-    }
-  }
-
-  private async exportPDFReport(reportData: ReportData, fileName: string): Promise<string> {
-    try {
-      const filePath = path.join(this.getDownloadsDirectory(), fileName);
-
-      // Use jsPDF for proper PDF generation
-      const { jsPDF } = await import('jspdf');
-      const doc = new jsPDF();
-
-      let yPosition = 20; // Initialize Y position
-
-      // Title
-      doc.setFontSize(18);
-      doc.text('Campaign Report', 105, yPosition, { align: 'center' });
-      yPosition += 15;
-
-      // Campaign Info
-      doc.setFontSize(12);
-      doc.text('Campaign Information', 20, yPosition);
-      yPosition += 8;
-
-      doc.setFontSize(10);
-      doc.text(`Name: ${reportData.campaign.name}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`ID: ${reportData.campaign.id}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Chain: ${reportData.campaign.chain}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Token: ${reportData.campaign.token_address}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Status: ${reportData.campaign.status}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Created: ${reportData.campaign.created_at}`, 20, yPosition);
-      yPosition += 12;
-
-      // Summary Statistics
-      doc.setFontSize(12);
-      doc.text('Summary Statistics', 20, yPosition);
-      yPosition += 8;
-
-      doc.setFontSize(10);
-      doc.text(`Total Recipients: ${reportData.summary.totalRecipients}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Sent: ${reportData.summary.sentRecipients}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Failed: ${reportData.summary.failedRecipients}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Pending: ${reportData.summary.pendingRecipients}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Success Rate: ${reportData.summary.successRate}%`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Total Amount: ${reportData.summary.totalAmount}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Sent Amount: ${reportData.summary.sentAmount}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Gas Used: ${reportData.summary.totalGasUsed}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Gas Cost: ${reportData.summary.totalGasCost}`, 20, yPosition);
-      yPosition += 12;
-
-      // Recipients table header
-      doc.setFontSize(12);
-      doc.text('Recipients', 20, yPosition);
-      yPosition += 8;
-
-      // Add recipients (with pagination)
-      doc.setFontSize(8);
-      reportData.recipients.forEach((recipient, index) => {
-        if (yPosition > 270) {
-          doc.addPage();
-          yPosition = 20;
-        }
-
-        doc.text(`${index + 1}. ${recipient.address}`, 20, yPosition);
-        yPosition += 5;
-        doc.text(`   Amount: ${recipient.amount} | Status: ${recipient.status}`, 25, yPosition);
-        yPosition += 5;
-
-        if (recipient.tx_hash) {
-          doc.text(`   Tx: ${recipient.tx_hash.substring(0, 30)}...`, 25, yPosition);
-          yPosition += 5;
-        }
-
-        yPosition += 3;
-      });
-
-      // Save PDF
-      const pdfBuffer = doc.output('arraybuffer');
-      await fsPromises.writeFile(filePath, Buffer.from(pdfBuffer));
-      return filePath;
-    } catch (error) {
-      throw new Error(`Failed to write PDF file: ${error}`);
-    }
-  }
-
+  
   private getDownloadsDirectory(): string {
     const homeDir = require('os').homedir();
     const platform = require('os').platform();
@@ -456,46 +333,4 @@ export class FileService {
     }
   }
 
-  async exportMultipleCampaigns(campaignIds: string[], format: 'csv' | 'json' = 'csv'): Promise<string> {
-    try {
-      const allData: any[] = [];
-
-      for (const campaignId of campaignIds) {
-        const reportData = await this.generateReportData(campaignId);
-        allData.push(...reportData.recipients.map(recipient => ({
-          campaignId: reportData.campaign.id,
-          campaignName: reportData.campaign.name,
-          chain: reportData.campaign.chain,
-          tokenAddress: reportData.campaign.token_address,
-          ...recipient
-        })));
-      }
-
-      const fileName = `multiple_campaigns_report_${Date.now()}.${format}`;
-      const filePath = path.join(this.getDownloadsDirectory(), fileName);
-
-      if (format === 'csv') {
-        return new Promise((resolve, reject) => {
-          const writableStream = fs.createWriteStream(filePath);
-          const csvStringifier = stringify({ header: true });
-
-          writableStream.on('finish', () => resolve(filePath));
-          writableStream.on('error', reject);
-
-          csvStringifier.pipe(writableStream);
-
-          allData.forEach(row => {
-            csvStringifier.write(row);
-          });
-
-          csvStringifier.end();
-        });
-      } else {
-        fs.writeFileSync(filePath, JSON.stringify(allData, null, 2));
-        return filePath;
-      }
-    } catch (error) {
-      throw new Error(`Failed to export multiple campaigns: ${error}`);
-    }
   }
-}

@@ -218,17 +218,7 @@ export async function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('chain:getActiveSolanaRPC', async (_event, network) => {
-    try {
-      console.log('获取活跃Solana RPC:', network);
-      const rpc = await chainService.getActiveSolanaRPC(network);
-      return rpc;
-    } catch (error) {
-      console.error('获取活跃Solana RPC失败:', error);
-      throw new Error(`获取活跃Solana RPC失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  });
-
+  
   ipcMain.handle('chain:addSolanaRPC', async (_event, rpcData) => {
     try {
       console.log('添加Solana RPC:', rpcData);

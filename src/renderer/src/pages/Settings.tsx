@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   AppSettings,
   EVMChain,
   ChainConfigurationForm,
-  NetworkTestResult,
-  GasSettings,
-  BatchSettings,
-  SecuritySettings,
-  NotificationSettings
+  NetworkTestResult
 } from '../types';
 
 interface SettingsModalProps {
@@ -60,7 +57,8 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
     }
   }, [chain]);
 
-  if (!isOpen || !chain) return null;
+  if (!isOpen) return null;
+  if (!chain) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,214 +73,183 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
 
   const testResult = testResults[chain.chainId];
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-xl font-semibold text-dark">编辑 {chain.name} 链参数</h2>
+  const isNewChain = !chain.id || chain.id === 0;
+
+  const modalContent = (
+    <div className="modal modal-open">
+      <div className="modal-box w-11/12 max-w-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">
+            {isNewChain ? '➕ 添加自定义网络' : `⚙️ 编辑 ${chain.name} 配置`}
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="btn btn-sm btn-circle btn-ghost"
           >
-            ×
+            ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit}>
           {/* Basic Chain Information */}
-          <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-medium text-dark mb-4">基础信息</h3>
+          <div className="collapse collapse-arrow bg-base-200 mb-4">
+            <input type="checkbox" defaultChecked className="min-w-fit" />
+            <div className="collapse-title text-lg font-semibold">
+              🔗 基础信息
+            </div>
+            <div className="collapse-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">链名称</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input input-bordered"
+                    required
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">链名称</label>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Chain ID</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.chainId}
+                    onChange={(e) => setFormData({ ...formData, chainId: parseInt(e.target.value) })}
+                    className="input input-bordered"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-control mt-4">
+                <label className="label">
+                  <span className="label-text font-medium">RPC 节点 URL</span>
+                </label>
                 <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  type="url"
+                  value={formData.rpcUrl}
+                  onChange={(e) => setFormData({ ...formData, rpcUrl: e.target.value })}
+                  className="input input-bordered"
+                  placeholder="https://polygon.llamarpc.com"
+                  required
+                />
+                <label className="label">
+                  <span className="label-text-alt">建议配置多个 URL 以实现冗余备份</span>
+                </label>
+              </div>
+
+              <div className="form-control mt-4">
+                <label className="label">
+                  <span className="label-text font-medium">备用 RPC URL</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.rpcBackup}
+                  onChange={(e) => setFormData({ ...formData, rpcBackup: e.target.value })}
+                  className="input input-bordered"
+                  placeholder="https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID"
+                />
+              </div>
+
+              <div className="form-control mt-4">
+                <label className="label">
+                  <span className="label-text font-medium">区块链浏览器 URL</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.explorerUrl}
+                  onChange={(e) => setFormData({ ...formData, explorerUrl: e.target.value })}
+                  className="input input-bordered"
+                  placeholder="https://polygonscan.com"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">Chain ID</label>
-                <input
-                  type="number"
-                  value={formData.chainId}
-                  onChange={(e) => setFormData({ ...formData, chainId: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  required
-                />
-              </div>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">代币符号</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.symbol}
+                    onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
+                    className="input input-bordered"
+                    placeholder="MATIC"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-dark mb-2">RPC 节点 URL</label>
-              <input
-                type="url"
-                value={formData.rpcUrl}
-                onChange={(e) => setFormData({ ...formData, rpcUrl: e.target.value })}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="https://polygon.llamarpc.com"
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">建议配置多个 URL 以实现冗余备份</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-dark mb-2">备用 RPC URL</label>
-              <input
-                type="url"
-                value={formData.rpcBackup}
-                onChange={(e) => setFormData({ ...formData, rpcBackup: e.target.value })}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-dark mb-2">区块链浏览器 URL</label>
-              <input
-                type="url"
-                value={formData.explorerUrl}
-                onChange={(e) => setFormData({ ...formData, explorerUrl: e.target.value })}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="https://polygonscan.com"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">代币符号</label>
-                <input
-                  type="text"
-                  value={formData.symbol}
-                  onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="MATIC"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">代币精度</label>
-                <input
-                  type="number"
-                  value={formData.decimals}
-                  onChange={(e) => setFormData({ ...formData, decimals: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="0"
-                  max="18"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Gas Parameter Settings */}
-          <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-medium text-dark mb-4">Gas 参数设置</h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">默认 Gas 价格 (Gwei)</label>
-                <input
-                  type="number"
-                  value={formData.gasPrice}
-                  onChange={(e) => setFormData({ ...formData, gasPrice: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">默认 Gas 限制</label>
-                <input
-                  type="number"
-                  value={formData.gasLimit}
-                  onChange={(e) => setFormData({ ...formData, gasLimit: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="21000"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">批量发送数量</label>
-                <input
-                  type="number"
-                  value={formData.batchSize}
-                  onChange={(e) => setFormData({ ...formData, batchSize: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="1"
-                  max="200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">发送间隔 (ms)</label>
-                <input
-                  type="number"
-                  value={formData.sendInterval}
-                  onChange={(e) => setFormData({ ...formData, sendInterval: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="500"
-                  step="100"
-                />
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">代币精度</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.decimals}
+                    onChange={(e) => setFormData({ ...formData, decimals: parseInt(e.target.value) })}
+                    className="input input-bordered"
+                    min="0"
+                    max="18"
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           {/* Test Connection */}
-          <div className="mb-6">
-            <button
-              type="button"
-              onClick={handleTest}
-              disabled={isTesting}
-              className="btn btn-ghost"
-            >
-              {isTesting ? '测试中...' : '测试连接'}
-            </button>
-
-            {testResult && (
-              <div className={`mt-2 p-3 rounded-lg ${
-                testResult.status === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span>
-                    延迟: {testResult.latency}ms | 区块: {testResult.blockNumber} | Gas: {testResult.gasPrice} Gwei
-                  </span>
-                  <span className={`font-medium ${
-                    testResult.status === 'success' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {testResult.status === 'success' ? '✓ 连接成功' : '✗ 连接失败'}
-                  </span>
-                </div>
-                {testResult.error && (
-                  <div className="text-sm mt-1">{testResult.error}</div>
-                )}
+          <div className="card bg-base-100 shadow-sm mb-6">
+            <div className="card-body">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <span>🔗</span>
+                  连接测试
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleTest}
+                  disabled={isTesting}
+                  className={`btn ${isTesting ? 'btn-disabled' : 'btn-outline'}`}
+                >
+                  {isTesting ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      测试中...
+                    </>
+                  ) : (
+                    '🧪 测试连接'
+                  )}
+                </button>
               </div>
-            )}
-          </div>
 
-          {/* Enable/Disable */}
-          <div className="mb-6">
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={formData.enabled}
-                onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-              />
-              <span className="text-sm font-medium text-dark">启用该区块链网络</span>
-            </label>
+              {testResult && (
+                <div className={`alert mt-4 ${
+                  testResult.status === 'success' ? 'alert-success' : 'alert-error'
+                }`}>
+                  <div>
+                    <div className="font-bold">
+                      {testResult.status === 'success' ? '✅ 连接成功' : '❌ 连接失败'}
+                    </div>
+                    <div className="text-sm">
+                      延迟: {testResult.latency}ms | 区块: {testResult.blockNumber} | Gas: {testResult.gasPrice} Gwei
+                    </div>
+                    {testResult.error && (
+                      <div className="text-xs mt-2">错误详情: {testResult.error}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-4">
+          <div className="modal-action">
             <button
               type="button"
               onClick={onClose}
@@ -294,13 +261,15 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
               type="submit"
               className="btn btn-primary"
             >
-              保存设置
+              💾 保存设置
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 export default function Settings() {
@@ -338,7 +307,7 @@ export default function Settings() {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<'chains' | 'gas' | 'batch' | 'security' | 'notifications'>('chains');
+  const [activeTab] = useState<'chains'>('chains');
   const [editingChain, setEditingChain] = useState<EVMChain | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [testResults, setTestResults] = useState<Record<number, NetworkTestResult>>({});
@@ -441,23 +410,67 @@ export default function Settings() {
     setIsModalOpen(true);
   };
 
+  const handleAddChain = () => {
+    const newChain = {
+      id: 0,
+      type: 'evm' as const,
+      chainId: 0,
+      name: '',
+      rpcUrl: '',
+      explorerUrl: '',
+      symbol: '',
+      decimals: 18,
+      enabled: true,
+      isCustom: true,
+    };
+    setEditingChain(newChain);
+    setIsModalOpen(true);
+  };
+
   const handleSaveChain = async (chainData: ChainConfigurationForm) => {
     try {
       if (window.electronAPI?.chain) {
-        if (chainData.id) {
+        if (chainData.id && chainData.id > 0) {
+          // 更新现有链
           await window.electronAPI.chain.updateEVMChain(chainData.id, chainData);
         } else {
+          // 添加新链
           const newId = await window.electronAPI.chain.addEVMChain(chainData);
           chainData.id = newId;
         }
       }
 
-      setSettings(prev => ({
-        ...prev,
-        chains: (prev.chains || []).map(chain =>
-          chain.id === chainData.id ? { ...chain, ...chainData } : chain
-        )
-      }));
+      setSettings(prev => {
+        const chains = prev.chains || [];
+        if (chainData.id && chainData.id > 0 && chains.some(c => c.id === chainData.id)) {
+          // 更新现有链
+          return {
+            ...prev,
+            chains: chains.map(chain =>
+              chain.id === chainData.id ? { ...chain, ...chainData } : chain
+            )
+          };
+        } else {
+          // 添加新链
+          const newChain: EVMChain = {
+            id: chainData.id || Date.now(),
+            type: 'evm',
+            chainId: chainData.chainId,
+            name: chainData.name,
+            rpcUrl: chainData.rpcUrl,
+            rpcBackup: chainData.rpcBackup,
+            explorerUrl: chainData.explorerUrl,
+            symbol: chainData.symbol,
+            decimals: chainData.decimals,
+            enabled: chainData.enabled,
+            isCustom: true,
+          };
+          return {
+            ...prev,
+            chains: [...chains, newChain]
+          };
+        }
+      });
 
       setIsModalOpen(false);
       setEditingChain(null);
@@ -508,473 +521,138 @@ export default function Settings() {
     }));
   };
 
-  const handleSaveSettings = async () => {
-    try {
-      if (window.electronAPI?.settings) {
-        await window.electronAPI.settings.update(settings);
-        alert('设置保存成功！');
-      }
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      alert('保存设置失败，请重试');
-    }
-  };
-
-  const updateGasSettings = (gasSettings: Partial<GasSettings>) => {
-    setSettings(prev => ({ ...prev, gasSettings: { ...prev.gasSettings, ...gasSettings } }));
-  };
-
-  const updateBatchSettings = (batchSettings: Partial<BatchSettings>) => {
-    setSettings(prev => ({ ...prev, batchSettings: { ...prev.batchSettings, ...batchSettings } }));
-  };
-
-  const updateSecuritySettings = (securitySettings: Partial<SecuritySettings>) => {
-    setSettings(prev => ({ ...prev, securitySettings: { ...prev.securitySettings, ...securitySettings } }));
-  };
-
-  const updateNotificationSettings = (notificationSettings: Partial<NotificationSettings>) => {
-    setSettings(prev => ({ ...prev, notificationSettings: { ...prev.notificationSettings, ...notificationSettings } }));
-  };
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-dark">系统设置</h1>
-        <button
-          onClick={() => navigate('/')}
-          className="btn btn-ghost"
-        >
-          返回仪表盘
-        </button>
-      </div>
+    <>
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">⚙️</span>
+            <h1 className="text-2xl font-bold">区块链网络设置</h1>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleAddChain}
+              className="btn btn-primary"
+            >
+              ➕ 添加自定义网络
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="btn btn-ghost"
+            >
+              ← 返回仪表盘
+            </button>
+          </div>
+        </div>
 
-      {/* Settings Navigation */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
-        <button
-          onClick={() => setActiveTab('chains')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'chains'
-              ? 'bg-white text-dark shadow-sm'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          区块链网络
-        </button>
-        <button
-          onClick={() => setActiveTab('gas')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'gas'
-              ? 'bg-white text-dark shadow-sm'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          Gas 设置
-        </button>
-        <button
-          onClick={() => setActiveTab('batch')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'batch'
-              ? 'bg-white text-dark shadow-sm'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          批量设置
-        </button>
-        <button
-          onClick={() => setActiveTab('security')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'security'
-              ? 'bg-white text-dark shadow-sm'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          安全设置
-        </button>
-        <button
-          onClick={() => setActiveTab('notifications')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'notifications'
-              ? 'bg-white text-dark shadow-sm'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          通知设置
-        </button>
-      </div>
-
-      {/* Settings Content */}
-      <div className="bg-white rounded-lg border border-border">
-        {/* Chain Settings */}
-        {activeTab === 'chains' && (
-          <div className="p-6">
-            <div className="mb-6">
-              <h2 className="text-lg font-medium text-dark mb-4">已配置的区块链</h2>
-              <div className="space-y-3">
-                {(settings.chains || []).map((chain) => (
-                  <div key={chain.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-border-light rounded-lg flex items-center justify-center">
-                        <span className="text-lg">{chain.symbol.slice(0, 2).toUpperCase()}</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-dark">{chain.name}</div>
-                        <div className="text-sm text-gray-500">主网 | Chain ID: {chain.chainId}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => handleToggleChain(chain.chainId)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          chain.enabled ? 'bg-primary' : 'bg-gray-200'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            chain.enabled ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-
-                      <button
-                        onClick={() => handleEditChain(chain)}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                      >
-                        编辑
-                      </button>
+        {/* Chain List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {(settings.chains || []).map((chain) => (
+            <div
+              key={chain.id}
+              className="card bg-base-100 shadow-sm hover:shadow-md transition-all border-2 border-transparent hover:border-primary/20"
+            >
+              {/* Chain Icon & Info */}
+              <div className="card-body">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="avatar placeholder">
+                    <div className="bg-neutral text-neutral-content rounded-full w-12 h-12">
+                      <span className="text-lg">
+                        {chain.symbol === 'ETH' && '🔷'}
+                        {chain.symbol === 'MATIC' && '🟣'}
+                        {chain.symbol === 'BNB' && '🟡'}
+                        {!['ETH', 'MATIC', 'BNB'].includes(chain.symbol) && '⚡'}
+                      </span>
                     </div>
                   </div>
-                ))}
+                  <div className="flex-1">
+                    <h2 className="card-title text-lg">{chain.name}</h2>
+                    <div className="flex items-center gap-2">
+                      <div className="badge badge-outline badge-sm">{chain.symbol}</div>
+                      <div className={`w-2 h-2 rounded-full ${chain.enabled ? 'bg-success' : 'bg-error'}`}></div>
+                      <span className="text-xs text-base-content/60">
+                        {chain.enabled ? '已启用' : '已禁用'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chain Details */}
+                <div className="divider my-2"></div>
+
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-base-content/60">Chain ID</span>
+                    <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded">{chain.chainId}</div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-base-content/60">类型</span>
+                    <div className="badge badge-sm">
+                      {chain.isCustom ? '自定义' : '官方'}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-base-content/60">精度</span>
+                    <span className="text-sm font-medium">{chain.decimals}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="card-actions justify-end">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleChain(chain.chainId)}
+                      className={`btn btn-sm ${chain.enabled ? 'btn-warning' : 'btn-success'}`}
+                    >
+                      {chain.enabled ? '🔒 禁用' : '🔓 启用'}
+                    </button>
+                    <button
+                      onClick={() => handleEditChain(chain)}
+                      className="btn btn-sm btn-outline"
+                    >
+                      ⚙️ 编辑
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* Help Section */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-lg font-medium text-blue-800 mb-3">如何管理区块链网络?</h3>
-              <ol className="space-y-2 text-sm text-blue-700">
-                <li>
-                  <strong>1. 添加区块链:</strong> 支持添加所有 EVM 兼容的区块链网络，包括主网和测试网。
-                </li>
-                <li>
-                  <strong>2. 配置参数:</strong> 为每条链设置合适的 Gas 价格、Gas 限制、批量发送数量等参数。
-                </li>
-                <li>
-                  <strong>3. 启用/禁用:</strong> 禁用的网络不会出现在活动流程中，但会保留相关数据。
-                </li>
-                <li>
-                  <strong>4. 维护与监控:</strong> 定期检查 RPC 节点的可用性和 Gas 价格变化。
-                </li>
-              </ol>
+        {/* Empty State */}
+        {(!settings.chains || settings.chains.length === 0) && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🌐</div>
+            <div className="text-lg font-medium mb-2">暂无区块链网络</div>
+            <div className="text-sm text-base-content/60 mb-6">
+              点击上方"添加自定义网络"开始配置
             </div>
+            <button
+              onClick={handleAddChain}
+              className="btn btn-primary"
+            >
+              ➕ 添加第一个网络
+            </button>
           </div>
         )}
 
-        {/* Gas Settings */}
-        {activeTab === 'gas' && (
-          <div className="p-6">
-            <h2 className="text-lg font-medium text-dark mb-4">Gas 参数配置</h2>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">默认 Gas 价格 (Gwei)</label>
-                <input
-                  type="number"
-                  value={settings.gasSettings?.defaultGasPrice || 30}
-                  onChange={(e) => updateGasSettings({ defaultGasPrice: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="0"
-                />
-                <p className="text-sm text-gray-500 mt-1">所有交易的默认 Gas 价格</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">默认 Gas 限制</label>
-                <input
-                  type="number"
-                  value={settings.gasSettings?.defaultGasLimit || 210000}
-                  onChange={(e) => updateGasSettings({ defaultGasLimit: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="21000"
-                />
-                <p className="text-sm text-gray-500 mt-1">标准转账交易的 Gas 限制</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">最大 Gas 价格 (Gwei)</label>
-                <input
-                  type="number"
-                  value={settings.gasSettings?.maxGasPrice || 100}
-                  onChange={(e) => updateGasSettings({ maxGasPrice: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="0"
-                />
-                <p className="text-sm text-gray-500 mt-1">防止 Gas 价格过高时的保护机制</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">优先费用 (Gwei)</label>
-                <input
-                  type="number"
-                  value={settings.gasSettings?.priorityFee || 2}
-                  onChange={(e) => updateGasSettings({ priorityFee: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="0"
-                />
-                <p className="text-sm text-gray-500 mt-1">矿工优先处理的额外费用</p>
-              </div>
-
-              <div className="col-span-2">
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.gasSettings?.autoAdjustGas || true}
-                    onChange={(e) => updateGasSettings({ autoAdjustGas: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">自动调整 Gas 价格</span>
-                </label>
-                <p className="text-sm text-gray-500 mt-1">根据网络拥堵情况自动调整 Gas 价格</p>
-              </div>
+        {/* Quick Tips */}
+        <div className="alert alert-info mt-8">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <h3 className="font-bold">快速提示</h3>
+            <div className="text-sm">
+              • 建议为每个网络配置多个 RPC URL 以提高连接稳定性<br/>
+              • 自定义网络支持测试网和主网配置<br/>
+              • 编辑网络前建议先测试连接以确保配置正确
             </div>
           </div>
-        )}
-
-        {/* Batch Settings */}
-        {activeTab === 'batch' && (
-          <div className="p-6">
-            <h2 className="text-lg font-medium text-dark mb-4">批量发送配置</h2>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">批量大小</label>
-                <input
-                  type="number"
-                  value={settings.batchSettings?.batchSize || 100}
-                  onChange={(e) => updateBatchSettings({ batchSize: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="1"
-                  max="200"
-                />
-                <p className="text-sm text-gray-500 mt-1">每个批次中包含的交易数量</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">发送间隔 (毫秒)</label>
-                <input
-                  type="number"
-                  value={settings.batchSettings?.sendInterval || 2000}
-                  onChange={(e) => updateBatchSettings({ sendInterval: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="500"
-                  step="100"
-                />
-                <p className="text-sm text-gray-500 mt-1">批次之间的等待时间</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">最大并发数</label>
-                <input
-                  type="number"
-                  value={settings.batchSettings?.maxConcurrency || 5}
-                  onChange={(e) => updateBatchSettings({ maxConcurrency: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="1"
-                  max="10"
-                />
-                <p className="text-sm text-gray-500 mt-1">同时处理的最大批次数量</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">重试次数</label>
-                <input
-                  type="number"
-                  value={settings.batchSettings?.retryAttempts || 3}
-                  onChange={(e) => updateBatchSettings({ retryAttempts: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="0"
-                  max="10"
-                />
-                <p className="text-sm text-gray-500 mt-1">失败交易的最大重试次数</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">重试延迟 (毫秒)</label>
-                <input
-                  type="number"
-                  value={settings.batchSettings?.retryDelay || 1000}
-                  onChange={(e) => updateBatchSettings({ retryDelay: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="1000"
-                  step="1000"
-                />
-                <p className="text-sm text-gray-500 mt-1">重试失败交易的等待时间</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Security Settings */}
-        {activeTab === 'security' && (
-          <div className="p-6">
-            <h2 className="text-lg font-medium text-dark mb-4">安全配置</h2>
-            <div className="space-y-6">
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.securitySettings?.autoBackup || false}
-                    onChange={(e) => updateSecuritySettings({ autoBackup: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">自动备份数据</span>
-                </label>
-                <p className="text-sm text-gray-500 mt-1">定期自动备份钱包和活动数据</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">备份间隔 (小时)</label>
-                <input
-                  type="number"
-                  value={settings.securitySettings?.backupInterval || 24}
-                  onChange={(e) => updateSecuritySettings({ backupInterval: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="1"
-                  max="168"
-                  disabled={!settings.securitySettings?.autoBackup}
-                />
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.securitySettings?.encryptPrivateKeys || true}
-                    onChange={(e) => updateSecuritySettings({ encryptPrivateKeys: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">加密私钥存储</span>
-                </label>
-                <p className="text-sm text-gray-500 mt-1">使用强加密算法保护私钥安全</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-2">会话超时 (分钟)</label>
-                <input
-                  type="number"
-                  value={settings.securitySettings?.sessionTimeout || 60}
-                  onChange={(e) => updateSecuritySettings({ sessionTimeout: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min="5"
-                  max="480"
-                />
-                <p className="text-sm text-gray-500 mt-1">用户无操作后自动登出的时间</p>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.securitySettings?.requirePassword || false}
-                    onChange={(e) => updateSecuritySettings({ requirePassword: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">敏感操作需要密码确认</span>
-                </label>
-                <p className="text-sm text-gray-500 mt-1">导出私钥、发送交易等操作需要输入密码</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Notification Settings */}
-        {activeTab === 'notifications' && (
-          <div className="p-6">
-            <h2 className="text-lg font-medium text-dark mb-4">通知配置</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationSettings?.emailNotifications || false}
-                    onChange={(e) => updateNotificationSettings({ emailNotifications: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">邮件通知</span>
-                </label>
-                <p className="text-sm text-gray-500 mt-1">通过邮件接收重要通知</p>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationSettings?.browserNotifications || true}
-                    onChange={(e) => updateNotificationSettings({ browserNotifications: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">浏览器通知</span>
-                </label>
-                <p className="text-sm text-gray-500 mt-1">在浏览器中接收推送通知</p>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationSettings?.campaignComplete || true}
-                    onChange={(e) => updateNotificationSettings({ campaignComplete: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">活动完成通知</span>
-                </label>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationSettings?.campaignFailed || true}
-                    onChange={(e) => updateNotificationSettings({ campaignFailed: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">活动失败通知</span>
-                </label>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationSettings?.lowBalance || true}
-                    onChange={(e) => updateNotificationSettings({ lowBalance: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">余额不足通知</span>
-                </label>
-              </div>
-
-              <div>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationSettings?.securityAlerts || true}
-                    onChange={(e) => updateNotificationSettings({ securityAlerts: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-dark">安全警报通知</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Save Button */}
-      <div className="flex justify-end mt-6">
-        <button
-          onClick={handleSaveSettings}
-          className="btn btn-primary"
-        >
-          保存设置
-        </button>
+        </div>
       </div>
 
       {/* Chain Edit Modal */}
@@ -989,6 +667,6 @@ export default function Settings() {
         onTest={handleTestChain}
         testResults={testResults}
       />
-    </div>
+    </>
   );
 }

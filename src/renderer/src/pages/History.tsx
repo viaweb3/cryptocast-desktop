@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCampaign } from '../contexts/CampaignContext';
 import { Campaign, CampaignStatus } from '../types';
-import GasTrendChart from '../components/GasTrendChart';
 
 interface HistoryFilters {
   timeRange: 'all' | 'today' | 'week' | 'month' | 'custom';
@@ -45,8 +44,124 @@ export default function History() {
     optimism: { id: 'optimism', name: 'Optimism', symbol: 'ETH', icon: '🔴', color: '#ff0420' },
   };
 
+  // Mock数据 - 用于展示效果
+  const mockCampaigns: Campaign[] = [
+    {
+      id: '1',
+      name: '春节营销活动',
+      description: '2025春节红包雨活动',
+      chain: 'ethereum',
+      tokenAddress: '0x1234567890123456789012345678901234567890',
+      status: 'COMPLETED',
+      totalRecipients: 1250,
+      successfulRecipients: 1248,
+      failedRecipients: 2,
+      gasUsed: '2.45',
+      createdAt: new Date(2025, 0, 15).toISOString(),
+      updatedAt: new Date(2025, 0, 16).toISOString(),
+      completedAt: new Date(2025, 0, 16).toISOString(),
+      walletAddress: '0xabcd...1234',
+    },
+    {
+      id: '2',
+      name: '社区空投活动Q1',
+      description: '第一季度社区贡献者奖励',
+      chain: 'polygon',
+      tokenAddress: '0x2345678901234567890123456789012345678901',
+      status: 'COMPLETED',
+      totalRecipients: 850,
+      successfulRecipients: 847,
+      failedRecipients: 3,
+      gasUsed: '0.87',
+      createdAt: new Date(2025, 0, 10).toISOString(),
+      updatedAt: new Date(2025, 0, 11).toISOString(),
+      completedAt: new Date(2025, 0, 11).toISOString(),
+      walletAddress: '0xbcde...2345',
+    },
+    {
+      id: '3',
+      name: 'NFT持有者空投',
+      description: 'NFT持有者专属代币奖励',
+      chain: 'arbitrum',
+      tokenAddress: '0x3456789012345678901234567890123456789012',
+      status: 'SENDING',
+      totalRecipients: 2500,
+      successfulRecipients: 1830,
+      failedRecipients: 5,
+      gasUsed: '1.23',
+      createdAt: new Date(2025, 0, 18).toISOString(),
+      updatedAt: new Date().toISOString(),
+      walletAddress: '0xcdef...3456',
+    },
+    {
+      id: '4',
+      name: '测试网空投',
+      description: '测试网用户代币发放',
+      chain: 'bsc',
+      tokenAddress: '0x4567890123456789012345678901234567890123',
+      status: 'FAILED',
+      totalRecipients: 500,
+      successfulRecipients: 320,
+      failedRecipients: 180,
+      gasUsed: '0.34',
+      createdAt: new Date(2025, 0, 5).toISOString(),
+      updatedAt: new Date(2025, 0, 5).toISOString(),
+      walletAddress: '0xdef0...4567',
+    },
+    {
+      id: '5',
+      name: 'DeFi流动性激励',
+      description: '流动性提供者奖励计划',
+      chain: 'optimism',
+      tokenAddress: '0x5678901234567890123456789012345678901234',
+      status: 'COMPLETED',
+      totalRecipients: 3200,
+      successfulRecipients: 3195,
+      failedRecipients: 5,
+      gasUsed: '3.21',
+      createdAt: new Date(2024, 11, 28).toISOString(),
+      updatedAt: new Date(2024, 11, 29).toISOString(),
+      completedAt: new Date(2024, 11, 29).toISOString(),
+      walletAddress: '0xef01...5678',
+    },
+    {
+      id: '6',
+      name: '早期支持者回馈',
+      description: '早期社区成员特别奖励',
+      chain: 'ethereum',
+      tokenAddress: '0x6789012345678901234567890123456789012345',
+      status: 'COMPLETED',
+      totalRecipients: 450,
+      successfulRecipients: 450,
+      failedRecipients: 0,
+      gasUsed: '1.87',
+      createdAt: new Date(2024, 11, 20).toISOString(),
+      updatedAt: new Date(2024, 11, 21).toISOString(),
+      completedAt: new Date(2024, 11, 21).toISOString(),
+      walletAddress: '0xf012...6789',
+    },
+    {
+      id: '7',
+      name: 'DAO治理代币分发',
+      description: 'DAO参与者治理代币发放',
+      chain: 'polygon',
+      tokenAddress: '0x7890123456789012345678901234567890123456',
+      status: 'PAUSED',
+      totalRecipients: 1800,
+      successfulRecipients: 920,
+      failedRecipients: 2,
+      gasUsed: '0.65',
+      createdAt: new Date(2025, 0, 12).toISOString(),
+      updatedAt: new Date(2025, 0, 14).toISOString(),
+      walletAddress: '0x0123...7890',
+    },
+  ];
+
+  // 使用mock数据或真实数据
+  const displayCampaigns = state.campaigns.length > 0 ? state.campaigns : mockCampaigns;
+
   const filteredCampaigns = useMemo(() => {
-    let filtered = [...state.campaigns];
+    let filtered = [...displayCampaigns];
 
     // Time range filter
     if (filters.timeRange !== 'all') {
@@ -112,67 +227,35 @@ export default function History() {
   const totalPages = Math.ceil(filteredCampaigns.length / pagination.limit);
 
   const getStatusBadge = (status: CampaignStatus) => {
-    const statusConfig = {
-      'COMPLETED': { className: 'status-badge status-success', text: '已完成', icon: '✅' },
-      'FAILED': { className: 'status-badge status-danger', text: '已失败', icon: '⚠️' },
-      'SENDING': { className: 'status-badge status-info', text: '发送中', icon: '⏳' },
-      'PAUSED': { className: 'status-badge status-warning', text: '暂停', icon: '⏸️' },
-      'CANCELLED': { className: 'status-badge status-info', text: '已取消', icon: '❌' },
-      'READY': { className: 'status-badge status-success', text: '就绪', icon: '⚡' },
-      'FUNDED': { className: 'status-badge status-info', text: '已充值', icon: '💰' },
-      'CREATED': { className: 'status-badge status-info', text: '已创建', icon: '📝' },
-    };
-
-    const config = statusConfig[status] || statusConfig['CREATED'];
-    return (
-      <span className={`flex items-center gap-1 ${config.className}`}>
-        <span>{config.icon}</span>
-        <span>{config.text}</span>
-      </span>
-    );
+    switch (status) {
+      case 'COMPLETED':
+        return <div className="badge badge-success gap-1">✅ 已完成</div>;
+      case 'FAILED':
+        return <div className="badge badge-error gap-1">❌ 已失败</div>;
+      case 'SENDING':
+        return <div className="badge badge-info gap-1">🔄 发送中</div>;
+      case 'PAUSED':
+        return <div className="badge badge-warning gap-1">⏸️ 暂停</div>;
+      case 'CANCELLED':
+        return <div className="badge badge-neutral gap-1">❌ 已取消</div>;
+      case 'READY':
+        return <div className="badge badge-warning gap-1">⚡ 就绪</div>;
+      case 'FUNDED':
+        return <div className="badge badge-info gap-1">💰 已充值</div>;
+      default:
+        return <div className="badge badge-neutral gap-1">📝 已创建</div>;
+    }
   };
 
   const getChainBadge = (chainId: string) => {
     const chain = chains[chainId];
-    if (!chain) return <span className="text-xs text-medium">Unknown</span>;
+    if (!chain) return <div className="badge badge-outline badge-sm">Unknown</div>;
     return (
-      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-border-light">
+      <div className="badge badge-outline badge-sm gap-1">
         <span>{chain.icon}</span>
-        <span className="text-sm font-medium">{chain.name}</span>
+        <span>{chain.name}</span>
       </div>
     );
-  };
-
-  const handleExportAll = async () => {
-    try {
-      // Create CSV content
-      const headers = ['活动名称', '区块链', '状态', '地址数', 'Gas消耗', '完成时间'];
-      const rows = filteredCampaigns.map(campaign => [
-        campaign.name,
-        chains[campaign.chain]?.name || campaign.chain,
-        campaign.status === 'COMPLETED' ? '已完成' : campaign.status,
-        campaign.totalRecipients.toString(),
-        campaign.gasUsed || '0',
-        campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : new Date(campaign.updatedAt).toLocaleDateString(),
-      ]);
-
-      const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
-
-      // Create blob and download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `cryptocast_history_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      alert('报告导出成功！');
-    } catch (error) {
-      alert('导出失败，请重试');
-    }
   };
 
   const handleExportSingle = async (campaign: Campaign) => {
@@ -204,222 +287,280 @@ export default function History() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-dark">历史记录</h1>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">📜</span>
+          <h1 className="text-2xl font-bold">历史记录</h1>
+        </div>
         <button
           onClick={() => navigate('/')}
           className="btn btn-ghost"
         >
-          返回仪表盘
+          ← 返回仪表盘
         </button>
       </div>
 
       {/* Statistical Overview */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
-        <div className="bg-white border border-border rounded-lg p-6 text-center">
-          <div className="text-3xl font-bold text-dark mb-1">
-            {state.campaigns.length}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="stat bg-base-100 rounded-lg shadow-sm">
+          <div className="stat-figure text-primary">
+            📋
           </div>
-          <div className="text-sm text-medium">历史总活动</div>
+          <div className="stat-title">历史总活动</div>
+          <div className="stat-value text-primary">{displayCampaigns.length}</div>
+          <div className="stat-desc text-info">累计创建</div>
         </div>
-        <div className="bg-white border border-border rounded-lg p-6 text-center">
-          <div className="text-3xl font-bold text-dark mb-1">
-            {state.campaigns.reduce((sum, c) => sum + c.totalRecipients, 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-medium">总发送地址</div>
-        </div>
-        <div className="bg-white border border-border rounded-lg p-6 text-center">
-          <div className="text-3xl font-bold text-success mb-1">98.5%</div>
-          <div className="text-sm text-medium">平均成功率</div>
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-            <div className="bg-success h-2 rounded-full" style={{width: '98.5%'}}></div>
-          </div>
-        </div>
-      </div>
 
-      {/* Gas Trend Chart */}
-      <div className="mb-6">
-        <GasTrendChart />
+        <div className="stat bg-base-100 rounded-lg shadow-sm">
+          <div className="stat-figure text-secondary">
+            👥
+          </div>
+          <div className="stat-title">总发送地址</div>
+          <div className="stat-value text-secondary">
+            {displayCampaigns.reduce((sum, c) => sum + c.totalRecipients, 0).toLocaleString()}
+          </div>
+          <div className="stat-desc text-secondary">所有活动</div>
+        </div>
+
+        <div className="stat bg-base-100 rounded-lg shadow-sm">
+          <div className="stat-figure text-success">
+            ✅
+          </div>
+          <div className="stat-title">平均成功率</div>
+          <div className="stat-value text-success">98.5%</div>
+          <div className="stat-desc">
+            <div className="flex items-center gap-2">
+              <progress className="progress progress-success w-20" value="98.5" max="100"></progress>
+              <span className="text-xs text-success">优秀</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="card bg-white border border-border rounded-lg p-6 mb-6">
-        <div className="grid grid-cols-4 gap-4">
-          {/* Time Range Filter */}
-          <div>
-            <label className="block text-sm font-medium text-dark mb-2">时间范围</label>
-            <select
-              value={filters.timeRange}
-              onChange={(e) => setFilters({ ...filters, timeRange: e.target.value as any })}
-              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="all">全部时间</option>
-              <option value="today">今天</option>
-              <option value="week">本周</option>
-              <option value="month">本月</option>
-              <option value="custom">自定义</option>
-            </select>
+      <div className="card bg-base-100 shadow-sm mb-6">
+        <div className="card-body">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-lg">🔍</span>
+            <h2 className="text-lg font-semibold">筛选条件</h2>
           </div>
 
-          {/* Chain Filter */}
-          <div>
-            <label className="block text-sm font-medium text-dark mb-2">所有链</label>
-            <select
-              value={filters.chain}
-              onChange={(e) => setFilters({ ...filters, chain: e.target.value })}
-              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="all">所有链</option>
-              {Object.values(chains).map(chain => (
-                <option key={chain.id} value={chain.id}>
-                  {chain.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Time Range Filter */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">时间范围</span>
+              </label>
+              <select
+                value={filters.timeRange}
+                onChange={(e) => setFilters({ ...filters, timeRange: e.target.value as any })}
+                className="select select-bordered"
+              >
+                <option value="all">全部时间</option>
+                <option value="today">今天</option>
+                <option value="week">本周</option>
+                <option value="month">本月</option>
+                <option value="custom">自定义</option>
+              </select>
+            </div>
 
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-dark mb-2">所有状态</label>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
-              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="all">全部状态</option>
-              <option value="COMPLETED">已完成</option>
-              <option value="FAILED">已失败</option>
-              <option value="SENDING">发送中</option>
-              <option value="PAUSED">已暂停</option>
-            </select>
-          </div>
+            {/* Chain Filter */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">区块链</span>
+              </label>
+              <select
+                value={filters.chain}
+                onChange={(e) => setFilters({ ...filters, chain: e.target.value })}
+                className="select select-bordered"
+              >
+                <option value="all">所有链</option>
+                {Object.values(chains).map(chain => (
+                  <option key={chain.id} value={chain.id}>
+                    {chain.icon} {chain.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Search */}
-          <div>
-            <label className="block text-sm font-medium text-dark mb-2">搜索活动名称</label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="输入活动名称搜索..."
-              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
+            {/* Status Filter */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">状态</span>
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
+                className="select select-bordered"
+              >
+                <option value="all">全部状态</option>
+                <option value="COMPLETED">✅ 已完成</option>
+                <option value="FAILED">❌ 已失败</option>
+                <option value="SENDING">🔄 发送中</option>
+                <option value="PAUSED">⏸️ 已暂停</option>
+              </select>
+            </div>
+
+            {/* Search */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">搜索</span>
+              </label>
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                placeholder="输入活动名称..."
+                className="input input-bordered"
+              />
+            </div>
           </div>
-        </div>
 
         {/* Custom Date Range */}
         {filters.timeRange === 'custom' && (
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-dark mb-2">开始日期</label>
-              <input
-                type="date"
-                value={filters.dateRange?.start || ''}
-                onChange={(e) => setFilters({
-                  ...filters,
-                  dateRange: { ...filters.dateRange!, start: e.target.value }
-                })}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
+          <div className="collapse collapse-arrow bg-base-200 mt-4">
+            <input type="checkbox" defaultChecked />
+            <div className="collapse-title text-sm font-medium">
+              自定义日期范围
             </div>
-            <div>
-              <label className="block text-sm font-medium text-dark mb-2">结束日期</label>
-              <input
-                type="date"
-                value={filters.dateRange?.end || ''}
-                min={filters.dateRange?.start}
-                onChange={(e) => setFilters({
-                  ...filters,
-                  dateRange: { ...filters.dateRange!, end: e.target.value }
-                })}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
+            <div className="collapse-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">开始日期</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.dateRange?.start || ''}
+                    onChange={(e) => setFilters({
+                      ...filters,
+                      dateRange: { ...filters.dateRange!, start: e.target.value }
+                    })}
+                    className="input input-bordered"
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">结束日期</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.dateRange?.end || ''}
+                    min={filters.dateRange?.start}
+                    onChange={(e) => setFilters({
+                      ...filters,
+                      dateRange: { ...filters.dateRange!, end: e.target.value }
+                    })}
+                    className="input input-bordered"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}
-
-        {/* Export Button */}
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleExportAll}
-            className="btn btn-primary"
-          >
-            导出全部报告
-          </button>
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="text-sm text-light mb-4">
-        显示 {formatNumber(paginatedCampaigns.length)} / {formatNumber(filteredCampaigns.length)} 条记录
+      {/* Results Summary */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm text-base-content/60">
+          显示 <span className="font-medium">{formatNumber(paginatedCampaigns.length)}</span> /{' '}
+          <span className="font-medium">{formatNumber(filteredCampaigns.length)}</span> 条记录
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-ghost btn-sm">📥 导出全部</button>
+          <button className="btn btn-ghost btn-sm">🔄 刷新</button>
+        </div>
       </div>
 
       {/* Campaigns Table */}
-      <div className="card bg-white border border-border rounded-lg overflow-hidden">
+      <div className="card bg-base-100 shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="table table-zebra">
             <thead>
-              <tr className="border-b border-border bg-border-light">
-                <th className="text-left py-4 px-6 font-medium text-dark">名称</th>
-                <th className="text-left py-4 px-6 font-medium text-dark">链</th>
-                <th className="text-left py-4 px-6 font-medium text-dark">状态</th>
-                <th className="text-right py-4 px-6 font-medium text-dark">地址数</th>
-                <th className="text-right py-4 px-6 font-medium text-dark">Gas消耗</th>
-                <th className="text-left py-4 px-6 font-medium text-dark">完成时间</th>
-                <th className="text-center py-4 px-6 font-medium text-dark">操作</th>
+              <tr>
+                <th className="bg-base-200">名称</th>
+                <th className="bg-base-200">链</th>
+                <th className="bg-base-200">状态</th>
+                <th className="bg-base-200 text-right">地址数</th>
+                <th className="bg-base-200 text-right">成功率</th>
+                <th className="bg-base-200 text-right">Gas消耗</th>
+                <th className="bg-base-200">创建时间</th>
+                <th className="bg-base-200 text-center">操作</th>
               </tr>
             </thead>
             <tbody>
               {paginatedCampaigns.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12">
+                  <td colSpan={8} className="text-center py-16">
                     <div className="text-6xl mb-4">📭</div>
-                    <div className="text-lg font-medium text-dark mb-2">暂无活动记录</div>
-                    <div className="text-light">创建活动后将在此处显示</div>
+                    <div className="text-lg font-medium mb-2">暂无活动记录</div>
+                    <div className="text-sm text-base-content/60">创建活动后将在此处显示</div>
                   </td>
                 </tr>
               ) : (
                 paginatedCampaigns.map((campaign) => (
-                  <tr key={campaign.id} className="border-b border-border hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-dark">{campaign.name}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      {getChainBadge(campaign.chain)}
-                    </td>
-                    <td className="py-4 px-6">
-                      {getStatusBadge(campaign.status)}
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      {formatNumber(campaign.totalRecipients)}
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="text-sm">
-                        <div>{formatAmount(campaign.gasUsed)} ETH</div>
-                        <div className="text-light text-xs">
-                          ≈ ${(parseFloat(campaign.gasUsed || '0') * 2000).toFixed(2)}
+                  <tr key={campaign.id} className="hover">
+                    <td>
+                      <div>
+                        <div className="font-medium">{campaign.name}</div>
+                        <div className="text-sm text-base-content/60 truncate max-w-[200px]">
+                          {campaign.description}
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-sm text-light">
-                      {campaign.completedAt
-                        ? formatDate(campaign.completedAt)
-                        : formatDate(campaign.updatedAt)
-                      }
+                    <td>
+                      {getChainBadge(campaign.chain)}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex justify-center gap-2">
+                    <td>
+                      {getStatusBadge(campaign.status)}
+                    </td>
+                    <td className="text-right">
+                      <div className="font-medium">{formatNumber(campaign.totalRecipients)}</div>
+                      <div className="text-xs text-success">
+                        +{formatNumber(campaign.successfulRecipients)} 成功
+                      </div>
+                    </td>
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="text-sm font-medium">
+                          {campaign.totalRecipients > 0
+                            ? ((campaign.successfulRecipients / campaign.totalRecipients) * 100).toFixed(1)
+                            : '0'
+                          }%
+                        </div>
+                        <progress
+                          className="progress progress-success w-8 h-2"
+                          value={campaign.totalRecipients > 0 ? (campaign.successfulRecipients / campaign.totalRecipients) * 100 : 0}
+                          max="100"
+                        ></progress>
+                      </div>
+                    </td>
+                    <td className="text-right">
+                      <div className="text-sm">
+                        <div className="font-mono">{formatAmount(campaign.gasUsed)} ETH</div>
+                        <div className="text-xs text-base-content/60">
+                          ≈ ${(parseFloat(campaign.gasUsed || '0') * 2000).toFixed(0)}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-sm text-base-content/60">
+                      {formatDate(campaign.createdAt)}
+                    </td>
+                    <td>
+                      <div className="flex justify-center gap-1">
                         <button
                           onClick={() => navigate(`/campaign/${campaign.id}`)}
-                          className="btn btn-ghost text-sm px-4 py-2"
+                          className="btn btn-ghost btn-xs"
                         >
-                          详情
+                          👁️ 详情
                         </button>
                         <button
                           onClick={() => handleExportSingle(campaign)}
-                          className="btn btn-ghost text-sm px-4 py-2"
+                          className="btn btn-ghost btn-xs"
                         >
-                          导出
+                          📥 导出
                         </button>
                       </div>
                     </td>
@@ -433,28 +574,42 @@ export default function History() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 mt-6">
-          <button
-            onClick={() => setPagination({ ...pagination, page: Math.max(1, pagination.page - 1) })}
-            disabled={pagination.page === 1}
-            className="btn btn-ghost"
-          >
-            上一页
-          </button>
+        <div className="flex justify-center items-center mt-6">
+          <div className="join">
+            <button
+              onClick={() => setPagination({ ...pagination, page: Math.max(1, pagination.page - 1) })}
+              disabled={pagination.page === 1}
+              className="join-item btn btn-sm"
+            >
+              «
+            </button>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-light">
-              第 {pagination.page} 页，共 {totalPages} 页
-            </span>
+            {/* Page numbers */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const pageNumber = Math.max(1, Math.min(totalPages - 4, pagination.page - 2)) + i;
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => setPagination({ ...pagination, page: pageNumber })}
+                  className={`join-item btn btn-sm ${pagination.page === pageNumber ? 'btn-active' : ''}`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => setPagination({ ...pagination, page: Math.min(totalPages, pagination.page + 1) })}
+              disabled={pagination.page === totalPages}
+              className="join-item btn btn-sm"
+            >
+              »
+            </button>
           </div>
 
-          <button
-            onClick={() => setPagination({ ...pagination, page: Math.min(totalPages, pagination.page + 1) })}
-            disabled={pagination.page === totalPages}
-            className="btn btn-ghost"
-          >
-            下一页
-          </button>
+          <div className="ml-4 text-sm text-base-content/60">
+            第 {pagination.page} 页，共 {totalPages} 页
+          </div>
         </div>
       )}
     </div>

@@ -235,29 +235,7 @@ export class ChainService {
     }
   }
 
-  async getActiveSolanaRPC(network: string): Promise<SolanaRPC | null> {
-    try {
-      // 按优先级获取可用的RPC
-      const rpcs = await this.getSolanaRPCs(network, true);
-
-      for (const rpc of rpcs) {
-        try {
-          const testResult = await this.testSolanaRPC(rpc.rpcUrl);
-          if (testResult.success && testResult.latency && testResult.latency < 10000) { // 10秒内响应
-            return rpc;
-          }
-        } catch (error) {
-          console.warn(`RPC ${rpc.name} failed health check:`, error);
-        }
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Failed to get active Solana RPC:', error);
-      return null;
-    }
-  }
-
+  
   async addSolanaRPC(rpcData: Omit<SolanaRPC, 'id'>): Promise<number> {
     try {
       // 测试RPC连接

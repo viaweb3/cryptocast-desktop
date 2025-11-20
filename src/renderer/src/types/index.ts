@@ -21,13 +21,11 @@ export interface ElectronAPI {
     deleteEVMChain: (chainId: number) => Promise<void>;
     testEVMLatency: (chainId: number) => Promise<{ latency: number; blockNumber: number }>;
     getSolanaRPCs: (network?: string, onlyEnabled?: boolean) => Promise<SolanaRPC[]>;
-    getActiveSolanaRPC: (network: string) => Promise<SolanaRPC | null>;
-    addSolanaRPC: (rpcData: any) => Promise<number>;
+        addSolanaRPC: (rpcData: any) => Promise<number>;
     testSolanaRPC: (rpcUrl: string) => Promise<{ success: boolean; latency?: number }>;
     updateSolanaRPCPriority: (id: number, priority: number) => Promise<void>;
     deleteSolanaRPC: (id: number) => Promise<void>;
-    healthCheckSolanaRPCs: () => Promise<void>;
-  };
+      };
   settings: {
     get: () => Promise<any>;
     update: (settings: any) => Promise<{ success: boolean }>;
@@ -226,8 +224,6 @@ export interface BatchSettings {
   batchSize: number;
   sendInterval: number; // in milliseconds
   maxConcurrency: number;
-  retryAttempts: number;
-  retryDelay: number;
 }
 
 export interface SecuritySettings {
@@ -238,14 +234,6 @@ export interface SecuritySettings {
   requirePassword: boolean;
 }
 
-export interface NotificationSettings {
-  emailNotifications: boolean;
-  browserNotifications: boolean;
-  campaignComplete: boolean;
-  campaignFailed: boolean;
-  lowBalance: boolean;
-  securityAlerts: boolean;
-}
 
 // Wallet Management types
 export interface ActivityWallet {
@@ -466,11 +454,6 @@ export interface BulkRewardSettings {
   maxGasPrice: number;
   priorityGasPrice: number;
   confirmationThreshold: number;
-  autoRetry: boolean;
-  retryAttempts: number;
-  retryDelay: number;
-  emailNotifications: boolean;
-  webhookUrl?: string;
 }
 
 export interface BulkRewardFilter {

@@ -44,9 +44,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('chain:testEVMLatency', chainId),
     getSolanaRPCs: (network?: string, onlyEnabled?: boolean) =>
       ipcRenderer.invoke('chain:getSolanaRPCs', network, onlyEnabled),
-    getActiveSolanaRPC: (network: string) =>
-      ipcRenderer.invoke('chain:getActiveSolanaRPC', network),
-    addSolanaRPC: (rpcData: any) =>
+        addSolanaRPC: (rpcData: any) =>
       ipcRenderer.invoke('chain:addSolanaRPC', rpcData),
     testSolanaRPC: (rpcUrl: string) =>
       ipcRenderer.invoke('chain:testSolanaRPC', rpcUrl),
@@ -54,9 +52,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('chain:updateSolanaRPCPriority', id, priority),
     deleteSolanaRPC: (id: number) =>
       ipcRenderer.invoke('chain:deleteSolanaRPC', id),
-    healthCheckSolanaRPCs: () =>
-      ipcRenderer.invoke('chain:healthCheckSolanaRPCs'),
-  },
+      },
 
   // 设置
   settings: {

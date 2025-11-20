@@ -4,22 +4,19 @@ export interface AppSettings {
   // 通用设置
   language: string;
   theme: 'light' | 'dark' | 'system';
-  notifications: boolean;
-  autoBackup: boolean;
+    autoBackup: boolean;
   backupInterval: 'daily' | 'weekly' | 'monthly';
 
   // Gas设置
   gasStrategy: 'economic' | 'standard' | 'fast' | 'custom';
   customGasPrice?: string;
-  gasAlertThreshold: number;
-
+  
   // 数据目录设置
   customDataDir?: string;
 
   // RPC设置
   rpcTimeout: number;
-  maxRetries: number;
-
+  
   // 安全设置
   sessionTimeout: number;
   requirePassword: boolean;
@@ -33,14 +30,11 @@ export interface AppSettings {
 const DEFAULT_SETTINGS: AppSettings = {
   language: 'zh-CN',
   theme: 'system',
-  notifications: true,
-  autoBackup: false,
+    autoBackup: false,
   backupInterval: 'weekly',
   gasStrategy: 'standard',
-  gasAlertThreshold: 100,
-  rpcTimeout: 30000,
-  maxRetries: 3,
-  sessionTimeout: 3600000, // 1小时
+    rpcTimeout: 30000,
+    sessionTimeout: 3600000, // 1小时
   requirePassword: false,
   batchSize: 100,
   maxConcurrency: 5,
@@ -184,7 +178,6 @@ export class SettingsService {
           return ['zh-CN', 'en-US'].includes(value);
         case 'theme':
           return ['light', 'dark', 'system'].includes(value);
-        case 'notifications':
         case 'autoBackup':
         case 'requirePassword':
           return typeof value === 'boolean';
@@ -320,29 +313,7 @@ export class SettingsService {
     };
   }
 
-  async getNotificationSettings(): Promise<{
-    enabled: boolean;
-    gasThreshold: number;
-  }> {
-    const enabled = await this.getSetting('notifications');
-    const gasThreshold = await this.getSetting('gasAlertThreshold');
-
-    return {
-      enabled,
-      gasThreshold,
-    };
-  }
-
-  async shouldShowNotification(_type: 'gas' | 'completion' | 'error'): Promise<boolean> {
-    const notifications = await this.getSetting('notifications');
-    if (!notifications) {
-      return false;
-    }
-
-    // 可以根据不同类型返回不同的设置
-    return true;
-  }
-
+  
   async migrateSettings(): Promise<void> {
     try {
       // 检查是否有需要迁移的旧设置
