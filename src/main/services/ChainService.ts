@@ -52,7 +52,7 @@ export class ChainService {
 
       query += ' ORDER BY name';
 
-      const chains = this.db.prepare(query).all(...params) as any[];
+      const chains = await this.db.prepare(query).all(...params) as any[];
       return chains.map(this.mapRowToEVMChain);
     } catch (error) {
       console.error('Failed to get EVM chains:', error);

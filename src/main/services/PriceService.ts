@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { Database } from 'better-sqlite3';
 
 
 export interface PriceData {

@@ -24,6 +24,8 @@ export async function setupIPCHandlers() {
   try {
     console.log('Initializing database manager...');
     databaseManager = new DatabaseManager();
+    await databaseManager.initialize();
+    console.log('Database initialized successfully');
 
     console.log('Initializing campaign service...');
     campaignService = new CampaignService(databaseManager);

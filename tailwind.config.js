@@ -15,5 +15,28 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [require('daisyui')],
+  daisyui: {
+    themes: [
+      {
+        cryptocast: {
+          "primary": "#7C3AED",
+          "secondary": "#0891B2",
+          "accent": "#10B981",
+          "neutral": "#1E293B",
+          "base-100": "#0F172A",
+          "base-200": "#1E293B",
+          "base-300": "#334155",
+          "info": "#3B82F6",
+          "success": "#10B981",
+          "warning": "#F59E0B",
+          "error": "#EF4444",
+        },
+      },
+    ],
+    darkTheme: "cryptocast",
+    base: true,
+    styled: true,
+    utils: true,
+  },
 }

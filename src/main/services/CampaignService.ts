@@ -139,7 +139,7 @@ export class CampaignService {
         params.push(filters.offset);
       }
 
-      const campaigns = this.db.prepare(query).all(...params) as any[];
+      const campaigns = await this.db.prepare(query).all(...params) as any[];
       return campaigns.map(this.mapRowToCampaign);
     } catch (error) {
       console.error('Failed to list campaigns:', error);
