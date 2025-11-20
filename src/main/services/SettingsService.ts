@@ -58,7 +58,7 @@ export class SettingsService {
     try {
       const settings = { ...DEFAULT_SETTINGS };
 
-      const rows = this.db.prepare('SELECT key, value FROM settings').all() as any[];
+      const rows = this.db.prepare('SELECT key, value FROM settings').all() as any[] || [];
 
       rows.forEach(row => {
         const key = row.key as keyof AppSettings;

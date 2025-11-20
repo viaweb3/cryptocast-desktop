@@ -1,413 +1,462 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCampaign } from '../contexts/CampaignContext';
+import { Campaign, CampaignStatus } from '../types';
+import GasTrendChart from '../components/GasTrendChart';
 
-interface Campaign {
+interface HistoryFilters {
+  timeRange: 'all' | 'today' | 'week' | 'month' | 'custom';
+  chain: string;
+  status: CampaignStatus;
+  search: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+}
+
+interface ChainInfo {
   id: string;
   name: string;
-  chain: string;
-  tokenAddress: string;
-  status: 'CREATED' | 'READY' | 'SENDING' | 'PAUSED' | 'COMPLETED' | 'FAILED';
-  totalRecipients: number;
-  completedRecipients: number;
-  walletAddress?: string;
-  contractAddress?: string;
-  createdAt: string;
-  updatedAt: string;
+  symbol: string;
+  icon: string;
+  color: string;
 }
 
 export default function History() {
   const navigate = useNavigate();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'status'>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const { state, actions } = useCampaign();
+  const [filters, setFilters] = useState<HistoryFilters>({
+    timeRange: 'all',
+    chain: 'all',
+    status: 'all',
+    search: '',
+  });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+  });
 
-  useEffect(() => {
-    loadCampaigns();
-  }, []);
-
-  const loadCampaigns = async () => {
-    try {
-      if (window.electronAPI?.campaign) {
-        const campaignList = await window.electronAPI.campaign.list();
-        setCampaigns(campaignList);
-      }
-    } catch (error) {
-      console.error('加载历史活动失败:', error);
-    } finally {
-      setLoading(false);
-    }
+  const chains: Record<string, ChainInfo> = {
+    ethereum: { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', icon: '🔷', color: '#627eea' },
+    polygon: { id: 'polygon', name: 'Polygon', symbol: 'MATIC', icon: '🟣', color: '#8247e5' },
+    arbitrum: { id: 'arbitrum', name: 'Arbitrum', symbol: 'ETH', icon: '🔵', color: '#28a0f0' },
+    bsc: { id: 'bsc', name: 'BSC', symbol: 'BNB', icon: '🟡', color: '#f3ba2f' },
+    optimism: { id: 'optimism', name: 'Optimism', symbol: 'ETH', icon: '🔴', color: '#ff0420' },
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'COMPLETED': return 'text-green-400 bg-green-900/20';
-      case 'SENDING': return 'text-yellow-400 bg-yellow-900/20';
-      case 'FAILED': return 'text-red-400 bg-red-900/20';
-      case 'PAUSED': return 'text-orange-400 bg-orange-900/20';
-      case 'READY': return 'text-blue-400 bg-blue-900/20';
-      default: return 'text-gray-400 bg-gray-900/20';
-    }
-  };
+  const filteredCampaigns = useMemo(() => {
+    let filtered = [...state.campaigns];
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'CREATED': return '已创建';
-      case 'READY': return '就绪';
-      case 'SENDING': return '发送中';
-      case 'PAUSED': return '已暂停';
-      case 'COMPLETED': return '已完成';
-      case 'FAILED': return '失败';
-      default: return '未知';
-    }
-  };
+    // Time range filter
+    if (filters.timeRange !== 'all') {
+      const now = new Date();
+      let startDate: Date;
 
-  const getChainName = (chainId: string) => {
-    const chains: Record<string, string> = {
-      '1': 'Ethereum',
-      '137': 'Polygon',
-      '56': 'BSC',
-      '43114': 'Avalanche',
-      '250': 'Fantom'
-    };
-    return chains[chainId] || `Chain ${chainId}`;
-  };
-
-  const filteredCampaigns = campaigns
-    .filter(campaign => {
-      // Filter by status
-      if (filter !== 'all' && campaign.status !== filter) {
-        return false;
-      }
-
-      // Filter by search term
-      if (searchTerm && !campaign.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
+      switch (filters.timeRange) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           break;
-        case 'status':
-          comparison = a.status.localeCompare(b.status);
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
-        case 'createdAt':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
         default:
-          comparison = 0;
+          startDate = new Date(0);
       }
 
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
+      filtered = filtered.filter(campaign => {
+        const campaignDate = new Date(campaign.createdAt);
+        return campaignDate >= startDate;
+      });
+    }
 
-  const exportReport = async (campaignId: string, format: string) => {
+    // Custom date range filter
+    if (filters.dateRange) {
+      const { start, end } = filters.dateRange;
+      filtered = filtered.filter(campaign => {
+        const campaignDate = new Date(campaign.createdAt);
+        return campaignDate >= new Date(start) && campaignDate <= new Date(end);
+      });
+    }
+
+    // Chain filter
+    if (filters.chain !== 'all') {
+      filtered = filtered.filter(campaign => campaign.chain === filters.chain);
+    }
+
+    // Status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(campaign => campaign.status === filters.status);
+    }
+
+    // Search filter
+    if (filters.search.trim()) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(campaign =>
+        campaign.name.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    return filtered;
+  }, [state.campaigns, filters]);
+
+  const paginatedCampaigns = useMemo(() => {
+    const startIndex = (pagination.page - 1) * pagination.limit;
+    const endIndex = startIndex + pagination.limit;
+    return filteredCampaigns.slice(startIndex, endIndex);
+  }, [filteredCampaigns, pagination]);
+
+  const totalPages = Math.ceil(filteredCampaigns.length / pagination.limit);
+
+  const getStatusBadge = (status: CampaignStatus) => {
+    const statusConfig = {
+      'COMPLETED': { className: 'status-badge status-success', text: '已完成', icon: '✅' },
+      'FAILED': { className: 'status-badge status-danger', text: '已失败', icon: '⚠️' },
+      'SENDING': { className: 'status-badge status-info', text: '发送中', icon: '⏳' },
+      'PAUSED': { className: 'status-badge status-warning', text: '暂停', icon: '⏸️' },
+      'CANCELLED': { className: 'status-badge status-info', text: '已取消', icon: '❌' },
+      'READY': { className: 'status-badge status-success', text: '就绪', icon: '⚡' },
+      'FUNDED': { className: 'status-badge status-info', text: '已充值', icon: '💰' },
+      'CREATED': { className: 'status-badge status-info', text: '已创建', icon: '📝' },
+    };
+
+    const config = statusConfig[status] || statusConfig['CREATED'];
+    return (
+      <span className={`flex items-center gap-1 ${config.className}`}>
+        <span>{config.icon}</span>
+        <span>{config.text}</span>
+      </span>
+    );
+  };
+
+  const getChainBadge = (chainId: string) => {
+    const chain = chains[chainId];
+    if (!chain) return <span className="text-xs text-medium">Unknown</span>;
+    return (
+      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-border-light">
+        <span>{chain.icon}</span>
+        <span className="text-sm font-medium">{chain.name}</span>
+      </div>
+    );
+  };
+
+  const handleExportAll = async () => {
     try {
-      if (window.electronAPI?.file) {
-        const result = await window.electronAPI.file.exportReport(campaignId, format);
-        if (result.success) {
-          alert(`${format.toUpperCase()}报告已导出到: ${result.filePath}`);
-        }
-      }
+      // Create CSV content
+      const headers = ['活动名称', '区块链', '状态', '地址数', 'Gas消耗', '完成时间'];
+      const rows = filteredCampaigns.map(campaign => [
+        campaign.name,
+        chains[campaign.chain]?.name || campaign.chain,
+        campaign.status === 'COMPLETED' ? '已完成' : campaign.status,
+        campaign.totalRecipients.toString(),
+        campaign.gasUsed || '0',
+        campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : new Date(campaign.updatedAt).toLocaleDateString(),
+      ]);
+
+      const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `cryptocast_history_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert('报告导出成功！');
     } catch (error) {
-      console.error('导出报告失败:', error);
-      alert('导出失败');
+      alert('导出失败，请重试');
     }
   };
 
-  if (loading) {
-    return (
-      <div>
-        <h1 className="text-3xl font-bold mb-6">历史活动</h1>
-        <div className="text-center py-12">
-          <div className="text-gray-400">加载中...</div>
-        </div>
-      </div>
-    );
-  }
+  const handleExportSingle = async (campaign: Campaign) => {
+    try {
+      const result = await actions.exportReport(campaign.id);
+      if (result.success) {
+        alert(`活动 "${campaign.name}" 报告导出成功！`);
+      } else {
+        alert('导出失败，请重试');
+      }
+    } catch (error) {
+      alert(`导出活动 "${campaign.name}" 失败：${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  };
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString('zh-CN');
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('zh-CN');
+  };
+
+  const formatAmount = (amount: string, decimals = 4) => {
+    const num = parseFloat(amount);
+    if (isNaN(num)) return '0';
+    return num.toFixed(decimals);
+  };
 
   return (
-    <div>
+    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">历史活动</h1>
+        <h1 className="text-2xl font-semibold text-dark">历史记录</h1>
         <button
-          onClick={() => navigate('/campaign/create')}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          onClick={() => navigate('/')}
+          className="btn btn-ghost"
         >
-          ➕ 创建新活动
+          返回仪表盘
         </button>
       </div>
 
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-gray-400 text-sm mb-1">总活动数</div>
-          <div className="text-2xl font-bold">{campaigns.length}</div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-gray-400 text-sm mb-1">已完成</div>
-          <div className="text-2xl font-bold text-green-400">
-            {campaigns.filter(c => c.status === 'COMPLETED').length}
+      {/* Statistical Overview */}
+      <div className="grid grid-cols-3 gap-6 mb-6">
+        <div className="bg-white border border-border rounded-lg p-6 text-center">
+          <div className="text-3xl font-bold text-dark mb-1">
+            {state.campaigns.length}
           </div>
+          <div className="text-sm text-medium">历史总活动</div>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-gray-400 text-sm mb-1">进行中</div>
-          <div className="text-2xl font-bold text-yellow-400">
-            {campaigns.filter(c => ['READY', 'SENDING'].includes(c.status)).length}
+        <div className="bg-white border border-border rounded-lg p-6 text-center">
+          <div className="text-3xl font-bold text-dark mb-1">
+            {state.campaigns.reduce((sum, c) => sum + c.totalRecipients, 0).toLocaleString()}
           </div>
+          <div className="text-sm text-medium">总发送地址</div>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-gray-400 text-sm mb-1">总地址数</div>
-          <div className="text-2xl font-bold text-blue-400">
-            {campaigns.reduce((sum, c) => sum + c.totalRecipients, 0).toLocaleString()}
+        <div className="bg-white border border-border rounded-lg p-6 text-center">
+          <div className="text-3xl font-bold text-success mb-1">98.5%</div>
+          <div className="text-sm text-medium">平均成功率</div>
+          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="bg-success h-2 rounded-full" style={{width: '98.5%'}}></div>
           </div>
         </div>
       </div>
 
-      {/* 筛选和搜索 */}
-      <div className="bg-gray-800 p-4 rounded-lg mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Gas Trend Chart */}
+      <div className="mb-6">
+        <GasTrendChart />
+      </div>
+
+      {/* Filters */}
+      <div className="card bg-white border border-border rounded-lg p-6 mb-6">
+        <div className="grid grid-cols-4 gap-4">
+          {/* Time Range Filter */}
           <div>
-            <label className="block text-sm font-medium mb-2">搜索活动</label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="输入活动名称..."
-            />
+            <label className="block text-sm font-medium text-dark mb-2">时间范围</label>
+            <select
+              value={filters.timeRange}
+              onChange={(e) => setFilters({ ...filters, timeRange: e.target.value as any })}
+              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="all">全部时间</option>
+              <option value="today">今天</option>
+              <option value="week">本周</option>
+              <option value="month">本月</option>
+              <option value="custom">自定义</option>
+            </select>
           </div>
 
+          {/* Chain Filter */}
           <div>
-            <label className="block text-sm font-medium mb-2">状态筛选</label>
+            <label className="block text-sm font-medium text-dark mb-2">所有链</label>
             <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={filters.chain}
+              onChange={(e) => setFilters({ ...filters, chain: e.target.value })}
+              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="all">所有链</option>
+              {Object.values(chains).map(chain => (
+                <option key={chain.id} value={chain.id}>
+                  {chain.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-dark mb-2">所有状态</label>
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
+              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="all">全部状态</option>
-              <option value="READY">就绪</option>
-              <option value="SENDING">发送中</option>
               <option value="COMPLETED">已完成</option>
+              <option value="FAILED">已失败</option>
+              <option value="SENDING">发送中</option>
               <option value="PAUSED">已暂停</option>
-              <option value="FAILED">失败</option>
             </select>
           </div>
 
+          {/* Search */}
           <div>
-            <label className="block text-sm font-medium mb-2">排序方式</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'createdAt' | 'name' | 'status')}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="createdAt">创建时间</option>
-              <option value="name">活动名称</option>
-              <option value="status">状态</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">排序顺序</label>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="desc">降序</option>
-              <option value="asc">升序</option>
-            </select>
+            <label className="block text-sm font-medium text-dark mb-2">搜索活动名称</label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              placeholder="输入活动名称搜索..."
+              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
           </div>
         </div>
-      </div>
 
-      {/* 活动列表 */}
-      <div className="bg-gray-800 p-6 rounded-lg">
-        {filteredCampaigns.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-3">📋</div>
-            <div className="text-gray-400 mb-4">暂无符合条件的活动记录</div>
-            <button
-              onClick={() => navigate('/campaign/create')}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              创建第一个活动
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Desktop View */}
-            <div className="hidden md:block">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-gray-400 border-b border-gray-700">
-                      <th className="pb-3">活动名称</th>
-                      <th className="pb-3">状态</th>
-                      <th className="pb-3">区块链</th>
-                      <th className="pb-3">收币地址</th>
-                      <th className="pb-3">完成进度</th>
-                      <th className="pb-3">创建时间</th>
-                      <th className="pb-3">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredCampaigns.map((campaign) => (
-                      <tr key={campaign.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                        <td className="py-4">
-                          <div className="font-medium">{campaign.name}</div>
-                          {campaign.walletAddress && (
-                            <div className="text-xs text-gray-400 font-mono mt-1">
-                              {campaign.walletAddress.slice(0, 6)}...{campaign.walletAddress.slice(-4)}
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}>
-                            {getStatusText(campaign.status)}
-                          </span>
-                        </td>
-                        <td className="py-4 text-gray-300">{getChainName(campaign.chain)}</td>
-                        <td className="py-4">
-                          <div className="text-gray-300">
-                            {campaign.completedRecipients}/{campaign.totalRecipients}
-                          </div>
-                          {campaign.totalRecipients > 0 && (
-                            <div className="text-xs text-gray-400">
-                              {Math.round((campaign.completedRecipients / campaign.totalRecipients) * 100)}%
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-4">
-                          {campaign.totalRecipients > 0 && (
-                            <div className="w-24">
-                              <div className="w-full bg-gray-700 rounded-full h-2">
-                                <div
-                                  className="bg-green-500 h-2 rounded-full"
-                                  style={{
-                                    width: `${(campaign.completedRecipients / campaign.totalRecipients) * 100}%`
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-4 text-gray-300">
-                          <div>{new Date(campaign.createdAt).toLocaleDateString()}</div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(campaign.createdAt).toLocaleTimeString()}
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => navigate(`/campaign/${campaign.id}`)}
-                              className="text-indigo-400 hover:text-indigo-300 text-sm"
-                            >
-                              详情
-                            </button>
-                            {campaign.status === 'COMPLETED' && (
-                              <>
-                                <span className="text-gray-600">|</span>
-                                <button
-                                  onClick={() => exportReport(campaign.id, 'csv')}
-                                  className="text-green-400 hover:text-green-300 text-sm"
-                                >
-                                  CSV
-                                </button>
-                                <button
-                                  onClick={() => exportReport(campaign.id, 'json')}
-                                  className="text-blue-400 hover:text-blue-300 text-sm"
-                                >
-                                  JSON
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+        {/* Custom Date Range */}
+        {filters.timeRange === 'custom' && (
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium text-dark mb-2">开始日期</label>
+              <input
+                type="date"
+                value={filters.dateRange?.start || ''}
+                onChange={(e) => setFilters({
+                  ...filters,
+                  dateRange: { ...filters.dateRange!, start: e.target.value }
+                })}
+                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
-
-            {/* Mobile View */}
-            <div className="md:hidden space-y-4">
-              {filteredCampaigns.map((campaign) => (
-                <div key={campaign.id} className="bg-gray-700 p-4 rounded-lg">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-semibold text-lg">{campaign.name}</h3>
-                      {campaign.walletAddress && (
-                        <div className="text-xs text-gray-400 font-mono mt-1">
-                          {campaign.walletAddress.slice(0, 6)}...{campaign.walletAddress.slice(-4)}
-                        </div>
-                      )}
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}>
-                      {getStatusText(campaign.status)}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-400 mb-3">
-                    <div>📍 {getChainName(campaign.chain)}</div>
-                    <div>📅 {new Date(campaign.createdAt).toLocaleDateString()}</div>
-                    <div>👥 {campaign.completedRecipients}/{campaign.totalRecipients}</div>
-                    <div>📊 {campaign.totalRecipients > 0 ? Math.round((campaign.completedRecipients / campaign.totalRecipients) * 100) : 0}%</div>
-                  </div>
-
-                  {campaign.totalRecipients > 0 && (
-                    <div className="mb-3">
-                      <div className="w-full bg-gray-600 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{
-                            width: `${(campaign.completedRecipients / campaign.totalRecipients) * 100}%`
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center">
-                    <button
-                      onClick={() => navigate(`/campaign/${campaign.id}`)}
-                      className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
-                    >
-                      查看详情
-                    </button>
-                    {campaign.status === 'COMPLETED' && (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => exportReport(campaign.id, 'csv')}
-                          className="px-2 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-xs"
-                        >
-                          CSV
-                        </button>
-                        <button
-                          onClick={() => exportReport(campaign.id, 'json')}
-                          className="px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs"
-                        >
-                          JSON
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div>
+              <label className="block text-sm font-medium text-dark mb-2">结束日期</label>
+              <input
+                type="date"
+                value={filters.dateRange?.end || ''}
+                min={filters.dateRange?.start}
+                onChange={(e) => setFilters({
+                  ...filters,
+                  dateRange: { ...filters.dateRange!, end: e.target.value }
+                })}
+                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
           </div>
         )}
+
+        {/* Export Button */}
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={handleExportAll}
+            className="btn btn-primary"
+          >
+            导出全部报告
+          </button>
+        </div>
       </div>
+
+      {/* Results Count */}
+      <div className="text-sm text-light mb-4">
+        显示 {formatNumber(paginatedCampaigns.length)} / {formatNumber(filteredCampaigns.length)} 条记录
+      </div>
+
+      {/* Campaigns Table */}
+      <div className="card bg-white border border-border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-border-light">
+                <th className="text-left py-4 px-6 font-medium text-dark">名称</th>
+                <th className="text-left py-4 px-6 font-medium text-dark">链</th>
+                <th className="text-left py-4 px-6 font-medium text-dark">状态</th>
+                <th className="text-right py-4 px-6 font-medium text-dark">地址数</th>
+                <th className="text-right py-4 px-6 font-medium text-dark">Gas消耗</th>
+                <th className="text-left py-4 px-6 font-medium text-dark">完成时间</th>
+                <th className="text-center py-4 px-6 font-medium text-dark">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedCampaigns.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-12">
+                    <div className="text-6xl mb-4">📭</div>
+                    <div className="text-lg font-medium text-dark mb-2">暂无活动记录</div>
+                    <div className="text-light">创建活动后将在此处显示</div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedCampaigns.map((campaign) => (
+                  <tr key={campaign.id} className="border-b border-border hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="font-medium text-dark">{campaign.name}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      {getChainBadge(campaign.chain)}
+                    </td>
+                    <td className="py-4 px-6">
+                      {getStatusBadge(campaign.status)}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      {formatNumber(campaign.totalRecipients)}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="text-sm">
+                        <div>{formatAmount(campaign.gasUsed)} ETH</div>
+                        <div className="text-light text-xs">
+                          ≈ ${(parseFloat(campaign.gasUsed || '0') * 2000).toFixed(2)}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-light">
+                      {campaign.completedAt
+                        ? formatDate(campaign.completedAt)
+                        : formatDate(campaign.updatedAt)
+                      }
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => navigate(`/campaign/${campaign.id}`)}
+                          className="btn btn-ghost text-sm px-4 py-2"
+                        >
+                          详情
+                        </button>
+                        <button
+                          onClick={() => handleExportSingle(campaign)}
+                          className="btn btn-ghost text-sm px-4 py-2"
+                        >
+                          导出
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-6">
+          <button
+            onClick={() => setPagination({ ...pagination, page: Math.max(1, pagination.page - 1) })}
+            disabled={pagination.page === 1}
+            className="btn btn-ghost"
+          >
+            上一页
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-light">
+              第 {pagination.page} 页，共 {totalPages} 页
+            </span>
+          </div>
+
+          <button
+            onClick={() => setPagination({ ...pagination, page: Math.min(totalPages, pagination.page + 1) })}
+            disabled={pagination.page === totalPages}
+            className="btn btn-ghost"
+          >
+            下一页
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,163 +13,109 @@ interface PriceInfo {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const [priceInfo, setPriceInfo] = useState<PriceInfo>({ eth: 0, matic: 0, sol: 0 });
-  const [gasPrices, setGasPrices] = useState<{ [key: string]: number }>({});
-
-  useEffect(() => {
-    updatePrices();
-    const interval = setInterval(updatePrices, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const updatePrices = async () => {
-    try {
-      if (window.electronAPI?.price) {
-        const prices = await window.electronAPI.price.getPrices(['ETH', 'MATIC', 'SOL']);
-        setPriceInfo({
-          eth: prices.ETH || 0,
-          matic: prices.MATIC || 0,
-          sol: prices.SOL || 0
-        });
-
-        try {
-          const chains = await window.electronAPI.chain.getEVMChains(true);
-          const ethChain = chains.find(c => c.name.toLowerCase().includes('ethereum'));
-          const polygonChain = chains.find(c => c.name.toLowerCase().includes('polygon'));
-
-          if (ethChain && priceInfo.eth > 0) {
-            const ethGasInfo = await window.electronAPI.gas.getInfo(ethChain.rpcUrl, 'ethereum', priceInfo.eth);
-            if (ethGasInfo.gasPrice) {
-              setGasPrices(prev => ({
-                ...prev,
-                'ethereum': parseFloat(ethGasInfo.gasPrice)
-              }));
-            }
-          }
-
-          if (polygonChain && priceInfo.matic > 0) {
-            const polygonGasInfo = await window.electronAPI.gas.getInfo(polygonChain.rpcUrl, 'polygon', priceInfo.matic);
-            if (polygonGasInfo.gasPrice) {
-              setGasPrices(prev => ({
-                ...prev,
-                'polygon': parseFloat(polygonGasInfo.gasPrice)
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch gas prices:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to update prices:', error);
-    }
-  };
+  const [priceInfo, setPriceInfo] = useState<PriceInfo>({ eth: 3685.42, matic: 0.92, sol: 178.35 });
 
   const navItems = [
-    { path: '/', label: '仪表盘', icon: '📊' },
-    { path: '/campaign/create', label: '新建活动', icon: '➕' },
-    { path: '/history', label: '历史记录', icon: '📜' },
-    { path: '/settings', label: '系统设置', icon: '⚙️' },
+    { path: '/', label: '仪表盘', icon: '🏠' },
+    { path: '/campaign/create', label: '活动', icon: '📊' },
+    { path: '/history', label: '历史', icon: '📜' },
+    { path: '/wallets', label: '钱包', icon: '👛' },
+    { path: '/settings', label: '设置', icon: '⚙️' },
   ];
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
-  };
-
-  const formatGasPrice = (gasPrice: number) => {
-    return `${gasPrice.toFixed(0)} Gwei`;
+    return `$${price.toFixed(2)}`;
   };
 
   return (
-    <div className="flex h-screen bg-base-100 text-base-content">
-      {/* 侧边栏 */}
-      <aside className="w-72 bg-base-200 border-r border-base-300 flex flex-col">
-        {/* Logo区域 */}
-        <div className="p-6 border-b border-base-300">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-1">
-            CryptoCast
-          </h1>
-          <p className="text-xs text-base-content/60">仪表盘 v1.0.0</p>
+    <div className="flex h-screen bg-white">
+      {/* Sidebar - 200px width */}
+      <aside className="w-[200px] bg-sidebar flex flex-col">
+        {/* Logo Area */}
+        <div className="p-6 border-b border-border">
+          <h1 className="text-xl font-semibold text-dark">CryptoCast</h1>
+          <p className="text-xs text-light mt-1">空投测试</p>
         </div>
 
-        {/* 导航菜单 */}
-        <nav className="p-4 space-y-1">
+        {/* Navigation */}
+        <nav className="flex-1 py-4">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${
+              className={`flex items-center gap-3 px-6 py-3 transition-all cursor-pointer ${
                 location.pathname === item.path
-                  ? 'bg-primary text-primary-content shadow-lg'
-                  : 'text-base-content/70 hover:bg-base-300 hover:text-base-content'
+                  ? 'bg-primary text-white'
+                  : 'text-medium hover:bg-sidebar-active'
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="icon-sm">{item.icon}</span>
+              <span className="text-sm font-medium">{item.label}</span>
             </Link>
           ))}
         </nav>
 
-        {/* 价格和Gas信息 - 滚动区域 */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* 价格显示 */}
-          <div className="card bg-base-300 shadow-sm">
-            <div className="card-body p-4">
-              <h3 className="text-xs font-semibold mb-3 text-primary uppercase tracking-wide flex items-center gap-2">
-                <span>💰</span>
-                实时价格
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg">
-                  <span className="text-base-content/70 text-sm font-medium">ETH</span>
-                  <span className="font-mono text-sm text-primary font-semibold">{formatPrice(priceInfo.eth)}</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg">
-                  <span className="text-base-content/70 text-sm font-medium">MATIC</span>
-                  <span className="font-mono text-sm text-secondary font-semibold">{formatPrice(priceInfo.matic)}</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg">
-                  <span className="text-base-content/70 text-sm font-medium">SOL</span>
-                  <span className="font-mono text-sm text-accent font-semibold">{formatPrice(priceInfo.sol)}</span>
-                </div>
+        {/* Price & Gas Info - Bottom Section */}
+        <div className="p-4 border-t border-border space-y-4">
+          {/* Prices */}
+          <div className="bg-white p-4 rounded-lg border border-border">
+            <h3 className="text-xs font-semibold text-primary mb-3 uppercase tracking-wide">💰 实时价格</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-medium">ETH</span>
+                <span className="text-xs font-semibold">{formatPrice(priceInfo.eth)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-medium">MATIC</span>
+                <span className="text-xs font-semibold">{formatPrice(priceInfo.matic)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-medium">SOL</span>
+                <span className="text-xs font-semibold">{formatPrice(priceInfo.sol)}</span>
               </div>
             </div>
           </div>
 
-          {/* Gas价格显示 */}
-          <div className="card bg-base-300 shadow-sm">
-            <div className="card-body p-4">
-              <h3 className="text-xs font-semibold mb-3 text-secondary uppercase tracking-wide flex items-center gap-2">
-                <span>⚡</span>
-                Gas价格
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg">
-                  <span className="text-base-content/70 text-sm font-medium">Ethereum</span>
-                  <span className="font-mono text-sm text-warning font-semibold">
-                    {gasPrices.ethereum ? formatGasPrice(gasPrices.ethereum) : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg">
-                  <span className="text-base-content/70 text-sm font-medium">Polygon</span>
-                  <span className="font-mono text-sm text-success font-semibold">
-                    {gasPrices.polygon ? formatGasPrice(gasPrices.polygon) : 'N/A'}
-                  </span>
-                </div>
+          {/* Gas Prices */}
+          <div className="bg-white p-4 rounded-lg border border-border">
+            <h3 className="text-xs font-semibold text-info mb-3 uppercase tracking-wide">⚡ Gas价格</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-medium">Ethereum</span>
+                <span className="text-xs font-semibold text-warning">28 Gwei</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-medium">Polygon</span>
+                <span className="text-xs font-semibold text-success">95 Gwei</span>
               </div>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* 主内容区 */}
-      <main className="flex-1 overflow-y-auto bg-base-100">
-        <div className="max-w-7xl mx-auto p-8">
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="h-[60px] bg-white border-b border-border flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-semibold text-dark">
+              {navItems.find(item => item.path === location.pathname)?.label || '仪表盘'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-6">
+            <button className="icon-md text-medium cursor-pointer hover:text-dark">🔔</button>
+            <button className="icon-md text-medium cursor-pointer hover:text-dark">💬</button>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                A
+              </div>
+              <span className="text-sm font-medium text-dark">Admin</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <div className="flex-1 overflow-y-auto p-6">
           {children}
         </div>
       </main>

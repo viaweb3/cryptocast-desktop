@@ -10,7 +10,9 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 4
+    },
     "preserveOutput": "always",
     "reporter": [
       [
@@ -40,7 +42,9 @@
         "outputDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 4
+        },
         "id": "chromium",
         "name": "chromium",
         "testDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e",
@@ -54,7 +58,9 @@
         "outputDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 4
+        },
         "id": "firefox",
         "name": "firefox",
         "testDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e",
@@ -68,7 +74,9 @@
         "outputDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 4
+        },
         "id": "webkit",
         "name": "webkit",
         "testDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e",
@@ -82,7 +90,9 @@
         "outputDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 4
+        },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
         "testDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e",
@@ -96,7 +106,9 @@
         "outputDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 4
+        },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
         "testDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e",
@@ -110,7 +122,9 @@
         "outputDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 4
+        },
         "id": "Microsoft Edge",
         "name": "Microsoft Edge",
         "testDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e",
@@ -124,7 +138,9 @@
         "outputDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 4
+        },
         "id": "Google Chrome",
         "name": "Google Chrome",
         "testDir": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e",
@@ -147,25 +163,2346 @@
       "timeout": 120000
     }
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "ReferenceError: jest is not defined",
-      "stack": "ReferenceError: jest is not defined\n    at Object.<anonymous> (/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/workflow.test.ts:5:1)",
-      "location": {
-        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/workflow.test.ts",
-        "column": 1,
-        "line": 5
-      },
-      "snippet": "\u001b[90m   at \u001b[39mworkflow.test.ts:5\n\n  3 |\n  4 | // Mock Electron module - mocks are hoisted, so define inline\n> 5 | jest.mock('electron', () => {\n    | ^\n  6 |   const mockApp = {\n  7 |     getPath: jest.fn((name: string) => {\n  8 |       if (name === 'userData') {"
+      "title": "campaign-create.spec.ts",
+      "file": "campaign-create.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Campaign Creation Workflow",
+          "file": "campaign-create.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should create a complete campaign",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12609,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('基本信息')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('基本信息')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('基本信息')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('基本信息')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:12:42",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                          "column": 42,
+                          "line": 12
+                        },
+                        "snippet": "  10 |\n  11 |     // Step 1: Basic Information\n> 12 |     await expect(page.getByText('基本信息')).toBeVisible();\n     |                                          ^\n  13 |\n  14 |     // Fill campaign name\n  15 |     await page.getByLabel(/活动名称/).fill('E2E Test Campaign');"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 42,
+                            "line": 12
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('基本信息')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('基本信息')\u001b[22m\n\n\n  10 |\n  11 |     // Step 1: Basic Information\n> 12 |     await expect(page.getByText('基本信息')).toBeVisible();\n     |                                          ^\n  13 |\n  14 |     // Fill campaign name\n  15 |     await page.getByLabel(/活动名称/).fill('E2E Test Campaign');\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:12:42"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:02.445Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                        "column": 42,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-740cb78c536d51b57e59",
+              "file": "campaign-create.spec.ts",
+              "line": 8,
+              "column": 7
+            },
+            {
+              "title": "should validate required fields",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 31835,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 33,
+                            "line": 64
+                          },
+                          "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('下一步')\u001b[22m\n\n\n  62 |\n  63 |     // Try to proceed without filling fields\n> 64 |     await page.getByText('下一步').click();\n     |                                 ^\n  65 |\n  66 |     // Should show validation error\n  67 |     await expect(page.getByText(/活动名称是必填项/)).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:64:33"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:02.452Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-f7db9c35be5424fabefe",
+              "file": "campaign-create.spec.ts",
+              "line": 60,
+              "column": 7
+            },
+            {
+              "title": "should handle different network selections",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 31851,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 74
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  72 |\n  73 |     // Fill campaign name\n> 74 |     await page.getByLabel(/活动名称/).fill('Network Test Campaign');\n     |                                   ^\n  75 |\n  76 |     // Test different networks\n  77 |     await page.getByLabel(/选择区块链网络/).selectOption('polygon');\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:74:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:02.450Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-b4d0ef9f4c21d7a6d11a",
+              "file": "campaign-create.spec.ts",
+              "line": 70,
+              "column": 7
+            },
+            {
+              "title": "should allow navigation between steps",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 31839,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 91
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  89 |\n  90 |     // Fill first step\n> 91 |     await page.getByLabel(/活动名称/).fill('Navigation Test');\n     |                                   ^\n  92 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');\n  93 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');\n  94 |\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:91:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:02.538Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-3df90f4548fdc99e9b12",
+              "file": "campaign-create.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "should handle wallet generation errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 30521,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 120
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  118 |\n  119 |     // Fill first step\n> 120 |     await page.getByLabel(/活动名称/).fill('Error Test');\n      |                                   ^\n  121 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');\n  122 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');\n  123 |     await page.getByText('下一步').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:120:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:16.989Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-3c4f3ddaa739e0bf179d",
+              "file": "campaign-create.spec.ts",
+              "line": 109,
+              "column": 7
+            },
+            {
+              "title": "should handle contract deployment errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 31579,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 143
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  141 |\n  142 |     // Complete first two steps\n> 143 |     await page.getByLabel(/活动名称/).fill('Deployment Error Test');\n      |                                   ^\n  144 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');\n  145 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');\n  146 |     await page.getByText('下一步').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:143:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:36.776Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-2297d142454872bdfc98",
+              "file": "campaign-create.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "should show loading states during operations",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 31592,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 175
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  173 |\n  174 |     // Complete first step\n> 175 |     await page.getByLabel(/活动名称/).fill('Loading Test');\n      |                                   ^\n  176 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');\n  177 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');\n  178 |     await page.getByText('下一步').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:175:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:36.774Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-f49524e2a797ae9b02a3",
+              "file": "campaign-create.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle custom RPC URL",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 31571,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 191
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  189 |\n  190 |     // Fill campaign details\n> 191 |     await page.getByLabel(/活动名称/).fill('Custom RPC Test');\n      |                                   ^\n  192 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');\n  193 |\n  194 |     // Select custom network option\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:191:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:36.779Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-b91634ad38feb07aae20",
+              "file": "campaign-create.spec.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "should validate token address format",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 30385,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 210
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  208 |\n  209 |     // Fill with invalid token address\n> 210 |     await page.getByLabel(/活动名称/).fill('Invalid Address Test');\n      |                                   ^\n  211 |     await page.getByLabel(/代币合约地址/).fill('invalid-address');\n  212 |\n  213 |     // Should show validation error\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:210:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:45:48.820Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-ac5705e7e50362e36d56",
+              "file": "campaign-create.spec.ts",
+              "line": 206,
+              "column": 7
+            },
+            {
+              "title": "should display gas estimation information",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 30179,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts",
+                            "column": 35,
+                            "line": 221
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel(/活动名称/)\u001b[22m\n\n\n  219 |\n  220 |     // Complete all steps to reach deployment\n> 221 |     await page.getByLabel(/活动名称/).fill('Gas Estimation Test');\n      |                                   ^\n  222 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');\n  223 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');\n  224 |     await page.getByText('下一步').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:221:35"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:10.344Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e747bd9e67193995163-dd2f14a17003c4bc5d1a",
+              "file": "campaign-create.spec.ts",
+              "line": 217,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "campaign-execution.spec.ts",
+      "file": "campaign-execution.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Campaign Execution Workflow",
+          "file": "campaign-execution.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should execute complete campaign workflow",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 11658,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('解锁钱包')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('解锁钱包')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('解锁钱包')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('解锁钱包')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:12:42",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 42,
+                          "line": 12
+                        },
+                        "snippet": "  10 |\n  11 |     // Step 1: Wallet Unlock\n> 12 |     await expect(page.getByText('解锁钱包')).toBeVisible();\n     |                                          ^\n  13 |     await expect(page.getByPlaceholderText(/输入密码/)).toBeVisible();\n  14 |\n  15 |     // Enter password and unlock"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 42,
+                            "line": 12
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('解锁钱包')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('解锁钱包')\u001b[22m\n\n\n  10 |\n  11 |     // Step 1: Wallet Unlock\n> 12 |     await expect(page.getByText('解锁钱包')).toBeVisible();\n     |                                          ^\n  13 |     await expect(page.getByPlaceholderText(/输入密码/)).toBeVisible();\n  14 |\n  15 |     // Enter password and unlock\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:12:42"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:10.343Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 42,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-484658fef3450bbadf16",
+              "file": "campaign-execution.spec.ts",
+              "line": 8,
+              "column": 7
+            },
+            {
+              "title": "should handle wallet unlock failure",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1332,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:73:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 73
+                        },
+                        "snippet": "  71 |     await page.goto('/campaign/1');\n  72 |\n> 73 |     await page.getByPlaceholderText(/输入密码/).fill('wrongpassword');\n     |                ^\n  74 |     await page.getByText('解锁').click();\n  75 |\n  76 |     await expect(page.getByText(/解锁失败/)).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 73
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  71 |     await page.goto('/campaign/1');\n  72 |\n> 73 |     await page.getByPlaceholderText(/输入密码/).fill('wrongpassword');\n     |                ^\n  74 |     await page.getByText('解锁').click();\n  75 |\n  76 |     await expect(page.getByText(/解锁失败/)).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:73:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:10.336Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 73
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-79a188087e5227ac7dfd",
+              "file": "campaign-execution.spec.ts",
+              "line": 63,
+              "column": 7
+            },
+            {
+              "title": "should allow CSV data editing",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1099,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:83:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 83
+                        },
+                        "snippet": "  81 |\n  82 |     // Complete wallet unlock\n> 83 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n     |                ^\n  84 |     await page.getByText('解锁').click();\n  85 |\n  86 |     await expect(page.getByText('导入CSV')).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 83
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  81 |\n  82 |     // Complete wallet unlock\n> 83 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n     |                ^\n  84 |     await page.getByText('解锁').click();\n  85 |\n  86 |     await expect(page.getByText('导入CSV')).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:83:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:14.088Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 83
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-ca4c40e827f5dac84928",
+              "file": "campaign-execution.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "should handle token approval failure",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1069,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:111:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 111
+                        },
+                        "snippet": "  109 |\n  110 |     // Complete previous steps\n> 111 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  112 |     await page.getByText('解锁').click();\n  113 |\n  114 |     await page.getByText('导入CSV').click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 111
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  109 |\n  110 |     // Complete previous steps\n> 111 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  112 |     await page.getByText('解锁').click();\n  113 |\n  114 |     await page.getByText('导入CSV').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:111:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:16.473Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 111
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-97c1ad87d134b89147ca",
+              "file": "campaign-execution.spec.ts",
+              "line": 100,
+              "column": 7
+            },
+            {
+              "title": "should handle batch transfer failure",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1063,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:134:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 134
+                        },
+                        "snippet": "  132 |\n  133 |     // Complete all previous steps\n> 134 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  135 |     await page.getByText('解锁').click();\n  136 |\n  137 |     await page.getByText('导入CSV').click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 134
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  132 |\n  133 |     // Complete all previous steps\n> 134 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  135 |     await page.getByText('解锁').click();\n  136 |\n  137 |     await page.getByText('导入CSV').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:134:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:18.783Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 134
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-d2d3b934b946dd228d69",
+              "file": "campaign-execution.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "should show real-time progress during batch transfer",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1230,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:167:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 167
+                        },
+                        "snippet": "  165 |\n  166 |     // Complete previous steps\n> 167 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  168 |     await page.getByText('解锁').click();\n  169 |\n  170 |     await page.getByText('导入CSV').click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 167
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  165 |\n  166 |     // Complete previous steps\n> 167 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  168 |     await page.getByText('解锁').click();\n  169 |\n  170 |     await page.getByText('导入CSV').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:167:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:20.723Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 167
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-6450ece6b0e1a6d3ea70",
+              "file": "campaign-execution.spec.ts",
+              "line": 149,
+              "column": 7
+            },
+            {
+              "title": "should display transaction details after completion",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1190,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:190:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 190
+                        },
+                        "snippet": "  188 |\n  189 |     // Complete full workflow\n> 190 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  191 |     await page.getByText('解锁').click();\n  192 |\n  193 |     await page.getByText('导入CSV').click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 190
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  188 |\n  189 |     // Complete full workflow\n> 190 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  191 |     await page.getByText('解锁').click();\n  192 |\n  193 |     await page.getByText('导入CSV').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:190:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:21.426Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 190
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-646e5c4210139fd707b6",
+              "file": "campaign-execution.spec.ts",
+              "line": 186,
+              "column": 7
+            },
+            {
+              "title": "should handle campaigns with different statuses",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11334,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('COMPLETED')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('COMPLETED')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('COMPLETED')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('COMPLETED')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:233:47",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 47,
+                          "line": 233
+                        },
+                        "snippet": "  231 |\n  232 |     // Should show completed status\n> 233 |     await expect(page.getByText('COMPLETED')).toBeVisible();\n      |                                               ^\n  234 |     await expect(page.getByText('100/100')).toBeVisible();\n  235 |     await expect(page.getByText('活动已完成')).toBeVisible();\n  236 |   });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 47,
+                            "line": 233
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('COMPLETED')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('COMPLETED')\u001b[22m\n\n\n  231 |\n  232 |     // Should show completed status\n> 233 |     await expect(page.getByText('COMPLETED')).toBeVisible();\n      |                                               ^\n  234 |     await expect(page.getByText('100/100')).toBeVisible();\n  235 |     await expect(page.getByText('活动已完成')).toBeVisible();\n  236 |   });\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:233:47"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:23.531Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 47,
+                        "line": 233
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-2f58d4b845faf67deeaf",
+              "file": "campaign-execution.spec.ts",
+              "line": 212,
+              "column": 7
+            },
+            {
+              "title": "should allow retry on failed operations",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 1376,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:242:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 242
+                        },
+                        "snippet": "  240 |\n  241 |     // Complete wallet unlock\n> 242 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  243 |     await page.getByText('解锁').click();\n  244 |\n  245 |     await page.getByText('导入CSV').click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 242
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  240 |\n  241 |     // Complete wallet unlock\n> 242 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  243 |     await page.getByText('解锁').click();\n  244 |\n  245 |     await page.getByText('导入CSV').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:242:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:23.592Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 242
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-2e1e1ccdf18cd573ac79",
+              "file": "campaign-execution.spec.ts",
+              "line": 238,
+              "column": 7
+            },
+            {
+              "title": "should validate CSV data format",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1109,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:262:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 262
+                        },
+                        "snippet": "  260 |     await page.goto('/campaign/1');\n  261 |\n> 262 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  263 |     await page.getByText('解锁').click();\n  264 |\n  265 |     await page.getByText('导入CSV').click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 262
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  260 |     await page.goto('/campaign/1');\n  261 |\n> 262 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  263 |     await page.getByText('解锁').click();\n  264 |\n  265 |     await page.getByText('导入CSV').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:262:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:24.360Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 262
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-871ac610894671db0cd7",
+              "file": "campaign-execution.spec.ts",
+              "line": 252,
+              "column": 7
+            },
+            {
+              "title": "should show gas estimation before each step",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 20,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 1166,
+                      "error": {
+                        "message": "TypeError: page.getByPlaceholderText is not a function",
+                        "stack": "TypeError: page.getByPlaceholderText is not a function\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:273:16",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                          "column": 16,
+                          "line": 273
+                        },
+                        "snippet": "  271 |     await page.goto('/campaign/1');\n  272 |\n> 273 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  274 |     await page.getByText('解锁').click();\n  275 |\n  276 |     await page.getByText('导入CSV').click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                            "column": 16,
+                            "line": 273
+                          },
+                          "message": "TypeError: page.getByPlaceholderText is not a function\n\n  271 |     await page.goto('/campaign/1');\n  272 |\n> 273 |     await page.getByPlaceholderText(/输入密码/).fill('password123');\n      |                ^\n  274 |     await page.getByText('解锁').click();\n  275 |\n  276 |     await page.getByText('导入CSV').click();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:273:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:26.574Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts",
+                        "column": 16,
+                        "line": 273
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "104896b66007a1f89133-69217cdd508f762783e9",
+              "file": "campaign-execution.spec.ts",
+              "line": 270,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "dashboard.spec.ts",
+      "file": "dashboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Dashboard",
+          "file": "dashboard.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display dashboard with campaign statistics",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 21,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 11258,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('仪表盘')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('仪表盘')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('仪表盘')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('仪表盘')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:12:41",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 41,
+                          "line": 12
+                        },
+                        "snippet": "  10 |\n  11 |     // Wait for dashboard to load\n> 12 |     await expect(page.getByText('仪表盘')).toBeVisible();\n     |                                         ^\n  13 |\n  14 |     // Check for statistics cards\n  15 |     await expect(page.getByText('总活动数')).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 41,
+                            "line": 12
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('仪表盘')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('仪表盘')\u001b[22m\n\n\n  10 |\n  11 |     // Wait for dashboard to load\n> 12 |     await expect(page.getByText('仪表盘')).toBeVisible();\n     |                                         ^\n  13 |\n  14 |     // Check for statistics cards\n  15 |     await expect(page.getByText('总活动数')).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:12:41"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:27.258Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 41,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-82133a81f314cb12f919",
+              "file": "dashboard.spec.ts",
+              "line": 8,
+              "column": 7
+            },
+            {
+              "title": "should show quick action buttons",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 22,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 11298,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('创建新活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('创建新活动')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('创建新活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('创建新活动')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:28:43",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 43,
+                          "line": 28
+                        },
+                        "snippet": "  26 |\n  27 |     // Verify quick action buttons are visible\n> 28 |     await expect(page.getByText('创建新活动')).toBeVisible();\n     |                                           ^\n  29 |     await expect(page.getByText('查看历史')).toBeVisible();\n  30 |     await expect(page.getByText('系统设置')).toBeVisible();\n  31 |   });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 43,
+                            "line": 28
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('创建新活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('创建新活动')\u001b[22m\n\n\n  26 |\n  27 |     // Verify quick action buttons are visible\n> 28 |     await expect(page.getByText('创建新活动')).toBeVisible();\n     |                                           ^\n  29 |     await expect(page.getByText('查看历史')).toBeVisible();\n  30 |     await expect(page.getByText('系统设置')).toBeVisible();\n  31 |   });\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:28:43"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:29.092Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 43,
+                        "line": 28
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-aba89fd8565e5b2bf546",
+              "file": "dashboard.spec.ts",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "should display active campaigns section",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 23,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11237,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('🚀 进行中的活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('🚀 进行中的活动')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('🚀 进行中的活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('🚀 进行中的活动')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:37:47",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 47,
+                          "line": 37
+                        },
+                        "snippet": "  35 |\n  36 |     // Check for active campaigns section\n> 37 |     await expect(page.getByText('🚀 进行中的活动')).toBeVisible();\n     |                                               ^\n  38 |\n  39 |     // Should show view all button\n  40 |     await expect(page.getByText('查看全部 →')).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 47,
+                            "line": 37
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('🚀 进行中的活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('🚀 进行中的活动')\u001b[22m\n\n\n  35 |\n  36 |     // Check for active campaigns section\n> 37 |     await expect(page.getByText('🚀 进行中的活动')).toBeVisible();\n     |                                               ^\n  38 |\n  39 |     // Should show view all button\n  40 |     await expect(page.getByText('查看全部 →')).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:37:47"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:36.157Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 47,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-f22cb4123b1acd87c712",
+              "file": "dashboard.spec.ts",
+              "line": 33,
+              "column": 7
+            },
+            {
+              "title": "should display recent campaigns table",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 11215,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('📋 最近活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('📋 最近活动')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('📋 最近活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('📋 最近活动')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:47:45",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 45,
+                          "line": 47
+                        },
+                        "snippet": "  45 |\n  46 |     // Check for recent campaigns section\n> 47 |     await expect(page.getByText('📋 最近活动')).toBeVisible();\n     |                                             ^\n  48 |\n  49 |     // Check table headers\n  50 |     await expect(page.getByText('活动名称')).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 45,
+                            "line": 47
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('📋 最近活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('📋 最近活动')\u001b[22m\n\n\n  45 |\n  46 |     // Check for recent campaigns section\n> 47 |     await expect(page.getByText('📋 最近活动')).toBeVisible();\n     |                                             ^\n  48 |\n  49 |     // Check table headers\n  50 |     await expect(page.getByText('活动名称')).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:47:45"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:39.698Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 45,
+                        "line": 47
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-d86e6fc0ef0198e0034a",
+              "file": "dashboard.spec.ts",
+              "line": 43,
+              "column": 7
+            },
+            {
+              "title": "should navigate to create campaign",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 25,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 30501,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 43,
+                            "line": 62
+                          },
+                          "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('创建新活动').first()\u001b[22m\n\n\n  60 |\n  61 |     // Click create new campaign button\n> 62 |     await page.getByText('创建新活动').first().click();\n     |                                           ^\n  63 |\n  64 |     // Should navigate to create page\n  65 |     await expect(page.getByText('创建新活动')).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:62:43"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:41.813Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-5400620218275a525fab",
+              "file": "dashboard.spec.ts",
+              "line": 58,
+              "column": 7
+            },
+            {
+              "title": "should navigate to history page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 26,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 30543,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 34,
+                            "line": 73
+                          },
+                          "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('查看历史')\u001b[22m\n\n\n  71 |\n  72 |     // Click view history button\n> 73 |     await page.getByText('查看历史').click();\n     |                                  ^\n  74 |\n  75 |     // Should navigate to history page\n  76 |     await expect(page.getByText('历史活动')).toBeVisible();\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:73:34"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:41.945Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-ba5440cd6c62b996a45d",
+              "file": "dashboard.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "should show empty state when no campaigns",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 27,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11532,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('暂无进行中的活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('暂无进行中的活动')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('暂无进行中的活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('暂无进行中的活动')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:92:46",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 46,
+                          "line": 92
+                        },
+                        "snippet": "  90 |\n  91 |     // Should show empty state\n> 92 |     await expect(page.getByText('暂无进行中的活动')).toBeVisible();\n     |                                              ^\n  93 |     await expect(page.getByText('创建第一个活动')).toBeVisible();\n  94 |   });\n  95 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 46,
+                            "line": 92
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('暂无进行中的活动')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('暂无进行中的活动')\u001b[22m\n\n\n  90 |\n  91 |     // Should show empty state\n> 92 |     await expect(page.getByText('暂无进行中的活动')).toBeVisible();\n     |                                              ^\n  93 |     await expect(page.getByText('创建第一个活动')).toBeVisible();\n  94 |   });\n  95 |\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:92:46"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:48.537Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 46,
+                        "line": 92
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-f60eb0106266adb8fc93",
+              "file": "dashboard.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "should display campaign status badges correctly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 28,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 11111,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('READY')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('READY')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('READY')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('READY')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:100:43",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 43,
+                          "line": 100
+                        },
+                        "snippet": "   98 |\n   99 |     // Should show different status badges\n> 100 |     await expect(page.getByText('READY')).toBeVisible();\n      |                                           ^\n  101 |   });\n  102 |\n  103 |   test('should display chain names correctly', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 43,
+                            "line": 100
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('READY')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('READY')\u001b[22m\n\n\n   98 |\n   99 |     // Should show different status badges\n> 100 |     await expect(page.getByText('READY')).toBeVisible();\n      |                                           ^\n  101 |   });\n  102 |\n  103 |   test('should display chain names correctly', async ({ page }) => {\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:100:43"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:46:52.117Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 43,
+                        "line": 100
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-f4eec032a7e5e582628d",
+              "file": "dashboard.spec.ts",
+              "line": 96,
+              "column": 7
+            },
+            {
+              "title": "should display chain names correctly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 29,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11591,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Ethereum')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Ethereum')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Ethereum')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Ethereum')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:107:46",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 46,
+                          "line": 107
+                        },
+                        "snippet": "  105 |\n  106 |     // Should show chain names\n> 107 |     await expect(page.getByText('Ethereum')).toBeVisible();\n      |                                              ^\n  108 |   });\n  109 |\n  110 |   test('should show progress bars for campaigns with recipients', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 46,
+                            "line": 107
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Ethereum')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Ethereum')\u001b[22m\n\n\n  105 |\n  106 |     // Should show chain names\n> 107 |     await expect(page.getByText('Ethereum')).toBeVisible();\n      |                                              ^\n  108 |   });\n  109 |\n  110 |   test('should show progress bars for campaigns with recipients', async ({ page }) => {\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:107:46"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:47:01.386Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 46,
+                        "line": 107
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-98adfdcc13e11643b9a5",
+              "file": "dashboard.spec.ts",
+              "line": 103,
+              "column": 7
+            },
+            {
+              "title": "should show progress bars for campaigns with recipients",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 30,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 11209,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[role=\"progressbar\"], .bg-green-500').first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[role=\"progressbar\"], .bg-green-500').first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[role=\"progressbar\"], .bg-green-500').first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[role=\"progressbar\"], .bg-green-500').first()\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:115:40",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 40,
+                          "line": 115
+                        },
+                        "snippet": "  113 |     // Look for progress indicators\n  114 |     const progressBars = page.locator('[role=\"progressbar\"], .bg-green-500');\n> 115 |     await expect(progressBars.first()).toBeVisible();\n      |                                        ^\n  116 |   });\n  117 |\n  118 |   test('should handle responsive layout on mobile', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 40,
+                            "line": 115
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[role=\"progressbar\"], .bg-green-500').first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[role=\"progressbar\"], .bg-green-500').first()\u001b[22m\n\n\n  113 |     // Look for progress indicators\n  114 |     const progressBars = page.locator('[role=\"progressbar\"], .bg-green-500');\n> 115 |     await expect(progressBars.first()).toBeVisible();\n      |                                        ^\n  116 |   });\n  117 |\n  118 |   test('should handle responsive layout on mobile', async ({ page }) => {\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:115:40"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:47:04.719Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 40,
+                        "line": 115
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-7639ec1f51aa6731e2ae",
+              "file": "dashboard.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "should handle responsive layout on mobile",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 31,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 11648,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('仪表盘')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('仪表盘')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('仪表盘')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('仪表盘')\u001b[22m\n\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:124:41",
+                        "location": {
+                          "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                          "column": 41,
+                          "line": 124
+                        },
+                        "snippet": "  122 |\n  123 |     // Should still show key elements on mobile\n> 124 |     await expect(page.getByText('仪表盘')).toBeVisible();\n      |                                         ^\n  125 |     await expect(page.getByText('总活动数')).toBeVisible();\n  126 |\n  127 |     // Mobile should show different layout"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                            "column": 41,
+                            "line": 124
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('仪表盘')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('仪表盘')\u001b[22m\n\n\n  122 |\n  123 |     // Should still show key elements on mobile\n> 124 |     await expect(page.getByText('仪表盘')).toBeVisible();\n      |                                         ^\n  125 |     await expect(page.getByText('总活动数')).toBeVisible();\n  126 |\n  127 |     // Mobile should show different layout\n    at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:124:41"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-20T08:47:13.640Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts",
+                        "column": 41,
+                        "line": 124
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-8171a747942fa0dea8c2",
+              "file": "dashboard.spec.ts",
+              "line": 118,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2025-11-19T14:33:33.131Z",
-    "duration": 706.7,
+    "startTime": "2025-11-20T08:44:52.303Z",
+    "duration": 153300.544,
     "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 32,
     "flaky": 0
   }
 }

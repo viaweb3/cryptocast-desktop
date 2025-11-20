@@ -108,7 +108,7 @@ export class PriceService {
 
       this.networks.forEach(network => {
         const coinData = response.data[network.coingeckoId];
-        if (coinData) {
+        if (coinData && typeof coinData.usd === 'number' && coinData.usd >= 0) {
           const priceData: PriceData = {
             symbol: network.nativeTokenSymbol,
             price: coinData.usd,
@@ -121,6 +121,8 @@ export class PriceService {
 
           this.priceCache.set(network.nativeTokenSymbol, priceData);
           this.savePriceToDatabase(priceData);
+        } else if (coinData) {
+          console.warn(`Invalid price data for ${network.nativeTokenSymbol}:`, coinData);
         }
       });
     } catch (error) {
@@ -172,6 +174,12 @@ export class PriceService {
 
   private savePriceToDatabase(priceData: PriceData): void {
     try {
+      // Double-check price validity before database insertion
+      if (typeof priceData.price !== 'number' || priceData.price < 0 || !isFinite(priceData.price)) {
+        console.warn(`Invalid price value for ${priceData.symbol}:`, priceData.price);
+        return;
+      }
+
       const stmt = this.db.prepare(`
         INSERT INTO price_history (symbol, price, change_24h, change_percent_24h, market_cap, volume_24h, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?)

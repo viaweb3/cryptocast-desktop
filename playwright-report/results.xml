@@ -1,2 +1,1335 @@
-<testsuites id="" name="" tests="0" failures="0" skipped="0" errors="0" time="0.7067">
+<testsuites id="" name="" tests="32" failures="32" skipped="0" errors="0" time="153.300544">
+<testsuite name="campaign-create.spec.ts" timestamp="2025-11-20T08:44:59.309Z" hostname="chromium" tests="10" failures="10" skipped="0" time="293.961" errors="0">
+<testcase name="Campaign Creation Workflow › should create a complete campaign" classname="campaign-create.spec.ts" time="12.609">
+<failure message="campaign-create.spec.ts:8:7 should create a complete campaign" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:8:7 › Campaign Creation Workflow › should create a complete campaign 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('基本信息')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('基本信息')
+
+
+      10 |
+      11 |     // Step 1: Basic Information
+    > 12 |     await expect(page.getByText('基本信息')).toBeVisible();
+         |                                          ^
+      13 |
+      14 |     // Fill campaign name
+      15 |     await page.getByLabel(/活动名称/).fill('E2E Test Campaign');
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:12:42
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-ef793--create-a-complete-campaign-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should validate required fields" classname="campaign-create.spec.ts" time="31.835">
+<failure message="campaign-create.spec.ts:60:7 should validate required fields" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:60:7 › Campaign Creation Workflow › should validate required fields 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByText('下一步')
+
+
+      62 |
+      63 |     // Try to proceed without filling fields
+    > 64 |     await page.getByText('下一步').click();
+         |                                 ^
+      65 |
+      66 |     // Should show validation error
+      67 |     await expect(page.getByText(/活动名称是必填项/)).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:64:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-ca804-ld-validate-required-fields-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should handle different network selections" classname="campaign-create.spec.ts" time="31.851">
+<failure message="campaign-create.spec.ts:70:7 should handle different network selections" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:70:7 › Campaign Creation Workflow › should handle different network selections 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      72 |
+      73 |     // Fill campaign name
+    > 74 |     await page.getByLabel(/活动名称/).fill('Network Test Campaign');
+         |                                   ^
+      75 |
+      76 |     // Test different networks
+      77 |     await page.getByLabel(/选择区块链网络/).selectOption('polygon');
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:74:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-fa223-ifferent-network-selections-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should allow navigation between steps" classname="campaign-create.spec.ts" time="31.839">
+<failure message="campaign-create.spec.ts:87:7 should allow navigation between steps" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:87:7 › Campaign Creation Workflow › should allow navigation between steps 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      89 |
+      90 |     // Fill first step
+    > 91 |     await page.getByLabel(/活动名称/).fill('Navigation Test');
+         |                                   ^
+      92 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');
+      93 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');
+      94 |
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:91:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-eed73-ow-navigation-between-steps-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should handle wallet generation errors" classname="campaign-create.spec.ts" time="30.521">
+<failure message="campaign-create.spec.ts:109:7 should handle wallet generation errors" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:109:7 › Campaign Creation Workflow › should handle wallet generation errors 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      118 |
+      119 |     // Fill first step
+    > 120 |     await page.getByLabel(/活动名称/).fill('Error Test');
+          |                                   ^
+      121 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');
+      122 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');
+      123 |     await page.getByText('下一步').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:120:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-f846e-le-wallet-generation-errors-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should handle contract deployment errors" classname="campaign-create.spec.ts" time="31.579">
+<failure message="campaign-create.spec.ts:132:7 should handle contract deployment errors" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:132:7 › Campaign Creation Workflow › should handle contract deployment errors 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      141 |
+      142 |     // Complete first two steps
+    > 143 |     await page.getByLabel(/活动名称/).fill('Deployment Error Test');
+          |                                   ^
+      144 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');
+      145 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');
+      146 |     await page.getByText('下一步').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:143:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-bf10c--contract-deployment-errors-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should show loading states during operations" classname="campaign-create.spec.ts" time="31.592">
+<failure message="campaign-create.spec.ts:158:7 should show loading states during operations" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:158:7 › Campaign Creation Workflow › should show loading states during operations 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      173 |
+      174 |     // Complete first step
+    > 175 |     await page.getByLabel(/活动名称/).fill('Loading Test');
+          |                                   ^
+      176 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');
+      177 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');
+      178 |     await page.getByText('下一步').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:175:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-dfaad-ng-states-during-operations-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should handle custom RPC URL" classname="campaign-create.spec.ts" time="31.571">
+<failure message="campaign-create.spec.ts:187:7 should handle custom RPC URL" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:187:7 › Campaign Creation Workflow › should handle custom RPC URL 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      189 |
+      190 |     // Fill campaign details
+    > 191 |     await page.getByLabel(/活动名称/).fill('Custom RPC Test');
+          |                                   ^
+      192 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');
+      193 |
+      194 |     // Select custom network option
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:191:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-6afb0-hould-handle-custom-RPC-URL-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should validate token address format" classname="campaign-create.spec.ts" time="30.385">
+<failure message="campaign-create.spec.ts:206:7 should validate token address format" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:206:7 › Campaign Creation Workflow › should validate token address format 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      208 |
+      209 |     // Fill with invalid token address
+    > 210 |     await page.getByLabel(/活动名称/).fill('Invalid Address Test');
+          |                                   ^
+      211 |     await page.getByLabel(/代币合约地址/).fill('invalid-address');
+      212 |
+      213 |     // Should show validation error
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:210:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-446e7-lidate-token-address-format-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Creation Workflow › should display gas estimation information" classname="campaign-create.spec.ts" time="30.179">
+<failure message="campaign-create.spec.ts:217:7 should display gas estimation information" type="FAILURE">
+<![CDATA[  [chromium] › campaign-create.spec.ts:217:7 › Campaign Creation Workflow › should display gas estimation information 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel(/活动名称/)
+
+
+      219 |
+      220 |     // Complete all steps to reach deployment
+    > 221 |     await page.getByLabel(/活动名称/).fill('Gas Estimation Test');
+          |                                   ^
+      222 |     await page.getByLabel(/代币合约地址/).fill('0x1234567890123456789012345678901234567890');
+      223 |     await page.getByLabel(/选择区块链网络/).selectOption('ethereum');
+      224 |     await page.getByText('下一步').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-create.spec.ts:221:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-create-Campaign-C-8348b--gas-estimation-information-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="campaign-execution.spec.ts" timestamp="2025-11-20T08:44:59.309Z" hostname="chromium" tests="11" failures="11" skipped="0" time="33.626" errors="0">
+<testcase name="Campaign Execution Workflow › should execute complete campaign workflow" classname="campaign-execution.spec.ts" time="11.658">
+<failure message="campaign-execution.spec.ts:8:7 should execute complete campaign workflow" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:8:7 › Campaign Execution Workflow › should execute complete campaign workflow 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('解锁钱包')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('解锁钱包')
+
+
+      10 |
+      11 |     // Step 1: Wallet Unlock
+    > 12 |     await expect(page.getByText('解锁钱包')).toBeVisible();
+         |                                          ^
+      13 |     await expect(page.getByPlaceholderText(/输入密码/)).toBeVisible();
+      14 |
+      15 |     // Enter password and unlock
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:12:42
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-3868f--complete-campaign-workflow-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should handle wallet unlock failure" classname="campaign-execution.spec.ts" time="1.332">
+<failure message="campaign-execution.spec.ts:63:7 should handle wallet unlock failure" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:63:7 › Campaign Execution Workflow › should handle wallet unlock failure 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      71 |     await page.goto('/campaign/1');
+      72 |
+    > 73 |     await page.getByPlaceholderText(/输入密码/).fill('wrongpassword');
+         |                ^
+      74 |     await page.getByText('解锁').click();
+      75 |
+      76 |     await expect(page.getByText(/解锁失败/)).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:73:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-52847-andle-wallet-unlock-failure-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should allow CSV data editing" classname="campaign-execution.spec.ts" time="1.099">
+<failure message="campaign-execution.spec.ts:79:7 should allow CSV data editing" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:79:7 › Campaign Execution Workflow › should allow CSV data editing 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      81 |
+      82 |     // Complete wallet unlock
+    > 83 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+         |                ^
+      84 |     await page.getByText('解锁').click();
+      85 |
+      86 |     await expect(page.getByText('导入CSV')).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:83:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-86070-ould-allow-CSV-data-editing-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should handle token approval failure" classname="campaign-execution.spec.ts" time="1.069">
+<failure message="campaign-execution.spec.ts:100:7 should handle token approval failure" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:100:7 › Campaign Execution Workflow › should handle token approval failure 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      109 |
+      110 |     // Complete previous steps
+    > 111 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+          |                ^
+      112 |     await page.getByText('解锁').click();
+      113 |
+      114 |     await page.getByText('导入CSV').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:111:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-0475c-ndle-token-approval-failure-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should handle batch transfer failure" classname="campaign-execution.spec.ts" time="1.063">
+<failure message="campaign-execution.spec.ts:123:7 should handle batch transfer failure" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:123:7 › Campaign Execution Workflow › should handle batch transfer failure 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      132 |
+      133 |     // Complete all previous steps
+    > 134 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+          |                ^
+      135 |     await page.getByText('解锁').click();
+      136 |
+      137 |     await page.getByText('导入CSV').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:134:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-2ce6a-ndle-batch-transfer-failure-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should show real-time progress during batch transfer" classname="campaign-execution.spec.ts" time="1.23">
+<failure message="campaign-execution.spec.ts:149:7 should show real-time progress during batch transfer" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:149:7 › Campaign Execution Workflow › should show real-time progress during batch transfer 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      165 |
+      166 |     // Complete previous steps
+    > 167 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+          |                ^
+      168 |     await page.getByText('解锁').click();
+      169 |
+      170 |     await page.getByText('导入CSV').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:167:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-b95bf-gress-during-batch-transfer-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should display transaction details after completion" classname="campaign-execution.spec.ts" time="1.19">
+<failure message="campaign-execution.spec.ts:186:7 should display transaction details after completion" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:186:7 › Campaign Execution Workflow › should display transaction details after completion 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      188 |
+      189 |     // Complete full workflow
+    > 190 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+          |                ^
+      191 |     await page.getByText('解锁').click();
+      192 |
+      193 |     await page.getByText('导入CSV').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:190:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-43265-on-details-after-completion-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should handle campaigns with different statuses" classname="campaign-execution.spec.ts" time="11.334">
+<failure message="campaign-execution.spec.ts:212:7 should handle campaigns with different statuses" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:212:7 › Campaign Execution Workflow › should handle campaigns with different statuses 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('COMPLETED')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('COMPLETED')
+
+
+      231 |
+      232 |     // Should show completed status
+    > 233 |     await expect(page.getByText('COMPLETED')).toBeVisible();
+          |                                               ^
+      234 |     await expect(page.getByText('100/100')).toBeVisible();
+      235 |     await expect(page.getByText('活动已完成')).toBeVisible();
+      236 |   });
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:233:47
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-94b62-gns-with-different-statuses-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should allow retry on failed operations" classname="campaign-execution.spec.ts" time="1.376">
+<failure message="campaign-execution.spec.ts:238:7 should allow retry on failed operations" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:238:7 › Campaign Execution Workflow › should allow retry on failed operations 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      240 |
+      241 |     // Complete wallet unlock
+    > 242 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+          |                ^
+      243 |     await page.getByText('解锁').click();
+      244 |
+      245 |     await page.getByText('导入CSV').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:242:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-9ff38--retry-on-failed-operations-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should validate CSV data format" classname="campaign-execution.spec.ts" time="1.109">
+<failure message="campaign-execution.spec.ts:252:7 should validate CSV data format" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:252:7 › Campaign Execution Workflow › should validate CSV data format 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      260 |     await page.goto('/campaign/1');
+      261 |
+    > 262 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+          |                ^
+      263 |     await page.getByText('解锁').click();
+      264 |
+      265 |     await page.getByText('导入CSV').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:262:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-00d7e-ld-validate-CSV-data-format-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Campaign Execution Workflow › should show gas estimation before each step" classname="campaign-execution.spec.ts" time="1.166">
+<failure message="campaign-execution.spec.ts:270:7 should show gas estimation before each step" type="FAILURE">
+<![CDATA[  [chromium] › campaign-execution.spec.ts:270:7 › Campaign Execution Workflow › should show gas estimation before each step 
+
+    TypeError: page.getByPlaceholderText is not a function
+
+      271 |     await page.goto('/campaign/1');
+      272 |
+    > 273 |     await page.getByPlaceholderText(/输入密码/).fill('password123');
+          |                ^
+      274 |     await page.getByText('解锁').click();
+      275 |
+      276 |     await page.getByText('导入CSV').click();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/campaign-execution.spec.ts:273:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/campaign-execution-Campaig-7c004-estimation-before-each-step-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.ts" timestamp="2025-11-20T08:44:59.309Z" hostname="chromium" tests="11" failures="11" skipped="0" time="163.143" errors="0">
+<testcase name="Dashboard › should display dashboard with campaign statistics" classname="dashboard.spec.ts" time="11.258">
+<failure message="dashboard.spec.ts:8:7 should display dashboard with campaign statistics" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:8:7 › Dashboard › should display dashboard with campaign statistics 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('仪表盘')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('仪表盘')
+
+
+      10 |
+      11 |     // Wait for dashboard to load
+    > 12 |     await expect(page.getByText('仪表盘')).toBeVisible();
+         |                                         ^
+      13 |
+      14 |     // Check for statistics cards
+      15 |     await expect(page.getByText('总活动数')).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:12:41
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-64003-rd-with-campaign-statistics-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should show quick action buttons" classname="dashboard.spec.ts" time="11.298">
+<failure message="dashboard.spec.ts:24:7 should show quick action buttons" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:24:7 › Dashboard › should show quick action buttons ───────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('创建新活动')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('创建新活动')
+
+
+      26 |
+      27 |     // Verify quick action buttons are visible
+    > 28 |     await expect(page.getByText('创建新活动')).toBeVisible();
+         |                                           ^
+      29 |     await expect(page.getByText('查看历史')).toBeVisible();
+      30 |     await expect(page.getByText('系统设置')).toBeVisible();
+      31 |   });
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:28:43
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-show-quick-action-buttons-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should display active campaigns section" classname="dashboard.spec.ts" time="11.237">
+<failure message="dashboard.spec.ts:33:7 should display active campaigns section" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:33:7 › Dashboard › should display active campaigns section ────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('🚀 进行中的活动')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('🚀 进行中的活动')
+
+
+      35 |
+      36 |     // Check for active campaigns section
+    > 37 |     await expect(page.getByText('🚀 进行中的活动')).toBeVisible();
+         |                                               ^
+      38 |
+      39 |     // Should show view all button
+      40 |     await expect(page.getByText('查看全部 →')).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:37:47
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-active-campaigns-section-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should display recent campaigns table" classname="dashboard.spec.ts" time="11.215">
+<failure message="dashboard.spec.ts:43:7 should display recent campaigns table" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:43:7 › Dashboard › should display recent campaigns table ──────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('📋 最近活动')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('📋 最近活动')
+
+
+      45 |
+      46 |     // Check for recent campaigns section
+    > 47 |     await expect(page.getByText('📋 最近活动')).toBeVisible();
+         |                                             ^
+      48 |
+      49 |     // Check table headers
+      50 |     await expect(page.getByText('活动名称')).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:47:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-recent-campaigns-table-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should navigate to create campaign" classname="dashboard.spec.ts" time="30.501">
+<failure message="dashboard.spec.ts:58:7 should navigate to create campaign" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:58:7 › Dashboard › should navigate to create campaign ─────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByText('创建新活动').first()
+
+
+      60 |
+      61 |     // Click create new campaign button
+    > 62 |     await page.getByText('创建新活动').first().click();
+         |                                           ^
+      63 |
+      64 |     // Should navigate to create page
+      65 |     await expect(page.getByText('创建新活动')).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:62:43
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-navigate-to-create-campaign-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should navigate to history page" classname="dashboard.spec.ts" time="30.543">
+<failure message="dashboard.spec.ts:69:7 should navigate to history page" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:69:7 › Dashboard › should navigate to history page ────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByText('查看历史')
+
+
+      71 |
+      72 |     // Click view history button
+    > 73 |     await page.getByText('查看历史').click();
+         |                                  ^
+      74 |
+      75 |     // Should navigate to history page
+      76 |     await expect(page.getByText('历史活动')).toBeVisible();
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:73:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-navigate-to-history-page-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should show empty state when no campaigns" classname="dashboard.spec.ts" time="11.532">
+<failure message="dashboard.spec.ts:79:7 should show empty state when no campaigns" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:79:7 › Dashboard › should show empty state when no campaigns ──────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('暂无进行中的活动')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('暂无进行中的活动')
+
+
+      90 |
+      91 |     // Should show empty state
+    > 92 |     await expect(page.getByText('暂无进行中的活动')).toBeVisible();
+         |                                              ^
+      93 |     await expect(page.getByText('创建第一个活动')).toBeVisible();
+      94 |   });
+      95 |
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:92:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-0d489-pty-state-when-no-campaigns-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should display campaign status badges correctly" classname="dashboard.spec.ts" time="11.111">
+<failure message="dashboard.spec.ts:96:7 should display campaign status badges correctly" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:96:7 › Dashboard › should display campaign status badges correctly 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('READY')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('READY')
+
+
+       98 |
+       99 |     // Should show different status badges
+    > 100 |     await expect(page.getByText('READY')).toBeVisible();
+          |                                           ^
+      101 |   });
+      102 |
+      103 |   test('should display chain names correctly', async ({ page }) => {
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:100:43
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-9f468-ign-status-badges-correctly-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should display chain names correctly" classname="dashboard.spec.ts" time="11.591">
+<failure message="dashboard.spec.ts:103:7 should display chain names correctly" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:103:7 › Dashboard › should display chain names correctly ──────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Ethereum')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('Ethereum')
+
+
+      105 |
+      106 |     // Should show chain names
+    > 107 |     await expect(page.getByText('Ethereum')).toBeVisible();
+          |                                              ^
+      108 |   });
+      109 |
+      110 |   test('should show progress bars for campaigns with recipients', async ({ page }) => {
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:107:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-display-chain-names-correctly-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should show progress bars for campaigns with recipients" classname="dashboard.spec.ts" time="11.209">
+<failure message="dashboard.spec.ts:110:7 should show progress bars for campaigns with recipients" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:110:7 › Dashboard › should show progress bars for campaigns with recipients 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[role="progressbar"], .bg-green-500').first()
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('[role="progressbar"], .bg-green-500').first()
+
+
+      113 |     // Look for progress indicators
+      114 |     const progressBars = page.locator('[role="progressbar"], .bg-green-500');
+    > 115 |     await expect(progressBars.first()).toBeVisible();
+          |                                        ^
+      116 |   });
+      117 |
+      118 |   test('should handle responsive layout on mobile', async ({ page }) => {
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:115:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-f4df1-r-campaigns-with-recipients-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Dashboard › should handle responsive layout on mobile" classname="dashboard.spec.ts" time="11.648">
+<failure message="dashboard.spec.ts:118:7 should handle responsive layout on mobile" type="FAILURE">
+<![CDATA[  [chromium] › dashboard.spec.ts:118:7 › Dashboard › should handle responsive layout on mobile ─────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('仪表盘')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('仪表盘')
+
+
+      122 |
+      123 |     // Should still show key elements on mobile
+    > 124 |     await expect(page.getByText('仪表盘')).toBeVisible();
+          |                                         ^
+      125 |     await expect(page.getByText('总活动数')).toBeVisible();
+      126 |
+      127 |     // Mobile should show different layout
+        at /Users/ffyu/Documents/GitHub/cryptocast-desktop/src/__tests__/e2e/dashboard.spec.ts:124:41
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/dashboard-Dashboard-should-4a302-responsive-layout-on-mobile-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
 </testsuites>
