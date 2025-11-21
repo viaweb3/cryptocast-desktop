@@ -5,8 +5,11 @@ import { DatabaseManager } from '../database/sqlite-schema';
 
 export interface CampaignData {
   name: string;
+  description?: string;
   chain: string;
   tokenAddress: string;
+  batchSize?: number;
+  sendInterval?: number;
   recipients: Array<{
     address: string;
     amount: string;
@@ -55,20 +58,24 @@ export class CampaignService {
 
       const insertCampaign = this.db.prepare(`
         INSERT INTO campaigns (
-          id, name, chain, token_address, status, total_recipients,
-          wallet_address, wallet_private_key_base64, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, name, description, chain, token_address, status, total_recipients,
+          wallet_address, wallet_private_key_base64, batch_size, send_interval,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       insertCampaign.run(
         id,
         data.name,
+        data.description || null,
         data.chain,
         data.tokenAddress,
         'CREATED',
         data.recipients.length,
         wallet.address,
         wallet.privateKeyBase64,
+        data.batchSize || 100,
+        data.sendInterval || 2000,
         now,
         now
       );
@@ -161,19 +168,25 @@ export class CampaignService {
     return {
       id: row.id,
       name: row.name,
+      description: row.description,
       chain: row.chain,
       tokenAddress: row.token_address,
+      tokenSymbol: row.token_symbol,
       status: row.status,
       totalRecipients: row.total_recipients,
       completedRecipients: row.completed_recipients,
+      failedRecipients: row.failed_recipients || 0,
       walletAddress: row.wallet_address,
       walletPrivateKeyBase64: row.wallet_private_key_base64,
       contractAddress: row.contract_address,
       contractDeployedAt: row.contract_deployed_at,
+      batchSize: row.batch_size || 100,
+      sendInterval: row.send_interval || 2000,
       gasUsed: row.gas_used || 0,
       gasCostUsd: row.gas_cost_usd || 0,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      completedAt: row.completed_at,
     };
   }
 
@@ -399,6 +412,181 @@ export class CampaignService {
     } catch (error) {
       console.error('Failed to delete campaign:', error);
       throw new Error('Campaign deletion failed');
+    }
+  }
+
+  /**
+   * 获取活动交易记录
+   */
+  async getCampaignTransactions(
+    campaignId: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Array<{
+    id: number;
+    txHash: string;
+    txType: string;
+    fromAddress: string;
+    toAddress?: string;
+    amount?: string;
+    gasUsed?: number;
+    gasPrice?: string;
+    gasCost?: number;
+    status: string;
+    blockNumber?: number;
+    blockHash?: string;
+    createdAt: string;
+    confirmedAt?: string;
+  }>> {
+    try {
+      let query = `
+        SELECT * FROM transactions
+        WHERE campaign_id = ?
+        ORDER BY created_at DESC
+      `;
+      const params: any[] = [campaignId];
+
+      if (options?.limit) {
+        query += ' LIMIT ?';
+        params.push(options.limit);
+      }
+
+      if (options?.offset) {
+        query += ' OFFSET ?';
+        params.push(options.offset);
+      }
+
+      const transactions = this.db.prepare(query).all(...params) as any[];
+
+      return transactions.map(row => ({
+        id: row.id,
+        txHash: row.tx_hash,
+        txType: row.tx_type,
+        fromAddress: row.from_address,
+        toAddress: row.to_address,
+        amount: row.amount,
+        gasUsed: row.gas_used,
+        gasPrice: row.gas_price,
+        gasCost: row.gas_cost,
+        status: row.status,
+        blockNumber: row.block_number,
+        blockHash: row.block_hash,
+        createdAt: row.created_at,
+        confirmedAt: row.confirmed_at,
+      }));
+    } catch (error) {
+      console.error('Failed to get campaign transactions:', error);
+      throw new Error('Campaign transactions retrieval failed');
+    }
+  }
+
+  /**
+   * 恢复活动
+   */
+  async resumeCampaign(id: string): Promise<{ success: boolean }> {
+    try {
+      const campaign = await this.getCampaignById(id);
+      if (!campaign) {
+        throw new Error('Campaign not found');
+      }
+
+      if (campaign.status !== 'PAUSED') {
+        throw new Error('Only paused campaigns can be resumed');
+      }
+
+      // 更新状态为SENDING
+      await this.updateCampaignStatus(id, 'SENDING');
+
+      // 请求执行器恢复执行
+      this.executor.resumeExecution(id);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to resume campaign:', error);
+      throw new Error('Campaign resume failed');
+    }
+  }
+
+  /**
+   * 取消活动
+   */
+  async cancelCampaign(id: string): Promise<{ success: boolean }> {
+    try {
+      const campaign = await this.getCampaignById(id);
+      if (!campaign) {
+        throw new Error('Campaign not found');
+      }
+
+      if (!['SENDING', 'PAUSED'].includes(campaign.status)) {
+        throw new Error('Only sending or paused campaigns can be canceled');
+      }
+
+      // 请求执行器停止执行
+      this.executor.cancelExecution(id);
+
+      // 更新状态为FAILED
+      await this.updateCampaignStatus(id, 'FAILED');
+
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to cancel campaign:', error);
+      throw new Error('Campaign cancel failed');
+    }
+  }
+
+  /**
+   * 获取活动详细信息（包含统计数据）
+   */
+  async getCampaignDetails(id: string): Promise<{
+    campaign: Campaign;
+    stats: {
+      totalRecipients: number;
+      completedRecipients: number;
+      failedRecipients: number;
+      pendingRecipients: number;
+      successRate: number;
+      totalGasUsed: number;
+      totalGasCost: number;
+    };
+  } | null> {
+    try {
+      const campaign = await this.getCampaignById(id);
+      if (!campaign) {
+        return null;
+      }
+
+      // 获取接收者统计
+      const recipientStats = this.db.prepare(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'SENT' THEN 1 ELSE 0 END) as completed,
+          SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) as failed,
+          SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending
+        FROM recipients
+        WHERE campaign_id = ?
+      `).get(id) as any;
+
+      const successRate = recipientStats.total > 0
+        ? (recipientStats.completed / recipientStats.total) * 100
+        : 0;
+
+      return {
+        campaign,
+        stats: {
+          totalRecipients: recipientStats.total || 0,
+          completedRecipients: recipientStats.completed || 0,
+          failedRecipients: recipientStats.failed || 0,
+          pendingRecipients: recipientStats.pending || 0,
+          successRate: Math.round(successRate * 100) / 100,
+          totalGasUsed: campaign.gasUsed,
+          totalGasCost: campaign.gasCostUsd,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to get campaign details:', error);
+      throw new Error('Campaign details retrieval failed');
     }
   }
 }

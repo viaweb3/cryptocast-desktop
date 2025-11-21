@@ -7,19 +7,25 @@ import { DatabaseAdapter } from './db-adapter';
 export interface Campaign {
   id: string;
   name: string;
+  description?: string;
   chain: string;
   token_address: string;
+  token_symbol?: string;
   status: 'CREATED' | 'FUNDED' | 'READY' | 'SENDING' | 'PAUSED' | 'COMPLETED' | 'FAILED';
   total_recipients: number;
   completed_recipients: number;
+  failed_recipients: number;
   wallet_address?: string;
   wallet_private_key_base64?: string;
   contract_address?: string;
   contract_deployed_at?: string;
+  batch_size: number;
+  send_interval: number;
   gas_used: number;
   gas_cost_usd: number;
   created_at: string;
   updated_at: string;
+  completed_at?: string;
 }
 
 
@@ -89,19 +95,25 @@ export class DatabaseManager {
       CREATE TABLE IF NOT EXISTS campaigns (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
+        description TEXT,
         chain TEXT NOT NULL,
         token_address TEXT NOT NULL,
+        token_symbol TEXT,
         status TEXT NOT NULL CHECK (status IN ('CREATED', 'FUNDED', 'READY', 'SENDING', 'PAUSED', 'COMPLETED', 'FAILED')),
         total_recipients INTEGER NOT NULL,
         completed_recipients INTEGER DEFAULT 0,
+        failed_recipients INTEGER DEFAULT 0,
         wallet_address TEXT,
         wallet_private_key_base64 TEXT,
         contract_address TEXT,
         contract_deployed_at TEXT,
+        batch_size INTEGER DEFAULT 100,
+        send_interval INTEGER DEFAULT 2000,
         gas_used REAL DEFAULT 0,
         gas_cost_usd REAL DEFAULT 0,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        completed_at TEXT
       )
     `);
 
@@ -220,8 +232,39 @@ export class DatabaseManager {
       CREATE INDEX IF NOT EXISTS idx_price_timestamp ON price_history(timestamp);
     `);
 
+    // 运行数据库迁移
+    await this.runMigrations();
+
     // 插入默认链信息
     await this.insertDefaultChains();
+  }
+
+  private async runMigrations(): Promise<void> {
+    if (!this.db) return;
+
+    // 检查并添加campaigns表的新字段
+    const campaignsInfo = await this.db.all(`PRAGMA table_info(campaigns)`);
+    const existingColumns = campaignsInfo.map((col: any) => col.name);
+
+    const newColumns = [
+      { name: 'description', type: 'TEXT' },
+      { name: 'token_symbol', type: 'TEXT' },
+      { name: 'failed_recipients', type: 'INTEGER DEFAULT 0' },
+      { name: 'batch_size', type: 'INTEGER DEFAULT 100' },
+      { name: 'send_interval', type: 'INTEGER DEFAULT 2000' },
+      { name: 'completed_at', type: 'TEXT' },
+    ];
+
+    for (const column of newColumns) {
+      if (!existingColumns.includes(column.name)) {
+        try {
+          await this.db.exec(`ALTER TABLE campaigns ADD COLUMN ${column.name} ${column.type}`);
+          console.log(`Added column ${column.name} to campaigns table`);
+        } catch (error) {
+          console.error(`Failed to add column ${column.name}:`, error);
+        }
+      }
+    }
   }
 
   private async insertDefaultChains(): Promise<void> {

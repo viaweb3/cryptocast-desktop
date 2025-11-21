@@ -113,6 +113,61 @@ export async function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle('campaign:resume', async (_event, id) => {
+    try {
+      console.log('恢复活动:', id);
+      const result = await campaignService.resumeCampaign(id);
+      return result;
+    } catch (error) {
+      console.error('恢复活动失败:', error);
+      throw new Error(`恢复活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  ipcMain.handle('campaign:cancel', async (_event, id) => {
+    try {
+      console.log('取消活动:', id);
+      const result = await campaignService.cancelCampaign(id);
+      return result;
+    } catch (error) {
+      console.error('取消活动失败:', error);
+      throw new Error(`取消活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  ipcMain.handle('campaign:getDetails', async (_event, id) => {
+    try {
+      console.log('获取活动详情:', id);
+      const details = await campaignService.getCampaignDetails(id);
+      return details;
+    } catch (error) {
+      console.error('获取活动详情失败:', error);
+      throw new Error(`获取活动详情失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  ipcMain.handle('campaign:getTransactions', async (_event, id, options) => {
+    try {
+      console.log('获取活动交易记录:', id);
+      const transactions = await campaignService.getCampaignTransactions(id, options);
+      return transactions;
+    } catch (error) {
+      console.error('获取活动交易记录失败:', error);
+      throw new Error(`获取活动交易记录失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  ipcMain.handle('campaign:getRecipients', async (_event, id) => {
+    try {
+      console.log('获取活动接收者列表:', id);
+      const recipients = await campaignService.getCampaignRecipients(id);
+      return recipients;
+    } catch (error) {
+      console.error('获取活动接收者列表失败:', error);
+      throw new Error(`获取活动接收者列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
   // 钱包相关（简化版 - 无密码保护）
   ipcMain.handle('wallet:create', async (_event, type = 'evm') => {
     try {

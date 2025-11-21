@@ -257,6 +257,24 @@ export class CampaignExecutor {
    */
   pauseExecution(campaignId: string): void {
     this.pauseMap.set(campaignId, true);
+    console.log(`Pause requested for campaign ${campaignId}`);
+  }
+
+  /**
+   * Resume paused campaign execution
+   */
+  resumeExecution(campaignId: string): void {
+    this.pauseMap.set(campaignId, false);
+    console.log(`Resume requested for campaign ${campaignId}`);
+  }
+
+  /**
+   * Cancel campaign execution
+   */
+  cancelExecution(campaignId: string): void {
+    this.executionMap.set(campaignId, false);
+    this.pauseMap.set(campaignId, true);
+    console.log(`Cancel requested for campaign ${campaignId}`);
   }
 
   /**
