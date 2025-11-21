@@ -2,211 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ActivityWallet,
-  WalletDetail,
-  WalletTransaction,
-  FundingRecord,
-  BalanceHistory,
   WalletBalance
 } from '../types';
-
-interface WalletDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  wallet: ActivityWallet | null;
-}
-
-function WalletDetailModal({ isOpen, onClose, wallet }: WalletDetailModalProps) {
-  if (!isOpen || !wallet) return null;
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <div className="badge badge-info gap-1">🔄 进行中</div>;
-      case 'pending':
-        return <div className="badge badge-warning gap-1">⏳ 待充值</div>;
-      case 'completed':
-        return <div className="badge badge-success gap-1">✅ 已完成</div>;
-      case 'failed':
-        return <div className="badge badge-error gap-1">❌ 已失败</div>;
-      default:
-        return <div className="badge badge-neutral gap-1">📋 未知</div>;
-    }
-  };
-
-  const getTransactionTypeIcon = (type: string) => {
-    const typeIcons = {
-      'incoming': '📥',
-      'outgoing': '📤',
-      'self': '🔄'
-    };
-    return typeIcons[type as keyof typeof typeIcons] || '❓';
-  };
-
-  const formatNumber = (num: string, decimals = 4) => {
-    const number = parseFloat(num);
-    if (isNaN(number)) return '0';
-    return number.toFixed(decimals);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN');
-  };
-
-  return (
-    <div className="modal modal-open">
-      <div className="modal-box w-11/12 max-w-4xl max-h-[90vh]">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">💼 钱包详情 - {wallet.campaignName}</h2>
-          <button
-            onClick={onClose}
-            className="btn btn-sm btn-circle btn-ghost"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Wallet Info */}
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">钱包信息</h3>
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="text-sm text-base-content/60">活动名称:</div>
-                    <div className="font-medium">{wallet.campaignName}</div>
-                  </div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="text-sm text-base-content/60">状态:</div>
-                    {getStatusBadge(wallet.status)}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm text-base-content/60">创建时间:</div>
-                    <div className="text-sm">{formatDate(wallet.createdAt)}</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="stat">
-                    <div className="stat-title text-xs">总余额 / 总容量</div>
-                    <div className="stat-value text-lg">
-                      {formatNumber(wallet.totalBalance)} / {formatNumber(wallet.totalCapacity)} ETH
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mockup-code bg-base-200 p-4 rounded-lg">
-                <div className="text-sm font-mono break-all">
-                  🔗 {wallet.address}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Token Balances */}
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span>💰</span>
-                代币余额
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {wallet.balances.map((balance, index) => (
-                  <div key={index} className="card bg-base-200">
-                    <div className="card-body p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="badge badge-outline">{balance.tokenSymbol}</div>
-                        <div className={`badge badge-sm ${parseFloat(balance.balance) > 0 ? 'badge-success' : 'badge-error'}`}>
-                          {parseFloat(balance.balance) > 0 ? '可用' : '已清空'}
-                        </div>
-                      </div>
-                      <div className="text-2xl font-bold mb-1">
-                        {formatNumber(balance.balance)}
-                      </div>
-                      {balance.usdValue && (
-                        <div className="text-sm text-base-content/60">
-                          ≈ ${parseFloat(balance.usdValue).toFixed(2)}
-                        </div>
-                      )}
-                      {parseFloat(balance.balance) > 0 && (
-                        <div className="mt-2">
-                          <div className="flex items-center gap-2">
-                            <div className="text-xs text-base-content/60">使用率:</div>
-                            <div className="text-xs font-medium">
-                              {((parseFloat(balance.balance) / parseFloat(wallet.totalCapacity)) * 100).toFixed(1)}%
-                            </div>
-                          </div>
-                          <progress
-                            className="progress progress-primary w-full h-2"
-                            value={Math.min((parseFloat(balance.balance) / parseFloat(wallet.totalCapacity)) * 100, 100)}
-                            max="100"
-                          ></progress>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Transactions */}
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span>📊</span>
-                最近交易
-              </h3>
-              <div className="space-y-2">
-                {[1, 2, 3].map((index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-lg">{getTransactionTypeIcon('incoming')}</span>
-                      <div>
-                        <div className="font-medium">接收代币</div>
-                        <div className="text-sm text-base-content/60">来自: 0x1234...5678</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium text-success">+{formatNumber('100')} USDC</div>
-                      <div className="text-sm text-base-content/60">{formatDate(new Date().toISOString())}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="modal-action">
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(wallet.address);
-                alert('钱包地址已复制到剪贴板');
-              }}
-              className="btn btn-ghost"
-            >
-              📋 复制地址
-            </button>
-            <button
-              onClick={onClose}
-              className="btn btn-primary"
-            >
-              关闭
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function WalletManagement() {
   const navigate = useNavigate();
   const [wallets, setWallets] = useState<ActivityWallet[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<ActivityWallet | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
@@ -393,8 +195,8 @@ export default function WalletManagement() {
   };
 
   const handleViewDetails = (wallet: ActivityWallet) => {
-    setSelectedWallet(wallet);
-    setIsDetailModalOpen(true);
+    // 直接跳转到对应的活动详情页面
+    navigate(`/campaign/${wallet.campaignId}`);
   };
 
   const handleExportWallet = async (wallet: ActivityWallet) => {
@@ -655,16 +457,6 @@ export default function WalletManagement() {
           </div>
         </div>
       </div>
-
-      {/* Wallet Detail Modal */}
-      <WalletDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => {
-          setIsDetailModalOpen(false);
-          setSelectedWallet(null);
-        }}
-        wallet={selectedWallet}
-      />
     </div>
   );
 }
