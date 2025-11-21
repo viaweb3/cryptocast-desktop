@@ -289,7 +289,7 @@ export default function WalletManagement() {
       </div>
 
       {/* Wallet Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div className="stat bg-base-100 rounded-lg shadow-sm">
           <div className="stat-figure text-primary">
             👛
@@ -308,17 +308,6 @@ export default function WalletManagement() {
             {wallets.filter(w => w.status === 'active').length}
           </div>
           <div className="stat-desc text-success">正在进行中</div>
-        </div>
-
-        <div className="stat bg-base-100 rounded-lg shadow-sm">
-          <div className="stat-figure text-secondary">
-            💰
-          </div>
-          <div className="stat-title">总价值</div>
-          <div className="stat-value text-secondary">
-            ${wallets.reduce((sum, w) => sum + parseFloat(w.totalBalance || '0'), 0).toLocaleString()}
-          </div>
-          <div className="stat-desc text-secondary">所有钱包</div>
         </div>
       </div>
 
