@@ -61,7 +61,7 @@ export class ChainManagementService {
             rpc_url: 'https://polygon-rpc.com',
             rpc_backup: 'https://rpc-mainnet.matic.network',
             explorer_url: 'https://polygonscan.com',
-            symbol: 'MATIC',
+            symbol: 'POL',
             decimals: 18,
             enabled: true,
             is_custom: false
@@ -471,7 +471,8 @@ export class ChainManagementService {
    */
   async getChainInfo(chain: string): Promise<any> {
     if (chain.toLowerCase().includes('solana')) {
-      const activeRPC = await this.getActiveSolanaRPC('mainnet-beta');
+      const rpcs = await this.getSolanaRPCs('mainnet-beta');
+      const activeRPC = rpcs.find(rpc => rpc.enabled) || rpcs[0];
       if (!activeRPC) {
         throw new Error('No active Solana RPC available');
       }

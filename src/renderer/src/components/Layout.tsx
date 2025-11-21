@@ -7,13 +7,21 @@ interface LayoutProps {
 
 interface PriceInfo {
   eth: number;
-  matic: number;
+  bnb: number;
+  pol: number;
+  avax: number;
   sol: number;
 }
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const [priceInfo, setPriceInfo] = useState<PriceInfo>({ eth: 3685.42, matic: 0.92, sol: 178.35 });
+  const [priceInfo, setPriceInfo] = useState<PriceInfo>({
+    eth: 3685.42,
+    bnb: 612.35,
+    pol: 0.48,
+    avax: 35.82,
+    sol: 178.35
+  });
 
   const navItems = [
     { path: '/', label: '仪表盘', icon: '🏠' },
@@ -34,7 +42,6 @@ export default function Layout({ children }: LayoutProps) {
         {/* Logo Area */}
         <div className="p-5 border-b border-base-300">
           <h1 className="text-lg font-bold text-primary">CryptoCast</h1>
-          <p className="text-xs text-base-content/60 mt-1">空投测试</p>
         </div>
 
         {/* Navigation */}
@@ -73,7 +80,7 @@ export default function Layout({ children }: LayoutProps) {
               <span className="text-lg">💰</span>
               <h3 className="text-xs font-semibold text-info uppercase tracking-wide">实时价格</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
@@ -83,10 +90,24 @@ export default function Layout({ children }: LayoutProps) {
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                  <span className="text-xs font-medium">MATIC</span>
+                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                  <span className="text-xs font-medium">BNB</span>
                 </div>
-                <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.matic)}</span>
+                <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.bnb)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                  <span className="text-xs font-medium">POL</span>
+                </div>
+                <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.pol)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  <span className="text-xs font-medium">AVAX</span>
+                </div>
+                <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.avax)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -104,14 +125,22 @@ export default function Layout({ children }: LayoutProps) {
               <span className="text-lg">⚡</span>
               <h3 className="text-xs font-semibold text-warning uppercase tracking-wide">Gas价格</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-medium">Ethereum</span>
-                <div className="badge badge-warning badge-sm">28 Gwei</div>
+                <div className="badge badge-warning badge-sm whitespace-nowrap">28 Gwei</div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-medium">Polygon</span>
-                <div className="badge badge-success badge-sm">95 Gwei</div>
+                <div className="badge badge-success badge-sm whitespace-nowrap">95 Gwei</div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-medium">BSC</span>
+                <div className="badge badge-info badge-sm whitespace-nowrap">12 Gwei</div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-medium">Avalanche</span>
+                <div className="badge badge-purple badge-sm whitespace-nowrap">25 Gwei</div>
               </div>
             </div>
           </div>

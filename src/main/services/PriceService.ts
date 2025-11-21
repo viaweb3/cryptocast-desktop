@@ -38,7 +38,7 @@ export class PriceService {
   // Supported networks
   private readonly networks: NetworkConfig[] = [
     { name: 'ethereum', chainId: 1, currency: 'USD', nativeTokenSymbol: 'ETH', coingeckoId: 'ethereum' },
-    { name: 'polygon', chainId: 137, currency: 'USD', nativeTokenSymbol: 'MATIC', coingeckoId: 'matic-network' },
+    { name: 'polygon', chainId: 137, currency: 'USD', nativeTokenSymbol: 'POL', coingeckoId: 'polygon-ecosystem-token' },
     { name: 'arbitrum', chainId: 42161, currency: 'USD', nativeTokenSymbol: 'ETH', coingeckoId: 'ethereum' },
     { name: 'optimism', chainId: 10, currency: 'USD', nativeTokenSymbol: 'ETH', coingeckoId: 'ethereum' },
     { name: 'base', chainId: 8453, currency: 'USD', nativeTokenSymbol: 'ETH', coingeckoId: 'ethereum' },

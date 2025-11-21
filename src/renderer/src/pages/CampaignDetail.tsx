@@ -48,6 +48,11 @@ export default function CampaignDetail() {
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
+  // Pagination states
+  const [txCurrentPage, setTxCurrentPage] = useState(1);
+  const [recipientsCurrentPage, setRecipientsCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [walletBalances, setWalletBalances] = useState({
     token: { current: '450.5', total: '500' },
     gas: { current: '0.12', total: '0.15' }
@@ -91,13 +96,18 @@ export default function CampaignDetail() {
         { id: '8', batchNumber: 8, status: 'sending', addressCount: 50, createdAt: new Date().toISOString() },
       ];
 
-      const mockRecipients: Recipient[] = [
-        { address: '0x1111111111111111111111111111111111111111', amount: '100 WETH', status: 'success', txHash: '0xabc123...' },
-        { address: '0x2222222222222222222222222222222222222222', amount: '200 WETH', status: 'success', txHash: '0xdef456...' },
-        { address: '0x3333333333333333333333333333333333333333', amount: '150 WETH', status: 'pending' },
-        { address: '0x4444444444444444444444444444444444444444', amount: '50 WETH', status: 'sending' },
-        { address: '0x5555555555555555555555555555555555555555', amount: '75 WETH', status: 'success', txHash: '0xghi789...' },
-      ];
+      // Generate more mock recipients for pagination testing
+      const mockRecipients: Recipient[] = [];
+      const statuses: Recipient['status'][] = ['success', 'sending', 'pending', 'failed'];
+
+      for (let i = 0; i < 50; i++) {
+        mockRecipients.push({
+          address: `0x${i.toString(16).padStart(40, '0')}`,
+          amount: `${Math.floor(Math.random() * 200) + 50} WETH`,
+          status: statuses[Math.floor(Math.random() * statuses.length)],
+          txHash: Math.random() > 0.3 ? `0x${Math.random().toString(16).substr(2, 10)}...` : undefined,
+        });
+      }
 
       setCampaign(mockCampaign);
       setTransactions(mockTransactions);
@@ -138,6 +148,123 @@ export default function CampaignDetail() {
   const handlePauseResume = () => {
     setIsPaused(!isPaused);
     // Implementation would go here
+  };
+
+  // Pagination logic
+  const getPaginatedItems = <T,>(items: T[], currentPage: number) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return items.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (items: T[]) => {
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  const paginatedTransactions = getPaginatedItems(transactions, txCurrentPage);
+  const paginatedRecipients = getPaginatedItems(recipients, recipientsCurrentPage);
+  const txTotalPages = getTotalPages(transactions);
+  const recipientsTotalPages = getTotalPages(recipients);
+
+  const formatPaginationInfo = (currentPage: number, items: T[]) => {
+    const startIndex = (currentPage - 1) * itemsPerPage + 1;
+    const endIndex = Math.min(currentPage * itemsPerPage, items.length);
+    return `显示 ${startIndex} 到 ${endIndex} 条，共 ${items.length} 条记录`;
+  };
+
+  const renderPagination = (currentPage: number, totalPages: number, setCurrentPage: (page: number) => void) => {
+    const getVisiblePages = () => {
+      const pages: (number | string)[] = [];
+
+      if (totalPages <= 7) {
+        // Show all pages if total is small
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Always show first page
+        pages.push(1);
+
+        // Show ellipsis if current page is far from start
+        if (currentPage > 3) {
+          pages.push('...');
+        }
+
+        // Show pages around current page
+        const start = Math.max(2, currentPage - 1);
+        const end = Math.min(totalPages - 1, currentPage + 1);
+
+        for (let i = start; i <= end; i++) {
+          if (i !== 1 && i !== totalPages) {
+            pages.push(i);
+          }
+        }
+
+        // Show ellipsis if current page is far from end
+        if (currentPage < totalPages - 2) {
+          pages.push('...');
+        }
+
+        // Always show last page
+        if (totalPages > 1) {
+          pages.push(totalPages);
+        }
+      }
+
+      return pages;
+    };
+
+    return (
+      <div className="join">
+        <button
+          className="join-item btn btn-sm"
+          onClick={() => setCurrentPage(1)}
+          disabled={currentPage === 1}
+        >
+          «
+        </button>
+        <button
+          className="join-item btn btn-sm"
+          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+        >
+          ‹
+        </button>
+        {getVisiblePages().map((page, index) => {
+          if (page === '...') {
+            return (
+              <button key={`ellipsis-${index}`} className="join-item btn btn-sm btn-disabled">
+                ...
+              </button>
+            );
+          }
+
+          return (
+            <button
+              key={page}
+              className={`join-item btn btn-sm ${currentPage === page ? 'btn-active' : ''}`}
+              onClick={() => setCurrentPage(page as number)}
+            >
+              {page}
+            </button>
+          );
+        })}
+        <button
+          className="join-item btn btn-sm"
+          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+        >
+          ›
+        </button>
+        <button
+          className="join-item btn btn-sm"
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={currentPage === totalPages}
+        >
+          »
+        </button>
+      </div>
+    );
   };
 
   const handleExportPrivateKey = async () => {
@@ -397,7 +524,7 @@ export default function CampaignDetail() {
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium flex items-center gap-1">
                         <div className="w-2 h-2 rounded-full bg-warning"></div>
-                        MATIC (Gas)
+                        POL (Gas)
                       </span>
                       <span className="text-sm font-bold">
                         {walletBalances.gas.current} / {walletBalances.gas.total}
@@ -467,7 +594,7 @@ export default function CampaignDetail() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((tx) => (
+                {paginatedTransactions.map((tx) => (
                   <tr key={tx.id} className="hover">
                     <td>
                       <div className="font-bold">#{tx.batchNumber}</div>
@@ -521,14 +648,9 @@ export default function CampaignDetail() {
 
           <div className="flex justify-between items-center mt-6">
             <div className="text-sm text-base-content/60">
-              显示 1 到 {transactions.length} 条，共 10 条记录
+              {formatPaginationInfo(txCurrentPage, transactions)}
             </div>
-            <div className="join">
-              <button className="join-item btn btn-sm">1</button>
-              <button className="join-item btn btn-sm">2</button>
-              <button className="join-item btn btn-sm btn-disabled">...</button>
-              <button className="join-item btn btn-sm">»</button>
-            </div>
+            {renderPagination(txCurrentPage, txTotalPages, setTxCurrentPage)}
           </div>
         </div>
       </div>
@@ -558,8 +680,8 @@ export default function CampaignDetail() {
                 </tr>
               </thead>
               <tbody>
-                {recipients.map((recipient, index) => (
-                  <tr key={index} className="hover">
+                {paginatedRecipients.map((recipient, index) => (
+                  <tr key={`${recipient.address}-${index}`} className="hover">
                     <td>
                       <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded max-w-[200px] truncate">
                         {recipient.address}
@@ -606,15 +728,9 @@ export default function CampaignDetail() {
 
           <div className="flex justify-between items-center mt-6">
             <div className="text-sm text-base-content/60">
-              显示 1 到 {recipients.length} 条，共 1000 条记录
+              {formatPaginationInfo(recipientsCurrentPage, recipients)}
             </div>
-            <div className="join">
-              <button className="join-item btn btn-sm">1</button>
-              <button className="join-item btn btn-sm">2</button>
-              <button className="join-item btn btn-sm btn-disabled">...</button>
-              <button className="join-item btn btn-sm">200</button>
-              <button className="join-item btn btn-sm">»</button>
-            </div>
+            {renderPagination(recipientsCurrentPage, recipientsTotalPages, setRecipientsCurrentPage)}
           </div>
         </div>
       </div>
