@@ -19,6 +19,9 @@ export interface EstimateResult {
   estimatedGasCostUSD: string;
   estimatedDuration: string; // in minutes
   gasPrice: string;
+  maxFeePerGas?: string; // EIP-1559
+  maxPriorityFeePerGas?: string; // EIP-1559
+  isEIP1559?: boolean;
   tokenSymbol?: string;
   recommendations: {
     optimalBatchSize: number;
@@ -54,16 +57,39 @@ export class CampaignEstimator {
       const totalBatches = Math.ceil(request.recipientCount / batchSize);
 
       // Get chain configuration
-      const chains = await this.chainService.getEVMChains(true);
+      const chains = await this.chainService.getEVMChains();
       const chainConfig = chains.find(c => c.chainId.toString() === request.chain);
 
       if (!chainConfig) {
         throw new Error(`Chain configuration not found for chain ${request.chain}`);
       }
 
-      // Get current gas price
-      const gasPrice = await this.gasService.getGasPrice(request.chain);
-      const gasPriceGwei = parseFloat(gasPrice);
+      console.log(`🔍 [CampaignEstimator] Estimating for chain ${request.chain} (${chainConfig.name})`);
+      console.log(`🔍 [CampaignEstimator] RPC URL: ${chainConfig.rpcUrl}`);
+
+      // Get real-time gas price from RPC with EIP-1559 support
+      let gasPriceGwei: number;
+      let maxFeePerGas: string | undefined;
+      let maxPriorityFeePerGas: string | undefined;
+      let isEIP1559 = false;
+
+      try {
+        const gasData = await this.gasService.getGasPriceFromRPC(chainConfig.rpcUrl, request.chain);
+        gasPriceGwei = parseFloat(gasData.gasPrice);
+        maxFeePerGas = gasData.maxFeePerGas;
+        maxPriorityFeePerGas = gasData.maxPriorityFeePerGas;
+        isEIP1559 = gasData.isEIP1559;
+
+        console.log(`✓ [CampaignEstimator] Got real-time gas price: ${gasPriceGwei} Gwei`);
+        if (isEIP1559) {
+          console.log(`✓ [CampaignEstimator] EIP-1559: maxFee=${maxFeePerGas} Gwei, priority=${maxPriorityFeePerGas} Gwei`);
+        }
+      } catch (error) {
+        console.warn(`⚠️  [CampaignEstimator] Failed to get RPC gas price, using fallback:`, error);
+        const fallbackGasPrice = await this.gasService.getGasPrice(request.chain);
+        gasPriceGwei = parseFloat(fallbackGasPrice);
+        console.log(`📌 [CampaignEstimator] Using fallback gas price: ${gasPriceGwei} Gwei`);
+      }
 
       // Determine if it's ERC20 or native token
       const isNativeToken = !request.tokenAddress ||
@@ -95,7 +121,7 @@ export class CampaignEstimator {
         gasPerTransfer
       );
 
-      return {
+      const result: EstimateResult = {
         totalRecipients: request.recipientCount,
         estimatedBatches: totalBatches,
         estimatedGasPerBatch: gasPerBatch.toString(),
@@ -103,7 +129,10 @@ export class CampaignEstimator {
         estimatedGasCostETH: gasCostETH.toFixed(6),
         estimatedGasCostUSD: gasCostUSD.toFixed(2),
         estimatedDuration: totalTimeMinutes.toFixed(1),
-        gasPrice: gasPrice,
+        gasPrice: gasPriceGwei.toFixed(2),
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        isEIP1559,
         tokenSymbol: chainConfig.symbol,
         recommendations: {
           optimalBatchSize,
@@ -111,6 +140,15 @@ export class CampaignEstimator {
           totalEstimatedTime: totalTimeMinutes.toFixed(1),
         },
       };
+
+      console.log(`✓ [CampaignEstimator] Estimation complete:`, {
+        batches: totalBatches,
+        totalGas: totalGas.toLocaleString(),
+        costETH: gasCostETH.toFixed(6),
+        costUSD: gasCostUSD.toFixed(2),
+      });
+
+      return result;
     } catch (error) {
       console.error('Failed to estimate campaign:', error);
       throw new Error('Campaign estimation failed');

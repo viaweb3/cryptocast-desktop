@@ -2,18 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ActivityWallet,
-  WalletBalance
+  WalletBalance,
+  EVMChain
 } from '../types';
 
 export default function WalletManagement() {
   const navigate = useNavigate();
   const [wallets, setWallets] = useState<ActivityWallet[]>([]);
+  const [chains, setChains] = useState<EVMChain[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [showPrivateKeyModal, setShowPrivateKeyModal] = useState(false);
+  const [exportedWallet, setExportedWallet] = useState<{ address: string; privateKey: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     loadWallets();
+    loadChains();
   }, []);
 
   const loadWallets = async () => {
@@ -33,6 +39,17 @@ export default function WalletManagement() {
       setWallets([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadChains = async () => {
+    try {
+      if (window.electronAPI?.chain) {
+        const chainsData = await window.electronAPI.chain.getEVMChains();
+        setChains(chainsData);
+      }
+    } catch (error) {
+      console.error('Failed to load chains:', error);
     }
   };
 
@@ -72,13 +89,38 @@ export default function WalletManagement() {
       if (window.electronAPI?.wallet) {
         const privateKey = await window.electronAPI.wallet.exportPrivateKey(wallet.privateKeyBase64);
 
-        // 直接显示私钥弹窗
-        alert(`钱包地址: ${wallet.address}\n私钥: ${privateKey}\n\n请妥善保管此私钥！`);
+        // 显示自定义私钥弹窗
+        setExportedWallet({
+          address: wallet.address,
+          privateKey: privateKey
+        });
+        setShowPrivateKeyModal(true);
+        setCopied(false);
       }
     } catch (error) {
       console.error('Failed to export wallet:', error);
       alert('获取私钥失败，请重试');
     }
+  };
+
+  const handleCopyPrivateKey = () => {
+    if (exportedWallet?.privateKey) {
+      navigator.clipboard.writeText(exportedWallet.privateKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCopyAddress = () => {
+    if (exportedWallet?.address) {
+      navigator.clipboard.writeText(exportedWallet.address);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowPrivateKeyModal(false);
+    setExportedWallet(null);
+    setCopied(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -104,6 +146,22 @@ export default function WalletManagement() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('zh-CN');
+  };
+
+  const getChainName = (chainValue: string) => {
+    // Try to find chain by chainId first (most common case for EVM)
+    const chainIdNum = parseInt(chainValue);
+    if (!isNaN(chainIdNum)) {
+      const chain = chains.find(c => c.chainId === chainIdNum);
+      if (chain) return chain.name;
+    }
+
+    // Try to match by name (for Solana networks like 'mainnet-beta', 'devnet')
+    const chain = chains.find(c => c.name.toLowerCase() === chainValue.toLowerCase());
+    if (chain) return chain.name;
+
+    // Fallback: return the value as-is or with "Chain" prefix
+    return chainValue || 'Unknown Chain';
   };
 
   return (
@@ -182,7 +240,7 @@ export default function WalletManagement() {
               <tr>
                 <th className="bg-base-200">活动名称</th>
                 <th className="bg-base-200">钱包地址</th>
-                <th className="bg-base-200">余额状态</th>
+                <th className="bg-base-200">区块链网络</th>
                 <th className="bg-base-200 text-center">操作</th>
               </tr>
             </thead>
@@ -213,19 +271,10 @@ export default function WalletManagement() {
                     </div>
                   </td>
                   <td>
-                    <div className="space-y-1">
-                      {wallet.balances.filter(b => parseFloat(b.balance) > 0).map((balance, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <div className="badge badge-outline badge-sm">{balance.tokenSymbol}</div>
-                          <div className="text-sm font-medium">{formatNumber(balance.balance, 4)}</div>
-                        </div>
-                      ))}
-                      {wallet.balances.every(b => parseFloat(b.balance) === 0) && (
-                        <div className="flex items-center gap-2 text-base-content/40">
-                          <span>💰</span>
-                          <span className="text-sm">余额已清空</span>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <div className="badge badge-primary badge-sm">
+                        {getChainName(wallet.chain)}
+                      </div>
                     </div>
                   </td>
                   <td>
@@ -309,6 +358,91 @@ export default function WalletManagement() {
           </div>
         </div>
       </div>
+
+      {/* Private Key Export Modal */}
+      {showPrivateKeyModal && exportedWallet && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <span>🔑</span>
+              <span>导出私钥</span>
+            </h3>
+
+            {/* Warning Alert */}
+            <div className="alert alert-warning mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span className="text-sm">
+                <strong>安全警告：</strong>私钥拥有您钱包的完全控制权，请妥善保管，切勿分享给他人！
+              </span>
+            </div>
+
+            {/* Wallet Address */}
+            <div className="mb-4">
+              <label className="label">
+                <span className="label-text font-semibold">钱包地址</span>
+              </label>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-base-200 px-4 py-3 rounded-lg font-mono text-sm break-all">
+                  {exportedWallet.address}
+                </div>
+                <button
+                  onClick={handleCopyAddress}
+                  className="btn btn-square btn-outline"
+                  title="复制地址"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+
+            {/* Private Key */}
+            <div className="mb-6">
+              <label className="label">
+                <span className="label-text font-semibold">私钥 (Private Key)</span>
+              </label>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-error/10 border-2 border-error/30 px-4 py-3 rounded-lg font-mono text-sm break-all">
+                  {exportedWallet.privateKey}
+                </div>
+                <button
+                  onClick={handleCopyPrivateKey}
+                  className={`btn btn-square ${copied ? 'btn-success' : 'btn-error'}`}
+                  title="复制私钥"
+                >
+                  {copied ? '✓' : '📋'}
+                </button>
+              </div>
+              {copied && (
+                <div className="text-success text-sm mt-2 flex items-center gap-1">
+                  <span>✓</span>
+                  <span>私钥已复制到剪贴板</span>
+                </div>
+              )}
+            </div>
+
+            {/* Security Tips */}
+            <div className="bg-base-200 p-4 rounded-lg mb-4">
+              <h4 className="font-semibold mb-2 text-sm">安全提示</h4>
+              <ul className="text-sm space-y-1 text-base-content/80">
+                <li>• 私钥可以导入到 MetaMask、Trust Wallet 等钱包</li>
+                <li>• 请将私钥保存在安全的地方（如密码管理器）</li>
+                <li>• 不要截图或通过互联网传输私钥</li>
+                <li>• 任何拥有私钥的人都可以控制钱包资金</li>
+              </ul>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="modal-action">
+              <button onClick={handleCloseModal} className="btn btn-primary">
+                我已安全保存
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCloseModal}></div>
+        </div>
+      )}
     </div>
   );
 }

@@ -212,12 +212,9 @@ export class ChainManagementService {
   /**
    * 获取所有EVM链（内置+自定义）
    */
-  async getEVMChains(onlyEnabled = false): Promise<EVMChain[]> {
+  async getEVMChains(): Promise<EVMChain[]> {
     try {
-      const query = onlyEnabled
-        ? `SELECT * FROM chains WHERE type = 'evm' AND enabled = 1 ORDER BY chain_id`
-        : `SELECT * FROM chains WHERE type = 'evm' ORDER BY chain_id`;
-
+      const query = `SELECT * FROM chains WHERE type = 'evm' ORDER BY chain_id`;
       const stmt = this.db.prepare(query);
       return stmt.all() as EVMChain[];
     } catch (error) {
@@ -490,7 +487,7 @@ export class ChainManagementService {
       };
     } else {
       // EVM chain
-      const evmChains = await this.getEVMChains(true);
+      const evmChains = await this.getEVMChains();
       const chainInfo = evmChains.find(c => c.chain_id.toString() === chain || c.name.toLowerCase() === chain.toLowerCase());
 
       if (!chainInfo) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCampaign } from '../contexts/CampaignContext';
-import { Campaign, CampaignStatus } from '../types';
+import { Campaign, CampaignStatus, EVMChain } from '../types';
 
 interface HistoryFilters {
   timeRange: 'all' | 'today' | 'week' | 'month' | 'custom';
@@ -14,13 +14,6 @@ interface HistoryFilters {
   };
 }
 
-interface ChainInfo {
-  id: string;
-  name: string;
-  symbol: string;
-  icon: string;
-  color: string;
-}
 
 export default function History() {
   const navigate = useNavigate();
@@ -35,48 +28,117 @@ export default function History() {
     page: 1,
     limit: 10,
   });
-  const [isRefreshing, setIsRefreshing] = useState(false);
+    const [chains, setChains] = useState<EVMChain[]>([]);
 
-  // Load campaigns on mount and set up auto-refresh
+  // Load campaigns and chains on mount and set up auto-refresh
   useEffect(() => {
     loadData();
+    loadChains();
 
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(() => {
-      loadData(true);
-    }, 10000);
+    }, []);
 
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadData = async (silent = false) => {
-    if (!silent) {
-      setIsRefreshing(true);
+  // Load chains from database
+  const loadChains = async () => {
+    try {
+      console.log('🔍 [History] loadChains: Starting to fetch chains from database');
+      if (window.electronAPI?.chain) {
+        const chainsData = await window.electronAPI.chain.getEVMChains();
+        console.log(`🔍 [History] loadChains: Received ${chainsData.length} chains from API`);
+        setChains(chainsData);
+        console.log('🔍 [History] loadChains: Chains set to state');
+      } else {
+        console.log('🔍 [History] loadChains: window.electronAPI.chain is not available');
+      }
+    } catch (error) {
+      console.error('🔍 [History] loadChains: Failed to load chains:', error);
     }
+  };
+
+  const loadData = async () => {
     try {
       await actions.loadCampaigns();
     } catch (error) {
       console.error('Failed to load campaigns:', error);
-    } finally {
-      if (!silent) {
-        setIsRefreshing(false);
-      }
     }
-  };
-
-  const chains: Record<string, ChainInfo> = {
-    ethereum: { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', icon: '🔷', color: '#627eea' },
-    polygon: { id: 'polygon', name: 'Polygon', symbol: 'MATIC', icon: '🟣', color: '#8247e5' },
-    arbitrum: { id: 'arbitrum', name: 'Arbitrum', symbol: 'ETH', icon: '🔵', color: '#28a0f0' },
-    bsc: { id: 'bsc', name: 'BSC', symbol: 'BNB', icon: '🟡', color: '#f3ba2f' },
-    optimism: { id: 'optimism', name: 'Optimism', symbol: 'ETH', icon: '🔴', color: '#ff0420' },
   };
 
   // Use real data from state
   const displayCampaigns = state.campaigns;
 
+  // Global debug log to always show campaign data
+  console.log('🔍 [History] Campaign data loaded:', {
+    count: displayCampaigns.length,
+    campaigns: displayCampaigns.map(c => ({
+      id: c.id,
+      name: c.name,
+      chain: c.chain,
+      chainId: (c as any).chainId // Chain ID might not be in interface but could be in data
+    }))
+  });
+
+  // Helper function to get chain icon based on chain name (dynamically generated)
+  const getChainIcon = (chainName: string): string => {
+    // Generate consistent icons based on chain name hash for dynamic chains
+    const icons = ['🔷', '🟣', '🔵', '🟡', '🔴', '🟢', '🟠', '🔺', '⚡', '🌟', '💎', '🚀'];
+
+    // Use a simple hash to get consistent icon for the same chain name
+    let hash = 0;
+    for (let i = 0; i < chainName.length; i++) {
+      hash = ((hash << 5) - hash + chainName.charCodeAt(i)) & 0xffffffff;
+    }
+
+    const iconIndex = Math.abs(hash) % icons.length;
+    return icons[iconIndex];
+  };
+
+  // Helper function to get chain by name or chainId using only database data
+  const getChainByName = (chainValue: string | number | undefined) => {
+    if (!chainValue) return undefined;
+
+    const chainStr = String(chainValue);
+    const chainIdAsNumber = parseInt(chainStr);
+
+    // 1. Try exact name match first
+    let chain = chains.find(c => c.name === chainStr);
+    if (chain) return chain;
+
+    // 2. Try matching by chainId (common scenario)
+    if (!isNaN(chainIdAsNumber)) {
+      chain = chains.find(c => c.chainId === chainIdAsNumber);
+      if (chain) return chain;
+    }
+
+    // 3. Try case-insensitive name match
+    chain = chains.find(c => c.name.toLowerCase() === chainStr.toLowerCase());
+    if (chain) return chain;
+
+    // 4. Try partial match based on actual database chain names
+    for (const dbChain of chains) {
+      const dbChainNameLower = dbChain.name.toLowerCase();
+      const inputLower = chainStr.toLowerCase();
+
+      // Check if input contains part of db chain name or vice versa
+      if (dbChainNameLower.includes(inputLower) || inputLower.includes(dbChainNameLower)) {
+        return dbChain;
+      }
+    }
+
+    return undefined;
+  };
+
   const filteredCampaigns = useMemo(() => {
     let filtered = [...displayCampaigns];
+
+    // Debug: Log all unique chain values from campaigns and full campaign data
+    const uniqueChains = [...new Set(displayCampaigns.map(c => c.chain))];
+    console.log('🔍 [History] All campaign chain values:', uniqueChains);
+    console.log('🔍 [History] Available chains from database:', chains.map(c => c.name));
+    console.log('🔍 [History] Full campaign data for debugging:', displayCampaigns.map(c => ({
+      id: c.id,
+      name: c.name,
+      chain: c.chain,
+      chainId: c.chainId
+    })));
 
     // Time range filter
     if (filters.timeRange !== 'all') {
@@ -112,9 +174,34 @@ export default function History() {
       });
     }
 
-    // Chain filter
+    // Chain filter - use simplified matching
     if (filters.chain !== 'all') {
-      filtered = filtered.filter(campaign => campaign.chain === filters.chain);
+      console.log('🔍 [History] Chain filter:', filters.chain);
+
+      // Get the selected chain from database
+      const selectedChain = getChainByName(filters.chain);
+      console.log('🔍 [History] Selected chain:', selectedChain);
+
+      filtered = filtered.filter(campaign => {
+        // Try to match campaign using our enhanced chain resolution
+        const campaignChain = getChainByName(campaign.chain);
+
+        // Match by exact name
+        if (campaign.chain === filters.chain) return true;
+
+        // Match by resolved chain name
+        if (campaignChain && campaignChain.name === filters.chain) return true;
+
+        // Match by chainId if we have a selected chain
+        if (selectedChain) {
+          const campaignChainId = parseInt(campaign.chain);
+          if (!isNaN(campaignChainId) && campaignChainId === selectedChain.chainId) {
+            return true;
+          }
+        }
+
+        return false;
+      });
     }
 
     // Status filter
@@ -142,59 +229,85 @@ export default function History() {
   const totalPages = Math.ceil(filteredCampaigns.length / pagination.limit);
 
   const getStatusBadge = (status: CampaignStatus) => {
+    const baseClasses = "badge gap-1 text-xs font-medium px-3 py-2";
     switch (status) {
       case 'COMPLETED':
-        return <div className="badge badge-success gap-1">✅ 已完成</div>;
+        return <div className={`${baseClasses} bg-green-100 text-green-800 border-green-200`}>✅ 已完成</div>;
       case 'FAILED':
-        return <div className="badge badge-error gap-1">❌ 已失败</div>;
+        return <div className={`${baseClasses} bg-red-100 text-red-800 border-red-200`}>❌ 已失败</div>;
       case 'SENDING':
-        return <div className="badge badge-info gap-1">🔄 发送中</div>;
+        return <div className={`${baseClasses} bg-blue-100 text-blue-800 border-blue-200`}>🔄 发送中</div>;
       case 'PAUSED':
-        return <div className="badge badge-warning gap-1">⏸️ 暂停</div>;
+        return <div className={`${baseClasses} bg-yellow-100 text-yellow-800 border-yellow-200`}>⏸️ 暂停</div>;
       case 'CANCELLED':
-        return <div className="badge badge-neutral gap-1">❌ 已取消</div>;
+        return <div className={`${baseClasses} bg-gray-100 text-gray-600 border-gray-200`}>❌ 已取消</div>;
       case 'READY':
-        return <div className="badge badge-warning gap-1">⚡ 就绪</div>;
+        return <div className={`${baseClasses} bg-orange-100 text-orange-800 border-orange-200`}>⚡ 就绪</div>;
       case 'FUNDED':
-        return <div className="badge badge-info gap-1">💰 已充值</div>;
+        return <div className={`${baseClasses} bg-blue-100 text-blue-800 border-blue-200`}>💰 已充值</div>;
       default:
-        return <div className="badge badge-neutral gap-1">📝 已创建</div>;
+        return <div className={`${baseClasses} bg-gray-100 text-gray-600 border-gray-200`}>📝 已创建</div>;
     }
   };
 
-  const getChainBadge = (chainId: string) => {
-    const chain = chains[chainId];
-    if (!chain) return <div className="badge badge-outline badge-sm">Unknown</div>;
+  const getChainBadge = (chainValue: string | number | undefined, chainId?: number) => {
+    // Try to find chain by the primary value, then by chainId
+    let chain = getChainByName(chainValue);
+
+    // If not found by primary value, try by chainId parameter
+    if (!chain && chainId) {
+      chain = chains.find(c => c.chainId === chainId);
+    }
+
+    // Use the best available name for display
+    const displayName = chain ? chain.name :
+                        (chainValue ? (isNaN(parseInt(String(chainValue))) ? String(chainValue) : `Chain ${chainValue}`) : 'Unknown Chain');
+
+    console.log('🔍 [History] getChainBadge:', { chainValue, chainId, foundChain: !!chain, displayName });
+
+    // 如果找到链信息，使用数据库中的颜色和名称
+    if (chain) {
+      return (
+        <div
+          className="badge text-xs font-medium px-2 py-1 gap-1 border-0"
+          style={{
+            backgroundColor: `${chain.color}20`,
+            color: chain.color,
+            border: `1px solid ${chain.color}40`
+          }}
+        >
+          <span>{getChainIcon(chain.name)}</span>
+          <span>{chain.name}</span>
+        </div>
+      );
+    }
+
+    // 如果没有找到链信息，显示为灰色徽章，但使用友好的名称
     return (
-      <div className="badge badge-outline badge-sm gap-1">
-        <span>{chain.icon}</span>
-        <span>{chain.name}</span>
+      <div className="badge bg-gray-100 text-gray-600 border-gray-200 text-xs font-medium px-2 py-1 gap-1">
+        <span>{getChainIcon(displayName)}</span>
+        <span>{displayName}</span>
       </div>
     );
   };
 
-  const handleExportSingle = async (campaign: Campaign) => {
-    try {
-      const result = await actions.exportReport(campaign.id);
-      if (result.success) {
-        alert(`活动 "${campaign.name}" 报告导出成功！`);
-      } else {
-        alert('导出失败，请重试');
-      }
-    } catch (error) {
-      alert(`导出活动 "${campaign.name}" 失败：${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  };
-
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined | null) => {
+    if (num === undefined || num === null || isNaN(num)) return '0';
     return num.toLocaleString('zh-CN');
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN');
+    return new Date(dateString).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-  const formatAmount = (amount: string, decimals = 4) => {
+  const formatAmount = (amount: string | undefined | null, decimals = 4) => {
+    if (!amount) return '0';
     const num = parseFloat(amount);
     if (isNaN(num)) return '0';
     return num.toFixed(decimals);
@@ -211,28 +324,12 @@ export default function History() {
             <span className="loading loading-spinner loading-sm"></span>
           )}
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => loadData()}
-            disabled={isRefreshing}
-            className="btn btn-sm btn-ghost"
-          >
-            {isRefreshing ? (
-              <>
-                <span className="loading loading-spinner loading-xs"></span>
-                刷新中...
-              </>
-            ) : (
-              <>🔄 刷新</>
-            )}
-          </button>
-          <button
+        <button
             onClick={() => navigate('/')}
             className="btn btn-sm btn-ghost"
           >
             ← 返回仪表盘
           </button>
-        </div>
       </div>
 
       {/* Statistical Overview */}
@@ -252,7 +349,7 @@ export default function History() {
           </div>
           <div className="stat-title">总发送地址</div>
           <div className="stat-value text-secondary">
-            {displayCampaigns.reduce((sum, c) => sum + c.totalRecipients, 0).toLocaleString()}
+            {formatNumber(displayCampaigns.reduce((sum, c) => sum + (c.totalRecipients || 0), 0))}
           </div>
           <div className="stat-desc text-secondary">所有活动</div>
         </div>
@@ -310,9 +407,9 @@ export default function History() {
                 className="select select-bordered"
               >
                 <option value="all">所有链</option>
-                {Object.values(chains).map(chain => (
-                  <option key={chain.id} value={chain.id}>
-                    {chain.icon} {chain.name}
+                {chains.map((chain) => (
+                  <option key={chain.name} value={chain.name}>
+                    {getChainIcon(chain.name)} {chain.name}
                   </option>
                 ))}
               </select>
@@ -397,37 +494,31 @@ export default function History() {
       </div>
 
       {/* Results Summary */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-start items-center mb-4">
         <div className="text-sm text-base-content/60">
           显示 <span className="font-medium">{formatNumber(paginatedCampaigns.length)}</span> /{' '}
           <span className="font-medium">{formatNumber(filteredCampaigns.length)}</span> 条记录
-        </div>
-        <div className="flex gap-2">
-          <button className="btn btn-ghost btn-sm">📥 导出全部</button>
-          <button className="btn btn-ghost btn-sm">🔄 刷新</button>
         </div>
       </div>
 
       {/* Campaigns Table */}
       <div className="card bg-base-100 shadow-sm">
         <div className="overflow-x-auto">
-          <table className="table table-zebra">
+          <table className="table-zebra table-hover">
             <thead>
               <tr>
-                <th className="bg-base-200">名称</th>
-                <th className="bg-base-200">链</th>
-                <th className="bg-base-200">状态</th>
-                <th className="bg-base-200 text-right">地址数</th>
-                <th className="bg-base-200 text-right">成功率</th>
-                <th className="bg-base-200 text-right">Gas消耗</th>
-                <th className="bg-base-200">创建时间</th>
-                <th className="bg-base-200 text-center">操作</th>
+                <th className="bg-base-200 font-semibold text-sm w-2/5 px-4 py-3">名称</th>
+                <th className="bg-base-200 font-semibold text-sm w-1/6 px-3 py-3">链</th>
+                <th className="bg-base-200 font-semibold text-sm w-1/6 px-3 py-3">状态</th>
+                <th className="bg-base-200 font-semibold text-sm text-right w-1/6 px-3 py-3">地址数</th>
+                <th className="bg-base-200 font-semibold text-sm w-1/5 px-3 py-3">创建时间</th>
+                <th className="bg-base-200 font-semibold text-sm text-center w-1/12 px-2 py-3">操作</th>
               </tr>
             </thead>
             <tbody>
               {paginatedCampaigns.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-16">
+                  <td colSpan={6} className="text-center py-16">
                     <div className="text-6xl mb-4">📭</div>
                     <div className="text-lg font-medium mb-2">暂无活动记录</div>
                     <div className="text-sm text-base-content/60">创建活动后将在此处显示</div>
@@ -435,66 +526,32 @@ export default function History() {
                 </tr>
               ) : (
                 paginatedCampaigns.map((campaign) => (
-                  <tr key={campaign.id} className="hover">
-                    <td>
-                      <div>
-                        <div className="font-medium">{campaign.name}</div>
-                        <div className="text-sm text-base-content/60 truncate max-w-[200px]">
-                          {campaign.description}
-                        </div>
-                      </div>
+                  <tr key={campaign.id} className="border-b border-base-200/50 hover:bg-base-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="font-medium text-base-content">{campaign.name}</div>
                     </td>
-                    <td>
-                      {getChainBadge(campaign.chain)}
+                    <td className="px-3 py-4">
+                      {getChainBadge(campaign.chain, campaign.chainId)}
                     </td>
-                    <td>
+                    <td className="px-3 py-4">
                       {getStatusBadge(campaign.status)}
                     </td>
-                    <td className="text-right">
-                      <div className="font-medium">{formatNumber(campaign.totalRecipients)}</div>
-                      <div className="text-xs text-success">
-                        +{formatNumber(campaign.successfulRecipients)} 成功
+                    <td className="px-3 py-4 text-right">
+                      <div className="font-medium text-base-content">{formatNumber(campaign.totalRecipients)}</div>
+                      <div className="text-xs text-success mt-1">
+                        +{formatNumber(campaign.completedRecipients)} 成功
                       </div>
                     </td>
-                    <td className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-sm font-medium">
-                          {campaign.totalRecipients > 0
-                            ? ((campaign.successfulRecipients / campaign.totalRecipients) * 100).toFixed(1)
-                            : '0'
-                          }%
-                        </div>
-                        <progress
-                          className="progress progress-success w-8 h-2"
-                          value={campaign.totalRecipients > 0 ? (campaign.successfulRecipients / campaign.totalRecipients) * 100 : 0}
-                          max="100"
-                        ></progress>
-                      </div>
+                    <td className="px-3 py-4">
+                      <div className="text-sm text-base-content/80">{formatDate(campaign.createdAt)}</div>
                     </td>
-                    <td className="text-right">
-                      <div className="text-sm">
-                        <div className="font-mono">{formatAmount(campaign.gasUsed)} ETH</div>
-                        <div className="text-xs text-base-content/60">
-                          ≈ ${(parseFloat(campaign.gasUsed || '0') * 2000).toFixed(0)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-sm text-base-content/60">
-                      {formatDate(campaign.createdAt)}
-                    </td>
-                    <td>
-                      <div className="flex justify-center gap-1">
+                    <td className="px-2 py-4">
+                      <div className="flex justify-center">
                         <button
                           onClick={() => navigate(`/campaign/${campaign.id}`)}
-                          className="btn btn-ghost btn-xs"
+                          className="btn btn-ghost btn-xs text-xs hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
                           👁️ 详情
-                        </button>
-                        <button
-                          onClick={() => handleExportSingle(campaign)}
-                          className="btn btn-ghost btn-xs"
-                        >
-                          📥 导出
                         </button>
                       </div>
                     </td>

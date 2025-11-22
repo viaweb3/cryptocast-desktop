@@ -1,18 +1,34 @@
 import { ethers } from 'ethers';
 import { Connection } from '@solana/web3.js';
 
-export interface EVMChain {
+export interface Chain {
   id?: number;
-  type: 'evm';
-  chainId: number;
+  type: 'evm' | 'solana';
+  chainId?: number;  // EVM链ID或Solana链ID (501主网, 502测试网)
   name: string;
   rpcUrl: string;
   rpcBackup?: string;
-  explorerUrl: string;
+  explorerUrl?: string;
   symbol: string;
   decimals: number;
+  color?: string;
+  badgeColor?: string;
+  network?: string;  // Solana网络类型 (mainnet-beta, devnet, testnet)
+  priority?: number;  // 主要用于Solana RPC优先级
+  latency?: number;  // 延迟测试结果(ms)
   enabled: boolean;
   isCustom: boolean;
+  createdAt?: string;
+}
+
+export interface EVMChain extends Chain {
+  type: 'evm';
+  chainId: number;
+}
+
+export interface SolanaChain extends Chain {
+  type: 'solana';
+  network: 'mainnet-beta' | 'devnet' | 'testnet';
 }
 
 export interface SolanaRPC {
@@ -22,9 +38,8 @@ export interface SolanaRPC {
   rpcUrl: string;
   wsUrl?: string;
   priority: number;
-  latency?: number;
-  uptime24h?: number;
   enabled: boolean;
+  createdAt?: string;
 }
 
 export interface RPCTestResult {
@@ -41,19 +56,57 @@ export class ChainService {
     this.db = databaseManager.getDatabase();
   }
 
-  async getEVMChains(onlyEnabled = true): Promise<EVMChain[]> {
+  // 统一获取所有链的方法
+  async getAllChains(onlyEnabled = true): Promise<Chain[]> {
     try {
-      let query = 'SELECT * FROM evm_chains';
+      console.log('🔍 [ChainService] getAllChains: Starting to fetch chains from database');
+      let query = 'SELECT * FROM chains';
       const params: any[] = [];
 
       if (onlyEnabled) {
         query += ' WHERE enabled = 1';
       }
 
+      query += ' ORDER BY type, name';
+
+      const chains = await this.db.prepare(query).all(...params) as any[];
+      console.log(`🔍 [ChainService] getAllChains: Retrieved ${chains.length} chains from database`);
+
+      const mappedChains = chains.map(this.mapRowToChain);
+      console.log(`🔍 [ChainService] getAllChains: Mapped ${mappedChains.length} chains to Chain format`);
+
+      return mappedChains;
+    } catch (error) {
+      console.error('Failed to get chains:', error);
+      throw new Error('Chains retrieval failed');
+    }
+  }
+
+  // 获取EVM链（向后兼容）
+  async getEVMChains(onlyEnabled = true): Promise<EVMChain[]> {
+    try {
+      console.log('🔍 [ChainService] getEVMChains: Starting to fetch EVM chains from database');
+      let query = 'SELECT * FROM chains WHERE type = ?';
+      const params: any[] = ['evm'];
+
+      if (onlyEnabled) {
+        query += ' AND enabled = 1';
+      }
+
       query += ' ORDER BY name';
 
       const chains = await this.db.prepare(query).all(...params) as any[];
-      return chains.map(this.mapRowToEVMChain);
+      console.log(`🔍 [ChainService] getEVMChains: Retrieved ${chains.length} EVM chains from database`);
+
+      const mappedChains = chains.map(this.mapRowToChain) as EVMChain[];
+      console.log(`🔍 [ChainService] getEVMChains: Mapped ${mappedChains.length} chains to EVMChain format`);
+
+      // Log each chain's color data
+      mappedChains.forEach((chain, index) => {
+        console.log(`🔍 [ChainService] Chain ${index}: ${chain.name} -> color: ${chain.color}, badgeColor: ${chain.badgeColor}`);
+      });
+
+      return mappedChains;
     } catch (error) {
       console.error('Failed to get EVM chains:', error);
       throw new Error('EVM chains retrieval failed');
@@ -63,7 +116,7 @@ export class ChainService {
   async addEVMChain(chainData: Omit<EVMChain, 'id' | 'type'>): Promise<number> {
     try {
       // 验证Chain ID是否重复
-      const existing = this.db.prepare('SELECT id FROM evm_chains WHERE chain_id = ?').get(chainData.chainId);
+      const existing = await this.db.prepare('SELECT id FROM chains WHERE chain_id = ? AND type = ?').get(chainData.chainId, 'evm');
       if (existing) {
         throw new Error(`Chain ID ${chainData.chainId} already exists`);
       }
@@ -75,12 +128,13 @@ export class ChainService {
       }
 
       const insertChain = this.db.prepare(`
-        INSERT INTO evm_chains (
-          chain_id, name, rpc_url, rpc_backup, explorer_url, symbol, decimals, enabled, is_custom, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO chains (
+          type, chain_id, name, rpc_url, rpc_backup, explorer_url, symbol, decimals, color, badge_color, is_custom, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const result = insertChain.run(
+        'evm',
         chainData.chainId,
         chainData.name,
         chainData.rpcUrl,
@@ -88,7 +142,8 @@ export class ChainService {
         chainData.explorerUrl,
         chainData.symbol,
         chainData.decimals,
-        chainData.enabled ? 1 : 0,
+        chainData.color || '#3B82F6',
+        chainData.badgeColor || 'badge-primary',
         chainData.isCustom ? 1 : 0,
         new Date().toISOString()
       );
@@ -135,9 +190,13 @@ export class ChainService {
         fields.push('decimals = ?');
         params.push(updates.decimals);
       }
-      if (updates.enabled !== undefined) {
-        fields.push('enabled = ?');
-        params.push(updates.enabled ? 1 : 0);
+      if (updates.color !== undefined) {
+        fields.push('color = ?');
+        params.push(updates.color);
+      }
+      if (updates.badgeColor !== undefined) {
+        fields.push('badge_color = ?');
+        params.push(updates.badgeColor);
       }
 
       if (fields.length === 0) {
@@ -160,33 +219,20 @@ export class ChainService {
   async deleteEVMChain(chainId: number): Promise<void> {
     try {
       // 检查是否是内置链
-      const chain = this.db.prepare('SELECT is_custom FROM evm_chains WHERE id = ?').get(chainId) as any;
+      const chain = await this.db.prepare('SELECT is_custom FROM evm_chains WHERE id = ?').get(chainId) as any;
       if (!chain || !chain.is_custom) {
         throw new Error('Cannot delete built-in chain');
       }
 
-      this.db.prepare('DELETE FROM evm_chains WHERE id = ?').run(chainId);
+      await this.db.prepare('DELETE FROM evm_chains WHERE id = ?').run(chainId);
     } catch (error) {
       console.error('Failed to delete EVM chain:', error);
       throw new Error('EVM chain deletion failed');
     }
   }
 
-  async testEVMLatency(chainId: number): Promise<{ latency: number; blockNumber: number }> {
+  async testEVMLatency(rpcUrl: string): Promise<{ latency: number; blockNumber: number }> {
     try {
-      const chain = this.db.prepare('SELECT * FROM evm_chains WHERE id = ?').get(chainId) as any;
-      if (!chain) {
-        throw new Error('Chain not found');
-      }
-
-      // 获取正确的RPC URL
-      const rpcUrl = chain.rpc_url || chain.rpcUrl;
-
-      if (!rpcUrl) {
-        console.error(`链 ${chainId} 没有配置RPC URL`);
-        throw new Error('Chain RPC URL not configured');
-      }
-
       console.log(`测试RPC URL: ${rpcUrl}`);
 
       const testResult = await this.testEVMLatencyByUrl(rpcUrl);
@@ -238,28 +284,40 @@ export class ChainService {
     }
   }
 
-  async getSolanaRPCs(network?: string, onlyEnabled = true): Promise<SolanaRPC[]> {
+  // 获取Solana链（新的统一方法）
+  async getSolanaChains(network?: string, onlyEnabled = true): Promise<SolanaChain[]> {
     try {
-      let query = 'SELECT * FROM solana_rpcs';
-      const params: any[] = [];
+      console.log(`🔍 [ChainService] getSolanaChains: ${network || 'all'} enabled=${onlyEnabled}`);
+      let query = 'SELECT * FROM chains WHERE type = ?';
+      const params: any[] = ['solana'];
 
       if (network) {
-        query += ' WHERE network = ?';
+        query += ' AND network = ?';
         params.push(network);
       }
 
       if (onlyEnabled) {
-        query += network ? ' AND enabled = 1' : ' WHERE enabled = 1';
+        query += ' AND enabled = 1';
       }
 
       query += ' ORDER BY priority, name';
 
-      const rpcs = this.db.prepare(query).all(...params) as any[];
-      return rpcs.map(this.mapRowToSolanaRPC);
+      const chains = await this.db.prepare(query).all(...params) as any[];
+      console.log(`🔍 [ChainService] getSolanaChains: Retrieved ${chains.length} Solana chains from database`);
+
+      const mappedChains = chains.map(this.mapRowToChain) as SolanaChain[];
+      console.log(`🔍 [ChainService] getSolanaChains: Mapped ${mappedChains.length} chains to SolanaChain format`);
+
+      return mappedChains;
     } catch (error) {
-      console.error('Failed to get Solana RPCs:', error);
-      throw new Error('Solana RPCs retrieval failed');
+      console.error('Failed to get Solana chains:', error);
+      throw new Error('Solana chains retrieval failed');
     }
+  }
+
+  // 向后兼容的Solana RPC获取方法
+  async getSolanaRPCs(network?: string, onlyEnabled = true): Promise<SolanaChain[]> {
+    return this.getSolanaChains(network, onlyEnabled);
   }
 
   
@@ -296,7 +354,7 @@ export class ChainService {
 
   async updateSolanaRPCPriority(id: number, priority: number): Promise<void> {
     try {
-      this.db.prepare('UPDATE solana_rpcs SET priority = ? WHERE id = ?').run(priority, id);
+      await this.db.prepare('UPDATE solana_rpcs SET priority = ? WHERE id = ?').run(priority, id);
     } catch (error) {
       console.error('Failed to update Solana RPC priority:', error);
       throw new Error('Solana RPC priority update failed');
@@ -305,7 +363,7 @@ export class ChainService {
 
   async deleteSolanaRPC(id: number): Promise<void> {
     try {
-      this.db.prepare('DELETE FROM solana_rpcs WHERE id = ?').run(id);
+      await this.db.prepare('DELETE FROM solana_rpcs WHERE id = ?').run(id);
     } catch (error) {
       console.error('Failed to delete Solana RPC:', error);
       throw new Error('Solana RPC deletion failed');
@@ -364,42 +422,86 @@ export class ChainService {
     }
   }
 
-  private mapRowToEVMChain(row: any): EVMChain {
-    return {
+  // 新的统一映射方法
+  private mapRowToChain(row: any): Chain {
+    // Debug: Log the complete raw row data from database
+    console.log(`🔍 [ChainService] mapRowToChain: Raw database row data:`);
+    console.log(`🔍 [ChainService]   - id: ${row.id}`);
+    console.log(`🔍 [ChainService]   - type: ${row.type}`);
+    console.log(`🔍 [ChainService]   - name: ${row.name}`);
+    console.log(`🔍 [ChainService]   - chain_id: ${row.chain_id}`);
+    console.log(`🔍 [ChainService]   - rpc_url: ${row.rpc_url}`);
+    console.log(`🔍 [ChainService]   - color: ${row.color}`);
+    console.log(`🔍 [ChainService]   - badge_color: ${row.badge_color}`);
+
+    const color = row.color || '#3B82F6';
+    const badgeColor = row.badge_color || 'badge-primary';
+
+    const baseChain = {
       id: row.id,
-      type: 'evm',
-      chainId: row.chain_id,
+      type: row.type as 'evm' | 'solana',
+      chainId: row.chain_id || undefined,
       name: row.name,
       rpcUrl: row.rpc_url,
-      rpcBackup: row.rpc_backup,
-      explorerUrl: row.explorer_url,
+      rpcBackup: row.rpc_backup || undefined,
+      explorerUrl: row.explorer_url || undefined,
       symbol: row.symbol,
-      decimals: row.decimals,
+      decimals: row.decimals || (row.type === 'solana' ? 9 : 18),
+      color: color,
+      badgeColor: badgeColor,
       enabled: Boolean(row.enabled),
       isCustom: Boolean(row.is_custom),
+      createdAt: row.created_at,
     };
+
+    // 为不同类型添加特定字段
+    if (row.type === 'evm') {
+      const evmChain: EVMChain = {
+        ...baseChain,
+        type: 'evm',
+        chainId: row.chain_id,
+      };
+      return evmChain;
+    } else if (row.type === 'solana') {
+      const solanaChain: SolanaChain = {
+        ...baseChain,
+        type: 'solana',
+        network: row.network,
+        priority: row.priority,
+        latency: row.latency,
+      };
+      return solanaChain;
+    }
+
+    return baseChain as Chain;
   }
 
-  private mapRowToSolanaRPC(row: any): SolanaRPC {
-    return {
-      id: row.id,
-      network: row.network,
-      name: row.name,
-      rpcUrl: row.rpc_url,
-      wsUrl: row.ws_url,
-      priority: row.priority,
-      latency: row.latency,
-      uptime24h: row.uptime_24h,
-      enabled: Boolean(row.enabled),
-    };
+  // 向后兼容的映射方法
+  private mapRowToEVMChain(row: any): EVMChain {
+    return this.mapRowToChain(row) as EVMChain;
+  }
+
+  private mapRowToSolanaRPC(row: any): SolanaChain {
+    return this.mapRowToChain(row) as SolanaChain;
+  }
+
+  // 统一的链查找方法
+  async getChainById(chainId: number): Promise<Chain | null> {
+    try {
+      const row = await this.db.prepare('SELECT * FROM chains WHERE chain_id = ?').get(chainId) as any;
+      return row ? this.mapRowToChain(row) : null;
+    } catch (error) {
+      console.error('Failed to get chain by chain ID:', error);
+      return null;
+    }
   }
 
   async getChainByChainId(chainId: number): Promise<EVMChain | null> {
     try {
-      const row = this.db.prepare('SELECT * FROM evm_chains WHERE chain_id = ?').get(chainId) as any;
-      return row ? this.mapRowToEVMChain(row) : null;
+      const row = await this.db.prepare('SELECT * FROM chains WHERE chain_id = ? AND type = ?').get(chainId, 'evm') as any;
+      return row ? this.mapRowToChain(row) as EVMChain : null;
     } catch (error) {
-      console.error('Failed to get chain by chain ID:', error);
+      console.error('Failed to get EVM chain by chain ID:', error);
       return null;
     }
   }
@@ -408,21 +510,22 @@ export class ChainService {
     return this.getChainByChainId(chainId);
   }
 
-  async toggleEVMChain(chainId: number, enabled: boolean): Promise<void> {
+  // 统一的链切换方法
+  async toggleChain(chainId: number, enabled: boolean): Promise<void> {
     try {
-      this.db.prepare('UPDATE evm_chains SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, chainId);
+      await this.db.prepare('UPDATE chains SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, chainId);
     } catch (error) {
-      console.error('Failed to toggle EVM chain:', error);
-      throw new Error('EVM chain toggle failed');
+      console.error('Failed to toggle chain:', error);
+      throw new Error('Chain toggle failed');
     }
   }
 
+  // 向后兼容的切换方法
+  async toggleEVMChain(chainId: number, enabled: boolean): Promise<void> {
+    return this.toggleChain(chainId, enabled);
+  }
+
   async toggleSolanaRPC(rpcId: number, enabled: boolean): Promise<void> {
-    try {
-      this.db.prepare('UPDATE solana_rpcs SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, rpcId);
-    } catch (error) {
-      console.error('Failed to toggle Solana RPC:', error);
-      throw new Error('Solana RPC toggle failed');
-    }
+    return this.toggleChain(rpcId, enabled);
   }
 }

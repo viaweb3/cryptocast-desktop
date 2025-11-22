@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { EVMChain } from '../types';
 
 interface Campaign {
   id: string;
@@ -45,6 +46,7 @@ export default function CampaignDetail() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [chains, setChains] = useState<EVMChain[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -54,20 +56,37 @@ export default function CampaignDetail() {
   const itemsPerPage = 10;
 
   const [walletBalances, setWalletBalances] = useState({
-    token: { current: '450.5', total: '500' },
-    gas: { current: '0.12', total: '0.15' }
+    native: { current: '0', total: '0' },
+    token: { current: '0', total: '0' }
   });
+  const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
+  const [showPrivateKeyModal, setShowPrivateKeyModal] = useState(false);
+  const [exportedWallet, setExportedWallet] = useState<{ address: string; privateKey: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadCampaign();
+      loadChains();
     }
   }, [id]);
+
+  // Load chains from database
+  const loadChains = async () => {
+    try {
+      if (window.electronAPI?.chain) {
+        const chainsData = await window.electronAPI.chain.getEVMChains();
+        setChains(chainsData);
+      }
+    } catch (error) {
+      console.error('Failed to load chains:', error);
+    }
+  };
 
   const loadCampaign = async () => {
     setLoading(true);
     try {
-      if (!id) {
+      if (!id || id === 'undefined') {
         throw new Error('Campaign ID is required');
       }
 
@@ -86,28 +105,47 @@ export default function CampaignDetail() {
         });
 
         // Load transactions
-        const txData = await window.electronAPI.campaign.getTransactions(id, {
-          limit: 100,
-        });
-        setTransactions(txData.map((tx: any) => ({
-          id: tx.id.toString(),
-          batchNumber: tx.id,
-          status: tx.status === 'CONFIRMED' ? 'success' : tx.status === 'PENDING' ? 'sending' : 'failed',
-          addressCount: 1,
-          txHash: tx.txHash,
-          gasUsed: tx.gasUsed?.toString(),
-          createdAt: tx.createdAt,
-        })));
+        try {
+          const txData = await window.electronAPI.campaign.getTransactions(id, {
+            limit: 100,
+          });
+          if (txData && Array.isArray(txData)) {
+            setTransactions(txData.map((tx: any) => ({
+              id: tx.id.toString(),
+              batchNumber: tx.id,
+              status: tx.status === 'CONFIRMED' ? 'success' : tx.status === 'PENDING' ? 'sending' : 'failed',
+              addressCount: 1,
+              txHash: tx.txHash,
+              gasUsed: tx.gasUsed?.toString(),
+              createdAt: tx.createdAt,
+            })));
+          }
+        } catch (txError) {
+          console.error('Failed to load transactions:', txError);
+          console.error('Transaction error details:', {
+            campaignId: id,
+            error: txError instanceof Error ? txError.message : txError,
+            stack: txError instanceof Error ? txError.stack : undefined
+          });
+          // Continue loading other data even if transactions fail
+        }
 
         // Load recipients
-        const recipientsData = await window.electronAPI.campaign.getRecipients(id);
-        setRecipients(recipientsData.map((r: any) => ({
-          address: r.address,
-          amount: r.amount,
-          status: r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending',
-          txHash: r.txHash,
-          error: r.errorMessage,
-        })));
+        try {
+          const recipientsData = await window.electronAPI.campaign.getRecipients(id);
+          if (recipientsData && Array.isArray(recipientsData)) {
+            setRecipients(recipientsData.map((r: any) => ({
+              address: r.address,
+              amount: r.amount,
+              status: r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending',
+              txHash: r.txHash,
+              error: r.errorMessage,
+            })));
+          }
+        } catch (recipientsError) {
+          console.error('Failed to load recipients:', recipientsError);
+          // Continue even if recipients fail to load
+        }
       }
     } catch (error) {
       console.error('Failed to load campaign:', error);
@@ -309,20 +347,160 @@ export default function CampaignDetail() {
     try {
       if (window.electronAPI?.wallet) {
         const privateKey = await window.electronAPI.wallet.exportPrivateKey(campaign.walletPrivateKeyBase64);
-        alert(`钱包地址: ${campaign.walletAddress}\n私钥: ${privateKey}\n\n请妥善保管此私钥！`);
+
+        // 显示自定义私钥弹窗
+        setExportedWallet({
+          address: campaign.walletAddress || '',
+          privateKey: privateKey
+        });
+        setShowPrivateKeyModal(true);
+        setCopied(false);
+      } else {
+        alert('钱包服务不可用');
       }
     } catch (error) {
       console.error('Failed to export private key:', error);
-      alert('获取私钥失败，请重试');
+      alert('导出私钥失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 8)}...${address.slice(-6)}`;
+  const handleCopyPrivateKey = () => {
+    if (exportedWallet?.privateKey) {
+      navigator.clipboard.writeText(exportedWallet.privateKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
+  const handleCopyAddress = () => {
+    if (exportedWallet?.address) {
+      navigator.clipboard.writeText(exportedWallet.address);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowPrivateKeyModal(false);
+    setExportedWallet(null);
+    setCopied(false);
+  };
+
+  // Helper function to get chain by name or chainId using only database data
+  const getChainByName = (chainValue: string | number | undefined) => {
+    if (!chainValue) return undefined;
+
+    const chainStr = String(chainValue);
+    const chainIdAsNumber = parseInt(chainStr);
+
+    // 1. Try exact name match first
+    let chain = chains.find(c => c.name === chainStr);
+    if (chain) return chain;
+
+    // 2. Try matching by chainId (common scenario)
+    if (!isNaN(chainIdAsNumber)) {
+      chain = chains.find(c => c.chainId === chainIdAsNumber);
+      if (chain) return chain;
+    }
+
+    // 3. Try case-insensitive name match
+    chain = chains.find(c => c.name.toLowerCase() === chainStr.toLowerCase());
+    if (chain) return chain;
+
+    // 4. Try partial match based on actual database chain names
+    for (const dbChain of chains) {
+      const dbChainNameLower = dbChain.name.toLowerCase();
+      const inputLower = chainStr.toLowerCase();
+
+      // Check if input contains part of db chain name or vice versa
+      if (dbChainNameLower.includes(inputLower) || inputLower.includes(dbChainNameLower)) {
+        return dbChain;
+      }
+    }
+
+    return undefined;
+  };
+
+  // Refresh wallet balances
+  const refreshBalances = async () => {
+    if (!campaign?.walletAddress || !campaign.chain) return;
+
+    setIsRefreshingBalance(true);
+    try {
+      if (window.electronAPI?.wallet && campaign.walletAddress) {
+        // Get native currency balance (e.g., ETH, BNB, MATIC)
+        const nativeBalance = await window.electronAPI.wallet.getBalance(
+          campaign.walletAddress,
+          campaign.chain
+        );
+
+        // Get token balance if token address is provided
+        let tokenBalance = null;
+        if (campaign.tokenAddress && campaign.tokenAddress !== '0x0000000000000000000000000000000000000000') {
+          try {
+            tokenBalance = await window.electronAPI.wallet.getBalance(
+              campaign.walletAddress,
+              campaign.chain,
+              campaign.tokenAddress,
+              campaign.tokenDecimals
+            );
+          } catch (tokenError) {
+            console.warn('Failed to get token balance:', tokenError);
+            tokenBalance = null;
+          }
+        }
+
+        setWalletBalances({
+          native: {
+            current: nativeBalance.native || '0',
+            total: '∞' // No total limit for native currency
+          },
+          token: {
+            current: tokenBalance?.token || '0',
+            total: campaign.totalAmount || '0'
+          }
+        });
+
+        // Log successful refresh
+        console.log('Balances refreshed successfully:', {
+          native: nativeBalance.native,
+          token: tokenBalance?.token
+        });
+      }
+    } catch (error) {
+      console.error('Failed to refresh balances:', error);
+      // Set fallback values on error
+      setWalletBalances({
+        native: {
+          current: '0',
+          total: '∞'
+        },
+        token: {
+          current: '0',
+          total: campaign.totalAmount || '0'
+        }
+      });
+    } finally {
+      setIsRefreshingBalance(false);
+    }
+  };
+
+  // Auto-refresh balances every 10 seconds
+  useEffect(() => {
+    if (campaign?.walletAddress && campaign.status === 'SENDING') {
+      refreshBalances();
+      const interval = setInterval(refreshBalances, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [campaign?.walletAddress, campaign?.status, campaign?.chain]);
+
+  
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN');
+    return new Date(dateString).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (loading) {
@@ -353,21 +531,8 @@ export default function CampaignDetail() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-3">
-          <div className="avatar placeholder">
-            <div className="bg-neutral text-neutral-content rounded-full w-12 h-12">
-              <span className="text-lg">📋</span>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">{campaign.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              {getStatusBadge(campaign.status)}
-              <div className="text-sm text-base-content/60">
-                创建于 {formatDate(campaign.createdAt)}
-              </div>
-            </div>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold">{campaign.name}</h1>
         </div>
         <div className="flex gap-2">
           {campaign && (campaign.status === 'SENDING' || campaign.status === 'PAUSED') && (
@@ -467,57 +632,67 @@ export default function CampaignDetail() {
               活动信息
             </h2>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">活动状态</span>
-                {getStatusBadge(campaign.status)}
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">活动ID</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-mono bg-base-200 px-2 py-1 rounded">{campaign.id.slice(0, 8)}...</span>
-                  <button className="btn btn-ghost btn-xs">📋</button>
+              {/* 主要信息 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-base-content/70">活动状态:</span>
+                  <div>{getStatusBadge(campaign.status)}</div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-base-content/70">区块链网络:</span>
+                  <div>
+                    {(() => {
+                      const chain = getChainByName(campaign.chain);
+                      if (chain) {
+                        return (
+                          <div className="badge text-xs font-medium px-2 py-1 gap-1 border-0" style={{
+                            backgroundColor: `${chain.color}20`,
+                            color: chain.color,
+                            border: `1px solid ${chain.color}40`
+                          }}>
+                            {chain.name}
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div className="badge badge-neutral">
+                            {campaign.chain || 'Unknown Chain'}
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">创建时间</span>
-                <span className="text-sm">{formatDate(campaign.createdAt)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">区块链网络</span>
-                <div className="badge badge-info">{campaign.chain.toUpperCase()}</div>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-sm font-medium">代币合约</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-mono bg-base-200 px-2 py-1 rounded max-w-[120px] truncate">
-                    {formatAddress(campaign.tokenAddress)}
+
+              {/* 次要信息 */}
+              <div className="divider"></div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-base-content/70">活动ID:</span>
+                  <div className="text-sm font-mono bg-base-200 px-2 py-1 rounded">
+                    {campaign.id && typeof campaign.id === 'string' ? campaign.id : campaign.id && typeof campaign.id === 'number' ? String(campaign.id) : 'N/A'}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-base-content/70">创建时间:</span>
+                  <span className="text-sm">{formatDate(campaign.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-base-content/70">代币合约:</span>
+                  <span className="text-sm font-mono bg-base-200 px-2 py-1 rounded whitespace-nowrap">
+                    {campaign.tokenAddress}
                   </span>
-                  <div className="dropdown dropdown-left">
-                    <button tabIndex={0} className="btn btn-ghost btn-xs">⋮</button>
-                    <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-32 z-[1]">
-                      <li><a>复制地址</a></li>
-                      <li><a>在区块浏览器查看</a></li>
-                    </ul>
-                  </div>
                 </div>
-              </div>
-              {campaign.contractAddress && (
-                <div className="flex justify-between items-start">
-                  <span className="text-sm font-medium">批量合约</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono bg-base-200 px-2 py-1 rounded max-w-[120px] truncate">
-                      {formatAddress(campaign.contractAddress)}
+                {campaign.contractAddress && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-base-content/70">批量合约:</span>
+                    <span className="text-sm font-mono bg-base-200 px-2 py-1 rounded whitespace-nowrap">
+                      {campaign.contractAddress}
                     </span>
-                    <div className="dropdown dropdown-left">
-                      <button tabIndex={0} className="btn btn-ghost btn-xs">⋮</button>
-                      <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-32 z-[1]">
-                        <li><a>复制地址</a></li>
-                        <li><a>在区块浏览器查看</a></li>
-                      </ul>
-                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -532,54 +707,54 @@ export default function CampaignDetail() {
             <div className="space-y-4">
               <div>
                 <div className="text-sm font-medium mb-2">钱包地址</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-mono bg-base-200 px-2 py-1 rounded flex-1">
-                    {campaign.walletAddress}
-                  </span>
-                  <button className="btn btn-ghost btn-xs">📋</button>
+                <div className="text-sm font-mono bg-base-200 px-2 py-1 rounded">
+                  {campaign.walletAddress}
                 </div>
               </div>
 
               <div>
-                <div className="text-sm font-medium mb-3">当前余额</div>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-primary"></div>
-                        {campaign.tokenSymbol}
-                      </span>
-                      <span className="text-sm font-bold">
-                        {walletBalances.token.current} / {walletBalances.token.total}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-medium">当前余额</div>
+                  <button
+                    onClick={refreshBalances}
+                    disabled={isRefreshingBalance}
+                    className="btn btn-ghost btn-xs"
+                  >
+                    {isRefreshingBalance ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      '🔄 刷新'
+                    )}
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {/* Native Currency Balance (e.g., ETH, BNB, MATIC) */}
+                  <div className="p-3 bg-base-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-success"></div>
+                      <span className="text-sm font-medium">
+                        {(() => {
+                          const chain = getChainByName(campaign.chain);
+                          return chain ? chain.symbol : 'Native';
+                        })()}
                       </span>
                     </div>
-                    <progress
-                      className="progress progress-primary w-full h-2"
-                      value={(parseFloat(walletBalances.token.current) / parseFloat(walletBalances.token.total)) * 100}
-                      max="100"
-                    ></progress>
-                    <div className="text-xs text-base-content/60 mt-1">
-                      {((parseFloat(walletBalances.token.current) / parseFloat(walletBalances.token.total)) * 100).toFixed(1)}% 已使用
+                    <div className="text-lg font-bold">
+                      {parseFloat(walletBalances.native.current).toFixed(4)} {(() => {
+                      const chain = getChainByName(campaign.chain);
+                      return chain ? chain.symbol : 'ETH';
+                    })()}
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-warning"></div>
-                        POL (Gas)
-                      </span>
-                      <span className="text-sm font-bold">
-                        {walletBalances.gas.current} / {walletBalances.gas.total}
-                      </span>
+                  {/* Token Balance */}
+                  <div className="p-3 bg-base-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      <span className="text-sm font-medium">{campaign.tokenSymbol}</span>
                     </div>
-                    <progress
-                      className="progress progress-warning w-full h-2"
-                      value={(parseFloat(walletBalances.gas.current) / parseFloat(walletBalances.gas.total)) * 100}
-                      max="100"
-                    ></progress>
-                    <div className="text-xs text-base-content/60 mt-1">
-                      {((parseFloat(walletBalances.gas.current) / parseFloat(walletBalances.gas.total)) * 100).toFixed(1)}% 已使用
+                    <div className="text-lg font-bold">
+                      {parseFloat(walletBalances.token.current).toFixed(4)} {campaign.tokenSymbol}
                     </div>
                   </div>
                 </div>
@@ -587,22 +762,46 @@ export default function CampaignDetail() {
 
               <div className="divider"></div>
               <div>
-                <div className="text-sm text-base-content/60 mb-2">安全提示</div>
-                <div className="alert alert-warning">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <div>
-                    <div className="text-sm font-medium">活动结束后可导出私钥回收剩余资金</div>
-                    <div className="text-xs">请妥善保管私钥，丢失将无法找回</div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleExportPrivateKey}
-                  className="btn btn-primary btn-sm w-full mt-3"
-                >
-                  🔑 导出私钥
-                </button>
+                <div className="text-sm text-base-content/60 mb-2">私钥管理</div>
+
+                {campaign.walletPrivateKeyBase64 ? (
+                  <>
+                    <div className="alert alert-success">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <div className="text-sm font-medium">私钥已保存</div>
+                        <div className="text-xs">可以导出私钥来控制钱包资金</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleExportPrivateKey}
+                      className="btn btn-primary btn-sm w-full mt-3"
+                    >
+                      🔑 导出私钥
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="alert alert-error">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <div className="text-sm font-medium">私钥丢失警告</div>
+                        <div className="text-xs">此活动创建时私钥未正确保存，无法导出私钥控制钱包</div>
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-disabled btn-sm w-full mt-3"
+                      title="私钥未保存，无法导出"
+                      disabled
+                    >
+                      🔑 私钥不可用
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -660,7 +859,7 @@ export default function CampaignDetail() {
                           rel="noopener noreferrer"
                           className="link link-primary link-hover text-sm font-mono"
                         >
-                          {formatAddress(tx.txHash)}
+                          {tx.txHash}
                         </a>
                       ) : (
                         <span className="text-base-content/40">-</span>
@@ -719,14 +918,13 @@ export default function CampaignDetail() {
                   <th>金额</th>
                   <th>状态</th>
                   <th>交易哈希</th>
-                  <th className="text-center">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedRecipients.map((recipient, index) => (
                   <tr key={`${recipient.address}-${index}`} className="hover">
-                    <td>
-                      <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded max-w-[200px] truncate">
+                    <td className="min-w-[400px]">
+                      <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded whitespace-normal break-all">
                         {recipient.address}
                       </div>
                     </td>
@@ -747,21 +945,11 @@ export default function CampaignDetail() {
                           rel="noopener noreferrer"
                           className="link link-primary link-hover text-sm font-mono"
                         >
-                          {formatAddress(recipient.txHash)}
+                          {recipient.txHash}
                         </a>
                       ) : (
                         <span className="text-base-content/40">-</span>
                       )}
-                    </td>
-                    <td className="text-center">
-                      <div className="dropdown dropdown-end">
-                        <button tabIndex={0} className="btn btn-ghost btn-xs">⋮</button>
-                        <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-32 z-[1]">
-                          <li><a>查看详情</a></li>
-                          <li><a>重新发送</a></li>
-                          {recipient.status === 'failed' && <li><a>查看错误</a></li>}
-                        </ul>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -777,6 +965,91 @@ export default function CampaignDetail() {
           </div>
         </div>
       </div>
+
+      {/* Private Key Export Modal */}
+      {showPrivateKeyModal && exportedWallet && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <span>🔑</span>
+              <span>导出私钥</span>
+            </h3>
+
+            {/* Warning Alert */}
+            <div className="alert alert-warning mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span className="text-sm">
+                <strong>安全警告：</strong>私钥拥有您钱包的完全控制权，请妥善保管，切勿分享给他人！
+              </span>
+            </div>
+
+            {/* Wallet Address */}
+            <div className="mb-4">
+              <label className="label">
+                <span className="label-text font-semibold">钱包地址</span>
+              </label>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-base-200 px-4 py-3 rounded-lg font-mono text-sm break-all">
+                  {exportedWallet.address}
+                </div>
+                <button
+                  onClick={handleCopyAddress}
+                  className="btn btn-square btn-outline"
+                  title="复制地址"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+
+            {/* Private Key */}
+            <div className="mb-6">
+              <label className="label">
+                <span className="label-text font-semibold">私钥 (Private Key)</span>
+              </label>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-error/10 border-2 border-error/30 px-4 py-3 rounded-lg font-mono text-sm break-all">
+                  {exportedWallet.privateKey}
+                </div>
+                <button
+                  onClick={handleCopyPrivateKey}
+                  className={`btn btn-square ${copied ? 'btn-success' : 'btn-error'}`}
+                  title="复制私钥"
+                >
+                  {copied ? '✓' : '📋'}
+                </button>
+              </div>
+              {copied && (
+                <div className="text-success text-sm mt-2 flex items-center gap-1">
+                  <span>✓</span>
+                  <span>私钥已复制到剪贴板</span>
+                </div>
+              )}
+            </div>
+
+            {/* Security Tips */}
+            <div className="bg-base-200 p-4 rounded-lg mb-4">
+              <h4 className="font-semibold mb-2 text-sm">安全提示</h4>
+              <ul className="text-sm space-y-1 text-base-content/80">
+                <li>• 私钥可以导入到 MetaMask、Trust Wallet 等钱包</li>
+                <li>• 请将私钥保存在安全的地方（如密码管理器）</li>
+                <li>• 不要截图或通过互联网传输私钥</li>
+                <li>• 任何拥有私钥的人都可以控制钱包资金</li>
+              </ul>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="modal-action">
+              <button onClick={handleCloseModal} className="btn btn-primary">
+                我已安全保存
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCloseModal}></div>
+        </div>
+      )}
     </div>
   );
 }

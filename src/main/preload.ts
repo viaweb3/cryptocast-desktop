@@ -40,8 +40,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // 链管理
   chain: {
-    getEVMChains: (onlyEnabled?: boolean) =>
-      ipcRenderer.invoke('chain:getEVMChains', onlyEnabled),
+    getEVMChains: () =>
+      ipcRenderer.invoke('chain:getEVMChains'),
     addEVMChain: (chainData: any) =>
       ipcRenderer.invoke('chain:addEVMChain', chainData),
     updateEVMChain: (chainId: number, updates: any) =>
@@ -79,7 +79,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   price: {
     getPrice: (symbol: string) => ipcRenderer.invoke('price:getPrice', symbol),
     getPrices: (symbols: string[]) => ipcRenderer.invoke('price:getPrices', symbols),
-    getGasPrice: (network: string) => ipcRenderer.invoke('price:getGasPrice', network),
     getSummary: () => ipcRenderer.invoke('price:getSummary'),
   },
 
@@ -100,5 +99,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('contract:checkApproval', rpcUrl, privateKey, tokenAddress, contractAddress, requiredAmount),
     getTokenInfo: (rpcUrl: string, tokenAddress: string) =>
       ipcRenderer.invoke('contract:getTokenInfo', rpcUrl, tokenAddress),
+  },
+
+  // 代币服务
+  token: {
+    getInfo: (tokenAddress: string, chainId: string) =>
+      ipcRenderer.invoke('token:getInfo', tokenAddress, chainId),
+    validateAddress: (tokenAddress: string, chainId: string) =>
+      ipcRenderer.invoke('token:validateAddress', tokenAddress, chainId),
+    getMultipleInfo: (tokenAddresses: string[], chainId: string) =>
+      ipcRenderer.invoke('token:getMultipleInfo', tokenAddresses, chainId),
   },
 });

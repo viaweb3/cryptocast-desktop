@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCampaign } from '../contexts/CampaignContext';
-import { Campaign, CSVValidationResult } from '../types';
+import { Campaign, CSVValidationResult, TokenInfo } from '../types';
 
 interface CampaignFormData {
   name: string;
@@ -12,13 +12,21 @@ interface CampaignFormData {
   sendInterval: string;
 }
 
+interface ChainOption {
+  id: string;
+  name: string;
+  symbol: string;
+  type: 'evm' | 'solana';
+  network?: string;
+}
+
 export default function CampaignCreate() {
   const navigate = useNavigate();
   const { state, actions } = useCampaign();
   const [formData, setFormData] = useState<CampaignFormData>({
     name: '',
     description: '',
-    chain: '137', // Default to Polygon
+    chain: '56', // Default to BSC
     tokenAddress: '',
     batchSize: 50,
     sendInterval: '15000' // Default to 15 seconds
@@ -30,28 +38,143 @@ export default function CampaignCreate() {
   const [tokenAddressError, setTokenAddressError] = useState<string>('');
   const [estimation, setEstimation] = useState<any>(null);
   const [isEstimating, setIsEstimating] = useState(false);
-
-  const availableChains = [
-    { id: '1', name: 'Ethereum', symbol: 'ETH' },
-    { id: '137', name: 'Polygon', symbol: 'POL' },
-    { id: '42161', name: 'Arbitrum', symbol: 'ETH' },
-    { id: '10', name: 'Optimism', symbol: 'ETH' },
-    { id: '8453', name: 'Base', symbol: 'ETH' },
-    { id: '56', name: 'BSC', symbol: 'BNB' },
-  ];
+  const [availableChains, setAvailableChains] = useState<ChainOption[]>([]);
+  const [chainsLoading, setChainsLoading] = useState(true);
+  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
+  const [isFetchingToken, setIsFetchingToken] = useState(false);
+  const [tokenInfoError, setTokenInfoError] = useState<string>('');
 
   useEffect(() => {
     loadChains();
   }, []);
 
-  const loadChains = async () => {
+  // 获取代币信息的函数
+  const fetchTokenInfo = async (tokenAddress: string) => {
+    if (!formData.chain) {
+      return; // 需要先选择链
+    }
+
+    setIsFetchingToken(true);
+    setTokenInfoError('');
+
     try {
-      if (window.electronAPI?.chain) {
-        const chains = await window.electronAPI.chain.getEVMChains(true);
-        // chains are loaded, no need to do anything
+      console.log('获取代币信息:', { tokenAddress, chainId: formData.chain });
+
+      if (window.electronAPI?.token) {
+        const tokenData = await window.electronAPI.token.getInfo(tokenAddress, formData.chain);
+
+        if (tokenData) {
+          setTokenInfo(tokenData);
+          console.log('代币信息获取成功:', tokenData);
+        } else {
+          setTokenInfoError('无法获取代币信息，请检查合约地址是否正确');
+          setTokenInfo(null);
+        }
+      } else {
+        setTokenInfoError('Token API不可用');
+        setTokenInfo(null);
       }
     } catch (error) {
+      console.error('获取代币信息失败:', error);
+      setTokenInfoError(`获取代币信息失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      setTokenInfo(null);
+    } finally {
+      setIsFetchingToken(false);
+    }
+  };
+
+  const loadChains = async () => {
+    try {
+      setChainsLoading(true);
+      const chains: ChainOption[] = [];
+
+      // Load EVM chains
+      if (window.electronAPI?.chain) {
+        const evmChains = await window.electronAPI.chain.getEVMChains(true);
+        evmChains.forEach((chain: any) => {
+          chains.push({
+            id: chain.chainId.toString(),
+            name: chain.name,
+            symbol: chain.symbol,
+            type: 'evm'
+          });
+        });
+
+        // Load Solana networks
+        try {
+          const solanaRPCs = await window.electronAPI.chain.getSolanaRPCs(undefined, true);
+
+          // Group by network and get the highest priority RPC for each network
+          const networkMap = new Map<string, any>();
+          solanaRPCs.forEach((rpc: any) => {
+            const existing = networkMap.get(rpc.network);
+            if (!existing || rpc.priority > existing.priority) {
+              networkMap.set(rpc.network, rpc);
+            }
+          });
+
+          // Add Solana networks to chains
+          networkMap.forEach((rpc, network) => {
+            const chainName = network === 'mainnet-beta' ? 'Solana Mainnet' :
+                             network === 'devnet' ? 'Solana Devnet' :
+                             network === 'testnet' ? 'Solana Testnet' :
+                             `Solana ${network}`;
+
+            chains.push({
+              id: `solana-${network}`,
+              name: chainName,
+              symbol: 'SOL',
+              type: 'solana',
+              network: network
+            });
+          });
+        } catch (error) {
+          console.warn('Failed to load Solana RPCs, using fallback:', error);
+          // Fallback: add default Solana networks
+          chains.push({
+            id: 'solana-mainnet-beta',
+            name: 'Solana Mainnet',
+            symbol: 'SOL',
+            type: 'solana',
+            network: 'mainnet-beta'
+          });
+          chains.push({
+            id: 'solana-devnet',
+            name: 'Solana Devnet',
+            symbol: 'SOL',
+            type: 'solana',
+            network: 'devnet'
+          });
+        }
+
+        console.log('Loaded chains:', chains);
+      }
+
+      // 按类型和名称排序：EVM链在前，然后是Solana，同类按名称排序
+      chains.sort((a, b) => {
+        if (a.type !== b.type) {
+          return a.type === 'evm' ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      setAvailableChains(chains);
+      console.log('Available chains loaded:', chains);
+    } catch (error) {
       console.error('Failed to load chains:', error);
+      // 如果加载失败，使用默认链列表作为备选
+      setAvailableChains([
+        { id: '1', name: 'Ethereum', symbol: 'ETH', type: 'evm' },
+        { id: '137', name: 'Polygon', symbol: 'POL', type: 'evm' },
+        { id: '42161', name: 'Arbitrum One', symbol: 'ETH', type: 'evm' },
+        { id: '10', name: 'Optimism', symbol: 'ETH', type: 'evm' },
+        { id: '8453', name: 'Base', symbol: 'ETH', type: 'evm' },
+        { id: '56', name: 'BSC', symbol: 'BNB', type: 'evm' },
+        { id: '43114', name: 'Avalanche C-Chain', symbol: 'AVAX', type: 'evm' },
+        { id: '501', name: 'Solana Mainnet', symbol: 'SOL', type: 'solana', network: 'mainnet-beta' },
+      ]);
+    } finally {
+      setChainsLoading(false);
     }
   };
 
@@ -61,6 +184,15 @@ export default function CampaignCreate() {
       ...prev,
       [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value
     }));
+
+    // 如果链发生变化，重新获取代币信息
+    if (name === 'chain' && formData.tokenAddress && !tokenAddressError) {
+      setTokenInfo(null);
+      setTokenInfoError('');
+      if (value) {
+        setTimeout(() => fetchTokenInfo(formData.tokenAddress), 100);
+      }
+    }
 
     // 实时校验代币合约地址
     if (name === 'tokenAddress') {
@@ -91,11 +223,17 @@ export default function CampaignCreate() {
             errorMsg += '当前格式不被支持';
           }
           setTokenAddressError(errorMsg);
+          setTokenInfo(null);
+          setTokenInfoError('');
         } else {
           setTokenAddressError('');
+          // 地址格式正确，获取代币信息
+          fetchTokenInfo(value);
         }
       } else {
         setTokenAddressError('');
+        setTokenInfo(null);
+        setTokenInfoError('');
       }
     }
   };
@@ -217,6 +355,9 @@ export default function CampaignCreate() {
         description: formData.description,
         chain: formData.chain,
         tokenAddress: formData.tokenAddress,
+        tokenSymbol: tokenInfo?.symbol,
+        tokenName: tokenInfo?.name,
+        tokenDecimals: tokenInfo?.decimals,
         batchSize: formData.batchSize,
         sendInterval: Number(formData.sendInterval),
         recipients: csvData  // 使用解析后的数据数组
@@ -263,7 +404,12 @@ export default function CampaignCreate() {
   };
 
   const getChainInfo = (chainId: string) => {
-    return availableChains.find(c => c.id === chainId) || { name: 'Unknown', symbol: '' };
+    return availableChains.find(c => c.id === chainId) || { name: 'Unknown', symbol: '', type: 'evm' };
+  };
+
+  const getSelectedChainType = () => {
+    const selectedChain = availableChains.find(c => c.id === formData.chain);
+    return selectedChain?.type || 'evm';
   };
 
   return (
@@ -319,13 +465,29 @@ export default function CampaignCreate() {
                   className="select select-bordered w-full"
                   style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
                   required
+                  disabled={chainsLoading}
                 >
-                  {availableChains.map(chain => (
-                    <option key={chain.id} value={chain.id}>
-                      {chain.name} ({chain.symbol})
-                    </option>
-                  ))}
+                  {chainsLoading ? (
+                    <option value="">加载链配置中...</option>
+                  ) : (
+                    <>
+                      <option value="">请选择区块链网络</option>
+                      {availableChains.map(chain => (
+                        <option key={chain.id} value={chain.id}>
+                          {chain.name} ({chain.symbol})
+                          {chain.type === 'solana' && ' 🔥'}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
+                {getSelectedChainType() === 'solana' && (
+                  <div className="mt-2">
+                    <span className="text-xs text-info">
+                      <strong>Solana网络提示：</strong>请确保使用Solana格式的地址和代币合约地址
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="md:col-span-2">
@@ -345,6 +507,58 @@ export default function CampaignCreate() {
                 {tokenAddressError && (
                   <div className="mt-1">
                     <span className="text-xs text-error">{tokenAddressError}</span>
+                  </div>
+                )}
+
+                {/* 代币信息显示 */}
+                {isFetchingToken && (
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2">
+                      <span className="loading loading-spinner loading-xs"></span>
+                      <span className="text-xs text-info">正在获取代币信息...</span>
+                    </div>
+                  </div>
+                )}
+
+                {tokenInfo && !isFetchingToken && (
+                  <div className="mt-2">
+                    <div className="bg-base-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                            <span className="text-xs text-primary-content font-bold">
+                              {tokenInfo.symbol?.substring(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold">{tokenInfo.name}</div>
+                            <div className="text-xs opacity-70">{tokenInfo.symbol}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs opacity-70">精度</div>
+                          <div className="text-sm font-mono">{tokenInfo.decimals}</div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs opacity-60">
+                        <div className="flex items-center gap-1">
+                          <span>链类型: {tokenInfo.chainType === 'evm' ? 'EVM' : 'Solana'}</span>
+                          <span>•</span>
+                          <span className="font-mono">{tokenInfo.address.substring(0, 8)}...{tokenInfo.address.substring(tokenInfo.address.length - 6)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {tokenInfoError && !isFetchingToken && (
+                  <div className="mt-2">
+                    <div className="alert alert-warning">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <span className="text-xs">{tokenInfoError}</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -464,29 +678,29 @@ export default function CampaignCreate() {
                       )}
 
                       {/* 统计信息 */}
-                      <div className="stats shadow-sm bg-base-100">
-                        <div className="stat">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="stat bg-base-200 rounded-lg p-4">
                           <div className="stat-title text-xs">有效地址数</div>
-                          <div className="stat-value text-lg">{csvValidation.validRecords}</div>
+                          <div className="stat-value text-2xl">{csvValidation.validRecords}</div>
                         </div>
 
-                        <div className="stat">
+                        <div className="stat bg-base-200 rounded-lg p-4">
                           <div className="stat-title text-xs">总代币数</div>
-                          <div className="stat-value text-lg">
-                            {csvData.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                          <div className="stat-value text-2xl">
+                            {csvData.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                           </div>
                         </div>
 
-                        <div className="stat">
+                        <div className="stat bg-base-200 rounded-lg p-4">
                           <div className="stat-title text-xs">批次数量</div>
-                          <div className="stat-value text-lg">
+                          <div className="stat-value text-2xl">
                             {Math.ceil(csvValidation.validRecords / formData.batchSize)}
                           </div>
                         </div>
 
-                        <div className="stat">
+                        <div className="stat bg-base-200 rounded-lg p-4">
                           <div className="stat-title text-xs">预估总时长</div>
-                          <div className="stat-value text-lg">
+                          <div className="stat-value text-2xl">
                             {(() => {
                               const batches = Math.ceil(csvValidation.validRecords / formData.batchSize);
                               const totalSeconds = (batches * parseInt(formData.sendInterval)) / 1000;
@@ -495,11 +709,6 @@ export default function CampaignCreate() {
                               return `${minutes}分${seconds}秒`;
                             })()}
                           </div>
-                        </div>
-
-                        <div className="stat">
-                          <div className="stat-title text-xs">预估 Gas 费</div>
-                          <div className="stat-value text-sm text-warning">计算中...</div>
                         </div>
                       </div>
 
@@ -592,9 +801,18 @@ export default function CampaignCreate() {
                   </div>
 
                   <div className="stat bg-base-200 rounded-lg p-4">
-                    <div className="stat-title text-xs">Gas 价格</div>
+                    <div className="stat-title text-xs">Gas 价格 {estimation.isEIP1559 && '(EIP-1559)'}</div>
                     <div className="stat-value text-2xl">{estimation.gasPrice}</div>
-                    <div className="stat-desc">Gwei</div>
+                    <div className="stat-desc">
+                      {estimation.isEIP1559 ? (
+                        <div className="text-xs">
+                          <div>Max: {estimation.maxFeePerGas} Gwei</div>
+                          <div>Priority: {estimation.maxPriorityFeePerGas} Gwei</div>
+                        </div>
+                      ) : (
+                        'Gwei (Legacy)'
+                      )}
+                    </div>
                   </div>
 
                   <div className="stat bg-base-200 rounded-lg p-4">
@@ -609,10 +827,16 @@ export default function CampaignCreate() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                   <div className="text-sm">
-                    <div className="font-bold">建议</div>
-                    <div>最优批次大小: {estimation.recommendations.optimalBatchSize} 地址/批次</div>
-                    <div>每批耗时: {estimation.recommendations.estimatedTimePerBatch} 秒</div>
-                    <div>总预计时间: {estimation.recommendations.totalEstimatedTime} 分钟</div>
+                    <div className="font-bold">优化建议</div>
+                    <div>✓ 最优批次大小: {estimation.recommendations.optimalBatchSize} 地址/批次</div>
+                    <div>✓ 每批耗时: {estimation.recommendations.estimatedTimePerBatch} 秒</div>
+                    <div>✓ 总预计时间: {estimation.recommendations.totalEstimatedTime} 分钟</div>
+                    <div className="mt-2 text-xs opacity-70">
+                      {estimation.isEIP1559
+                        ? '💡 使用EIP-1559动态Gas定价，已包含20%的maxFee和50%的priority安全缓冲'
+                        : '💡 使用传统Gas定价，已包含20%安全缓冲'
+                      }
+                    </div>
                   </div>
                 </div>
 
@@ -622,7 +846,8 @@ export default function CampaignCreate() {
                   </svg>
                   <div className="text-sm">
                     <div className="font-bold">重要提醒</div>
-                    <div>以上估算仅供参考，实际Gas费用可能因网络状况而有所不同</div>
+                    <div>⚠️  Gas价格从RPC实时获取，但网络拥堵时可能会有波动</div>
+                    <div>⚠️  估算已包含安全缓冲，确保交易能够快速确认</div>
                   </div>
                 </div>
               </div>

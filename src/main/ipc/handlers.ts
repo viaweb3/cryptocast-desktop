@@ -9,6 +9,7 @@ import { FileService } from '../services/FileService';
 import { PriceService } from '../services/PriceService';
 import { ContractService } from '../services/ContractService';
 import { CampaignEstimator } from '../services/CampaignEstimator';
+import { TokenService } from '../services/TokenService';
 
 let databaseManager: DatabaseManager;
 let campaignService: CampaignService;
@@ -20,6 +21,7 @@ let fileService: FileService;
 let priceService: PriceService;
 let contractService: ContractService;
 let campaignEstimator: CampaignEstimator;
+let tokenService: TokenService;
 
 export async function setupIPCHandlers() {
   // 初始化服务
@@ -57,6 +59,9 @@ export async function setupIPCHandlers() {
     console.log('Initializing campaign estimator...');
     campaignEstimator = new CampaignEstimator(databaseManager);
 
+    console.log('Initializing token service...');
+    tokenService = new TokenService(chainService);
+
     console.log('All services initialized successfully');
   } catch (error) {
     console.error('Failed to initialize services:', error);
@@ -68,9 +73,11 @@ export async function setupIPCHandlers() {
     try {
       console.log('创建活动:', data);
       const campaign = await campaignService.createCampaign(data);
+      console.log('✅ 活动创建成功:', campaign.id);
       return campaign;
     } catch (error) {
-      console.error('创建活动失败:', error);
+      console.error('❌ 创建活动失败:', error);
+      console.error('错误堆栈:', error instanceof Error ? error.stack : 'No stack trace');
       throw new Error(`创建活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   });
@@ -214,10 +221,10 @@ export async function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('wallet:getBalance', async (_event, address, chain, tokenAddress) => {
+  ipcMain.handle('wallet:getBalance', async (_event, address, chain, tokenAddress, tokenDecimals) => {
     try {
-      console.log('查询余额:', address, chain, tokenAddress);
-      const balance = await blockchainService.getBalance(address, chain, tokenAddress);
+      console.log('查询余额:', address, chain, tokenAddress, tokenDecimals);
+      const balance = await blockchainService.getBalance(address, chain, tokenAddress, tokenDecimals);
       return balance;
     } catch (error) {
       console.error('查询余额失败:', error);
@@ -260,10 +267,10 @@ export async function setupIPCHandlers() {
   });
 
   // 链管理相关
-  ipcMain.handle('chain:getEVMChains', async (_event, onlyEnabled) => {
+  ipcMain.handle('chain:getEVMChains', async (_event) => {
     try {
       console.log('获取EVM链列表');
-      const chains = await chainService.getEVMChains(onlyEnabled);
+      const chains = await chainService.getEVMChains();
       return chains;
     } catch (error) {
       console.error('获取EVM链列表失败:', error);
@@ -302,10 +309,10 @@ export async function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('chain:testEVMLatency', async (_event, chainId) => {
+  ipcMain.handle('chain:testEVMLatency', async (_event, rpcUrl) => {
     try {
-      console.log('测试EVM链延迟:', chainId);
-      const result = await chainService.testEVMLatency(chainId);
+      console.log('测试EVM链延迟, RPC URL:', rpcUrl);
+      const result = await chainService.testEVMLatency(rpcUrl);
       return result;
     } catch (error) {
       console.error('测试EVM链延迟失败:', error);
@@ -456,17 +463,7 @@ export async function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('price:getGasPrice', async (_event, network) => {
-    try {
-      console.log('获取Gas价格:', network);
-      const gasPrice = await priceService.getGasPrice(network);
-      return gasPrice;
-    } catch (error) {
-      console.error('获取Gas价格失败:', error);
-      throw new Error(`获取Gas价格失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  });
-
+  
   // Gas info with buffer
   ipcMain.handle('gas:getInfo', async (_event, rpcUrl, network, tokenPrice) => {
     try {
@@ -604,6 +601,40 @@ export async function setupIPCHandlers() {
     } catch (error) {
       console.error('批量转账失败:', error);
       throw new Error(`批量转账失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  // 代币相关处理器
+  ipcMain.handle('token:getInfo', async (_event, tokenAddress: string, chainId: string) => {
+    try {
+      console.log('获取代币信息:', { tokenAddress, chainId });
+      const tokenInfo = await tokenService.getTokenInfo(tokenAddress, chainId);
+      return tokenInfo;
+    } catch (error) {
+      console.error('获取代币信息失败:', error);
+      throw new Error(`获取代币信息失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  ipcMain.handle('token:validateAddress', async (_event, tokenAddress: string, chainId: string) => {
+    try {
+      console.log('验证代币地址:', { tokenAddress, chainId });
+      const validation = await tokenService.validateTokenAddressForChain(tokenAddress, chainId);
+      return validation;
+    } catch (error) {
+      console.error('验证代币地址失败:', error);
+      throw new Error(`验证代币地址失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  ipcMain.handle('token:getMultipleInfo', async (_event, tokenAddresses: string[], chainId: string) => {
+    try {
+      console.log('批量获取代币信息:', { tokenAddresses, chainId });
+      const tokenInfos = await tokenService.getMultipleTokenInfos(tokenAddresses, chainId);
+      return tokenInfos;
+    } catch (error) {
+      console.error('批量获取代币信息失败:', error);
+      throw new Error(`批量获取代币信息失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   });
 

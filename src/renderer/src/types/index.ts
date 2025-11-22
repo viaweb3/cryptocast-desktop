@@ -12,14 +12,14 @@ export interface ElectronAPI {
   wallet: {
     create: (type?: string) => Promise<{ address: string; privateKeyBase64: string }>;
     exportPrivateKey: (privateKeyBase64: string) => Promise<string>;
-    getBalance: (address: string, chain: string, tokenAddress?: string) => Promise<BalanceData>;
+    getBalance: (address: string, chain: string, tokenAddress?: string, tokenDecimals?: number) => Promise<BalanceData>;
   };
   chain: {
     getEVMChains: (onlyEnabled?: boolean) => Promise<EVMChain[]>;
     addEVMChain: (chainData: any) => Promise<number>;
     updateEVMChain: (chainId: number, updates: any) => Promise<void>;
     deleteEVMChain: (chainId: number) => Promise<void>;
-    testEVMLatency: (chainId: number) => Promise<{ latency: number; blockNumber: number }>;
+    testEVMLatency: (rpcUrl: string) => Promise<{ latency: number; blockNumber: number }>;
     getSolanaRPCs: (network?: string, onlyEnabled?: boolean) => Promise<SolanaRPC[]>;
         addSolanaRPC: (rpcData: any) => Promise<number>;
     testSolanaRPC: (rpcUrl: string) => Promise<{ success: boolean; latency?: number }>;
@@ -33,7 +33,6 @@ export interface ElectronAPI {
   price: {
     getPrice: (symbol: string) => Promise<{ symbol: string; price: number }>;
     getPrices: (symbols: string[]) => Promise<Record<string, number>>;
-    getGasPrice: (network: string) => Promise<any>;
     getSummary: () => Promise<any>;
   };
   gas: {
@@ -46,6 +45,11 @@ export interface ElectronAPI {
     approveTokens: (rpcUrl: string, privateKey: string, tokenAddress: string, contractAddress: string, amount: string) => Promise<{ success: boolean; txHash: string }>;
     checkApproval: (rpcUrl: string, privateKey: string, tokenAddress: string, contractAddress: string, requiredAmount: string) => Promise<{ approved: boolean }>;
     getTokenInfo: (rpcUrl: string, tokenAddress: string) => Promise<{ symbol: string; name: string; decimals: number }>;
+  };
+  token: {
+    getInfo: (tokenAddress: string, chainId: string) => Promise<TokenInfo | null>;
+    validateAddress: (tokenAddress: string, chainId: string) => Promise<{ isValid: boolean; chainType?: 'evm' | 'solana'; error?: string }>;
+    getMultipleInfo: (tokenAddresses: string[], chainId: string) => Promise<TokenInfo[]>;
   };
 }
 
@@ -129,6 +133,14 @@ export interface CampaignEstimate {
   successProbability: number;
 }
 
+export interface TokenInfo {
+  name: string;
+  symbol: string;
+  decimals: number;
+  address: string;
+  chainType: 'evm' | 'solana';
+}
+
 export interface CSVValidationResult {
   isValid: boolean;
   totalRecords: number;
@@ -182,7 +194,8 @@ export interface EVMChain {
   explorerUrl: string;
   symbol: string;
   decimals: number;
-  enabled: boolean;
+  color?: string;
+  badgeColor?: string;
   isCustom: boolean;
 }
 
@@ -206,6 +219,7 @@ export interface ActivityWallet {
   campaignId: string;
   campaignName: string;
   address: string;
+  chain: string;
   privateKeyBase64?: string;
   balances: WalletBalance[];
   status: 'active' | 'pending' | 'completed' | 'failed';

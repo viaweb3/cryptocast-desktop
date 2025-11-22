@@ -4,20 +4,38 @@ import { createPortal } from 'react-dom';
 import {
   AppSettings,
   EVMChain,
+  SolanaRPC,
   ChainConfigurationForm,
   NetworkTestResult
 } from '../types';
+
+// 获取链的显示字母
+function getChainInitial(name: string, symbol?: string): string {
+  const lowerName = name.toLowerCase();
+
+  // 特殊链的显示字母
+  if (lowerName.includes('ethereum') && lowerName.includes('sepolia')) return 'S'; // Sepolia
+  if (lowerName.includes('ethereum')) return 'E'; // Ethereum Mainnet
+  if (lowerName.includes('polygon')) return 'P'; // Polygon
+  if (lowerName.includes('arbitrum')) return 'A'; // Arbitrum
+  if (lowerName.includes('base')) return 'B'; // Base
+  if (lowerName.includes('optimism')) return 'O'; // Optimism
+  if (lowerName.includes('bsc') || lowerName.includes('binance')) return 'B'; // BSC
+  if (lowerName.includes('avalanche')) return 'A'; // Avalanche
+  if (lowerName.includes('solana')) return 'S'; // Solana
+
+  // 默认使用symbol的第一个字母
+  return symbol?.charAt(0)?.toUpperCase() || name.charAt(0)?.toUpperCase() || '⚡';
+}
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   chain: EVMChain | null;
   onSave: (chainData: ChainConfigurationForm) => void;
-  onTest: (chainId: number) => void;
-  testResults: Record<number, NetworkTestResult>;
 }
 
-function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }: SettingsModalProps) {
+function ChainEditModal({ isOpen, onClose, chain, onSave }: SettingsModalProps) {
   const [formData, setFormData] = useState<ChainConfigurationForm>({
     name: '',
     chainId: 1,
@@ -35,6 +53,12 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
   });
 
   const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ latency: number; blockNumber: number } | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  const [isTestingBackup, setIsTestingBackup] = useState(false);
+  const [testResultBackup, setTestResultBackup] = useState<{ latency: number; blockNumber: number } | null>(null);
+  const [testErrorBackup, setTestErrorBackup] = useState<string | null>(null);
 
   useEffect(() => {
     if (chain) {
@@ -67,22 +91,49 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
     onSave(formData);
   };
 
-  const handleTest = async () => {
-    if (isTesting) {
+  const handleTestRPC = async () => {
+    if (isTesting || !formData.rpcUrl) {
       return;
     }
 
     setIsTesting(true);
+    setTestError(null);
+    setTestResult(null);
+
     try {
-      await onTest(chain.chainId);
+      if (window.electronAPI?.chain) {
+        const result = await window.electronAPI.chain.testEVMLatency(formData.rpcUrl);
+        setTestResult(result);
+      }
     } catch (error) {
       console.error('测试失败:', error);
+      setTestError(error instanceof Error ? error.message : '连接失败');
     } finally {
       setIsTesting(false);
     }
   };
 
-  const testResult = testResults[chain.chainId];
+  const handleTestBackupRPC = async () => {
+    if (isTestingBackup || !formData.rpcBackup) {
+      return;
+    }
+
+    setIsTestingBackup(true);
+    setTestErrorBackup(null);
+    setTestResultBackup(null);
+
+    try {
+      if (window.electronAPI?.chain) {
+        const result = await window.electronAPI.chain.testEVMLatency(formData.rpcBackup);
+        setTestResultBackup(result);
+      }
+    } catch (error) {
+      console.error('备用RPC测试失败:', error);
+      setTestErrorBackup(error instanceof Error ? error.message : '连接失败');
+    } finally {
+      setIsTestingBackup(false);
+    }
+  };
 
   const isNewChain = !chain.id || chain.id === 0;
 
@@ -143,15 +194,50 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
                 <label className="label">
                   <span className="label-text font-medium">RPC 节点 URL</span>
                 </label>
-                <input
-                  type="url"
-                  value={formData.rpcUrl}
-                  onChange={(e) => setFormData({ ...formData, rpcUrl: e.target.value })}
-                  className="input input-bordered"
-                  style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
-                  placeholder="https://polygon.llamarpc.com"
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={formData.rpcUrl}
+                    onChange={(e) => {
+                      setFormData({ ...formData, rpcUrl: e.target.value });
+                      setTestResult(null);
+                      setTestError(null);
+                    }}
+                    className="input input-bordered flex-1"
+                    style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                    placeholder="https://polygon.llamarpc.com"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestRPC}
+                    disabled={isTesting || !formData.rpcUrl}
+                    className="btn btn-outline btn-sm"
+                  >
+                    {isTesting ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs"></span>
+                        测试中
+                      </>
+                    ) : (
+                      '🧪 测试'
+                    )}
+                  </button>
+                </div>
+                {testResult && (
+                  <div className="alert alert-success mt-2">
+                    <div className="text-sm">
+                      ✅ 延迟: {testResult.latency}ms | 区块: {testResult.blockNumber}
+                    </div>
+                  </div>
+                )}
+                {testError && (
+                  <div className="alert alert-error mt-2">
+                    <div className="text-sm">
+                      ❌ {testError}
+                    </div>
+                  </div>
+                )}
                 <label className="label">
                   <span className="label-text-alt">建议配置多个 URL 以实现冗余备份</span>
                 </label>
@@ -161,14 +247,49 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
                 <label className="label">
                   <span className="label-text font-medium">备用 RPC URL</span>
                 </label>
-                <input
-                  type="url"
-                  value={formData.rpcBackup}
-                  onChange={(e) => setFormData({ ...formData, rpcBackup: e.target.value })}
-                  className="input input-bordered"
-                  style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
-                  placeholder="https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={formData.rpcBackup}
+                    onChange={(e) => {
+                      setFormData({ ...formData, rpcBackup: e.target.value });
+                      setTestResultBackup(null);
+                      setTestErrorBackup(null);
+                    }}
+                    className="input input-bordered flex-1"
+                    style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                    placeholder="https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestBackupRPC}
+                    disabled={isTestingBackup || !formData.rpcBackup}
+                    className="btn btn-outline btn-sm"
+                  >
+                    {isTestingBackup ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs"></span>
+                        测试中
+                      </>
+                    ) : (
+                      '🧪 测试'
+                    )}
+                  </button>
+                </div>
+                {testResultBackup && (
+                  <div className="alert alert-success mt-2">
+                    <div className="text-sm">
+                      ✅ 延迟: {testResultBackup.latency}ms | 区块: {testResultBackup.blockNumber}
+                    </div>
+                  </div>
+                )}
+                {testErrorBackup && (
+                  <div className="alert alert-error mt-2">
+                    <div className="text-sm">
+                      ❌ {testErrorBackup}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="form-control mt-4">
@@ -218,51 +339,6 @@ function ChainEditModal({ isOpen, onClose, chain, onSave, onTest, testResults }:
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Test Connection */}
-          <div className="card bg-base-100 shadow-sm mb-6">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <span>🔗</span>
-                  连接测试
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleTest}
-                  disabled={isTesting}
-                  className={`btn ${isTesting ? 'btn-disabled' : 'btn-outline'}`}
-                >
-                  {isTesting ? (
-                    <>
-                      <span className="loading loading-spinner loading-sm"></span>
-                      测试中...
-                    </>
-                  ) : (
-                    '🧪 测试连接'
-                  )}
-                </button>
-              </div>
-
-              {testResult && (
-                <div className={`alert mt-4 ${
-                  testResult.status === 'success' ? 'alert-success' : 'alert-error'
-                }`}>
-                  <div>
-                    <div className="font-bold">
-                      {testResult.status === 'success' ? '✅ 连接成功' : '❌ 连接失败'}
-                    </div>
-                    <div className="text-sm">
-                      延迟: {testResult.latency}ms | 区块: {testResult.blockNumber} | Gas: {testResult.gasPrice} Gwei
-                    </div>
-                    {testResult.error && (
-                      <div className="text-xs mt-2">错误详情: {testResult.error}</div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -328,7 +404,7 @@ export default function Settings() {
   const [activeTab] = useState<'chains'>('chains');
   const [editingChain, setEditingChain] = useState<EVMChain | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [testResults, setTestResults] = useState<Record<number, NetworkTestResult>>({});
+  const [solanaRPCs, setSolanaRPCs] = useState<SolanaRPC[]>([]);
 
   useEffect(() => {
     loadSettings();
@@ -345,76 +421,36 @@ export default function Settings() {
 
   const loadChains = async () => {
     try {
+      console.log('🔍 [Settings] loadChains: Starting to load chains from electron API');
       if (window.electronAPI?.chain) {
+        // Load EVM chains
         const chains = await window.electronAPI.chain.getEVMChains();
+        console.log(`🔍 [Settings] loadChains: Received ${chains.length} EVM chains from API`);
+        console.log('🔍 [Settings] loadChains: Chain data received:', chains.map(chain => ({
+          name: chain.name,
+          color: chain.color,
+          badgeColor: chain.badgeColor,
+          chainId: chain.chainId
+        })));
         setSettings(prev => ({ ...prev, chains }));
+        console.log('🔍 [Settings] loadChains: Chains set to state');
+
+        // Load Solana RPCs
+        try {
+          const solanaRPCData = await window.electronAPI.chain.getSolanaRPCs();
+          console.log(`🔍 [Settings] loadChains: Received ${solanaRPCData.length} Solana RPCs from API`);
+          setSolanaRPCs(solanaRPCData);
+          console.log('🔍 [Settings] loadChains: Solana RPCs set to state');
+        } catch (error) {
+          console.warn('🔍 [Settings] loadChains: Failed to load Solana RPCs:', error);
+        }
+      } else {
+        console.log('🔍 [Settings] loadChains: window.electronAPI.chain is not available');
       }
     } catch (error) {
-      console.error('Failed to load chains:', error);
-      // Mock data for demonstration
-      const mockChains: EVMChain[] = [
-        {
-          id: 1,
-          type: 'evm',
-          chainId: 1,
-          name: 'Ethereum',
-          rpcUrl: 'https://eth.llamarpc.com',
-          explorerUrl: 'https://etherscan.io',
-          symbol: 'ETH',
-          decimals: 18,
-          enabled: true,
-          isCustom: false,
-        },
-        {
-          id: 2,
-          type: 'evm',
-          chainId: 137,
-          name: 'Polygon',
-          rpcUrl: 'https://polygon.llamarpc.com',
-          explorerUrl: 'https://polygonscan.com',
-          symbol: 'MATIC',
-          decimals: 18,
-          enabled: true,
-          isCustom: false,
-        },
-        {
-          id: 3,
-          type: 'evm',
-          chainId: 8453,
-          name: 'Base',
-          rpcUrl: 'https://mainnet.base.org',
-          explorerUrl: 'https://basescan.org',
-          symbol: 'ETH',
-          decimals: 18,
-          enabled: true,
-          isCustom: false,
-        },
-        {
-          id: 4,
-          type: 'evm',
-          chainId: 42161,
-          name: 'Arbitrum',
-          rpcUrl: 'https://arb1.arbitrum.io/rpc',
-          explorerUrl: 'https://arbiscan.io',
-          symbol: 'ETH',
-          decimals: 18,
-          enabled: false,
-          isCustom: false,
-        },
-        {
-          id: 5,
-          type: 'evm',
-          chainId: 10,
-          name: 'Optimism',
-          rpcUrl: 'https://mainnet.optimism.io',
-          explorerUrl: 'https://optimistic.etherscan.io',
-          symbol: 'ETH',
-          decimals: 18,
-          enabled: false,
-          isCustom: false,
-        },
-      ];
-      setSettings(prev => ({ ...prev, chains: mockChains }));
+      console.error('🔍 [Settings] loadChains: Failed to load chains:', error);
+      // Set empty chains array when database connection fails
+      setSettings(prev => ({ ...prev, chains: [] }));
     }
   };
 
@@ -493,37 +529,6 @@ export default function Settings() {
     }
   };
 
-  const handleTestChain = async (chainId: number) => {
-    try {
-      if (window.electronAPI?.chain) {
-        const result = await window.electronAPI.chain.testEVMLatency(chainId);
-        setTestResults(prev => ({
-          ...prev,
-          [chainId]: {
-            chainId,
-            latency: result.latency,
-            blockNumber: result.blockNumber,
-            gasPrice: 30,
-            status: 'success',
-            timestamp: new Date().toISOString(),
-          }
-        }));
-      }
-    } catch (error) {
-      setTestResults(prev => ({
-        ...prev,
-        [chainId]: {
-          chainId,
-          latency: 0,
-          blockNumber: 0,
-          gasPrice: 0,
-          status: 'failed',
-          error: error instanceof Error ? error.message : '连接失败',
-          timestamp: new Date().toISOString(),
-        }
-      }));
-    }
-  };
 
   
   return (
@@ -551,65 +556,139 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Chain List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(settings.chains || []).map((chain) => (
-            <div
-              key={chain.id}
-              className="card bg-base-100 shadow-sm hover:shadow-md transition-all border-2 border-transparent hover:border-primary/20"
-            >
-              {/* Chain Icon & Info */}
-              <div className="card-body">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="avatar placeholder">
-                    <div className="bg-neutral text-neutral-content rounded-full w-12 h-12">
-                      <span className="text-lg">
-                        {chain.symbol === 'ETH' && '🔷'}
-                        {chain.symbol === 'MATIC' && '🟣'}
-                        {chain.symbol === 'BNB' && '🟡'}
-                        {!['ETH', 'MATIC', 'BNB'].includes(chain.symbol) && '⚡'}
-                      </span>
+        {/* EVM Chain List */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <span>⛓️</span>
+            <span>EVM 链</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(settings.chains || []).map((chain) => (
+              <div
+                key={chain.id}
+                className="card bg-base-100 shadow-sm hover:shadow-md transition-all border-2 border-transparent hover:border-primary/20"
+              >
+                {/* Chain Icon & Info */}
+                <div className="card-body">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="avatar placeholder">
+                      <div
+                        className="text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold"
+                        style={{ backgroundColor: chain.color }}
+                      >
+                        {getChainInitial(chain.name, chain.symbol)}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="card-title text-lg">{chain.name}</h2>
+                      <div className="flex items-center gap-2">
+                        <div className={`badge ${chain.badgeColor || 'badge-primary'} badge-sm`}>{chain.symbol}</div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h2 className="card-title text-lg">{chain.name}</h2>
-                    <div className="flex items-center gap-2">
-                      <div className="badge badge-outline badge-sm">{chain.symbol}</div>
+
+                  {/* Chain Details */}
+                  <div className="divider my-2"></div>
+
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-base-content/60">Chain ID</span>
+                      <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded">{chain.chainId}</div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-base-content/60">精度</span>
+                      <span className="text-sm font-medium">{chain.decimals}</span>
                     </div>
                   </div>
-                </div>
 
-                {/* Chain Details */}
-                <div className="divider my-2"></div>
-
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-base-content/60">Chain ID</span>
-                    <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded">{chain.chainId}</div>
+                  {/* Actions */}
+                  <div className="card-actions justify-end">
+                    <button
+                      onClick={() => handleEditChain(chain)}
+                      className="btn btn-sm btn-outline"
+                    >
+                      ⚙️ 编辑
+                    </button>
                   </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-base-content/60">精度</span>
-                    <span className="text-sm font-medium">{chain.decimals}</span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="card-actions justify-end">
-                  <button
-                    onClick={() => handleEditChain(chain)}
-                    className="btn btn-sm btn-outline"
-                  >
-                    ⚙️ 编辑
-                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Solana Network List */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <span>🌐</span>
+            <span>Solana 网络</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {solanaRPCs.map((rpc) => {
+              const networkName = rpc.network === 'mainnet-beta' ? 'Solana Mainnet' :
+                                 rpc.network === 'devnet' ? 'Solana Devnet' :
+                                 rpc.network === 'testnet' ? 'Solana Testnet' :
+                                 `Solana ${rpc.network}`;
+
+              return (
+                <div
+                  key={rpc.id}
+                  className="card bg-base-100 shadow-sm hover:shadow-md transition-all border-2 border-transparent hover:border-accent/20"
+                >
+                  <div className="card-body">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="avatar placeholder">
+                        <div
+                          className="text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold"
+                          style={{ backgroundColor: rpc.network === 'mainnet-beta' ? '#00FFA3' : '#00D4AA' }}
+                        >
+                          S
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="card-title text-lg">{rpc.name}</h2>
+                        <div className="flex items-center gap-2">
+                          <div className="badge badge-accent badge-sm">SOL</div>
+                          {rpc.enabled && <div className="badge badge-success badge-sm">启用</div>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Solana Details */}
+                    <div className="divider my-2"></div>
+
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-base-content/60">网络</span>
+                        <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded">{networkName}</div>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-base-content/60">优先级</span>
+                        <span className="text-sm font-medium">{rpc.priority}</span>
+                      </div>
+
+                      {rpc.latency && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-base-content/60">延迟</span>
+                          <span className="text-sm font-medium">{rpc.latency}ms</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* RPC URL */}
+                    <div className="text-xs text-base-content/60 truncate mb-2" title={rpc.rpcUrl}>
+                      {rpc.rpcUrl}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Empty State */}
-        {(!settings.chains || settings.chains.length === 0) && (
+        {(!settings.chains || settings.chains.length === 0) && solanaRPCs.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🌐</div>
             <div className="text-lg font-medium mb-2">暂无区块链网络</div>
@@ -650,8 +729,6 @@ export default function Settings() {
         }}
         chain={editingChain}
         onSave={handleSaveChain}
-        onTest={handleTestChain}
-        testResults={testResults}
       />
     </>
   );

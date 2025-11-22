@@ -51,7 +51,9 @@ export class WalletManagementService {
           c.id as campaign_id,
           c.name as campaign_name,
           c.wallet_address as address,
-          c.chain,
+          c.chain_type,
+          c.chain_id,
+          c.network,
           c.status,
           c.token_address,
           c.token_symbol,
@@ -69,8 +71,9 @@ export class WalletManagementService {
       }
 
       if (options?.chain) {
-        query += ' AND c.chain = ?';
-        params.push(options.chain);
+        // Support both chain_id and chain_type filtering
+        query += ' AND (c.chain_id = ? OR c.chain_type = ?)';
+        params.push(options.chain, options.chain);
       }
 
       query += ' ORDER BY c.created_at DESC';
@@ -85,17 +88,22 @@ export class WalletManagementService {
         params.push(options.offset);
       }
 
-      const rows = this.db.prepare(query).all(...params) as any[];
+      const rows = await this.db.prepare(query).all(...params) as any[];
 
       const wallets: ActivityWallet[] = await Promise.all(
         rows.map(async (row) => {
+          // Determine chain identifier based on chain type
+          const chain = row.chain_type === 'evm'
+            ? row.chain_id?.toString() || ''
+            : row.network || 'mainnet-beta';
+
           // 为每个钱包获取余额信息（这里返回基本结构，实际余额需要链上查询）
           return {
             id: row.id,
             campaignId: row.campaign_id,
             campaignName: row.campaign_name,
             address: row.address,
-            chain: row.chain,
+            chain: chain,
             status: row.status,
             balances: [
               {
@@ -140,9 +148,9 @@ export class WalletManagementService {
     }>;
   } | null> {
     try {
-      const campaign = this.db
+      const campaign = await this.db
         .prepare(
-          `SELECT wallet_address, chain, token_address, token_symbol
+          `SELECT wallet_address, chain_type, chain_id, network, token_address, token_symbol
            FROM campaigns WHERE id = ?`
         )
         .get(campaignId) as any;
@@ -152,11 +160,11 @@ export class WalletManagementService {
       }
 
       // 获取链的RPC URL
-      const chains = await this.chainService.getEVMChains(true);
-      const chainConfig = chains.find((c) => c.chainId.toString() === campaign.chain);
+      const chains = await this.chainService.getEVMChains();
+      const chainConfig = chains.find((c) => c.chainId === campaign.chain_id);
 
       if (!chainConfig) {
-        throw new Error(`Chain configuration not found for chain ${campaign.chain}`);
+        throw new Error(`Chain configuration not found for chain ID ${campaign.chain_id}`);
       }
 
       // 查询代币余额
@@ -172,9 +180,14 @@ export class WalletManagementService {
         chainConfig.rpcUrl
       );
 
+      // Determine chain identifier
+      const chain = campaign.chain_type === 'evm'
+        ? campaign.chain_id?.toString() || ''
+        : campaign.network || 'mainnet-beta';
+
       return {
         address: campaign.wallet_address,
-        chain: campaign.chain,
+        chain: chain,
         balances: [
           {
             tokenAddress: campaign.token_address || '0x0000000000000000000000000000000000000000',

@@ -11,15 +11,6 @@ export interface PriceData {
   lastUpdated: number;
 }
 
-export interface GasPriceData {
-  network: string;
-  gasPrice: string;
-  baseFee: string;
-  priorityFee: string;
-  maxFee: string;
-  estimatedTime: number; // seconds
-  lastUpdated: number;
-}
 
 export interface NetworkConfig {
   name: string;
@@ -32,7 +23,6 @@ export interface NetworkConfig {
 export class PriceService {
   private db: any;
   private priceCache: Map<string, PriceData> = new Map();
-  private gasPriceCache: Map<string, GasPriceData> = new Map();
   private updateInterval: NodeJS.Timeout | null = null;
 
   // Supported networks
@@ -73,19 +63,17 @@ export class PriceService {
   }
 
   private startPriceUpdates(): void {
-    // Update prices every 60 seconds
+    // Update prices every 3 minutes (180 seconds)
     this.updateInterval = setInterval(async () => {
       try {
         await this.updateAllPrices();
-        await this.updateGasPrices();
       } catch (error) {
         console.error('Price update failed:', error);
       }
-    }, 60000);
+    }, 180000);
 
     // Initial price update
     this.updateAllPrices();
-    this.updateGasPrices();
   }
 
   private async updateAllPrices(): Promise<void> {
@@ -96,10 +84,6 @@ export class PriceService {
         params: {
           ids: coinIds.join(','),
           vs_currencies: 'usd',
-          include_24hr_change: true,
-          include_market_cap: true,
-          include_24hr_vol: true,
-          include_last_updated_at: true,
         },
         timeout: 10000,
       });
@@ -112,11 +96,11 @@ export class PriceService {
           const priceData: PriceData = {
             symbol: network.nativeTokenSymbol,
             price: coinData.usd,
-            change24h: coinData.usd_24h_change || 0,
-            changePercent24h: coinData.usd_24h_change || 0,
-            marketCap: coinData.usd_market_cap || 0,
-            volume24h: coinData.usd_24h_vol || 0,
-            lastUpdated: coinData.last_updated_at || timestamp,
+            change24h: 0,
+            changePercent24h: 0,
+            marketCap: 0,
+            volume24h: 0,
+            lastUpdated: timestamp,
           };
 
           this.priceCache.set(network.nativeTokenSymbol, priceData);
@@ -131,47 +115,7 @@ export class PriceService {
     }
   }
 
-  private async updateGasPrices(): Promise<void> {
-    const gasApis = [
-      { network: 'ethereum', url: 'https://api.etherscan.io/api?module=gastracker&action=gasoracle' },
-      { network: 'polygon', url: 'https://api.polygonscan.com/api?module=gastracker&action=gasoracle' },
-      { network: 'arbitrum', url: 'https://api.arbiscan.io/api?module=gastracker&action=gasoracle' },
-      { network: 'bsc', url: 'https://api.bscscan.com/api?module=gastracker&action=gasoracle' },
-    ];
-
-    for (const api of gasApis) {
-      try {
-        const response = await axios.get(api.url, { timeout: 10000 });
-        if (response.data.status === '1' && response.data.result) {
-          const result = response.data.result;
-          const gasPriceData: GasPriceData = {
-            network: api.network,
-            gasPrice: result.ProposeGasPrice || result.FastGasPrice || result.SafeGasPrice || '0',
-            baseFee: result.BaseFee || '0',
-            priorityFee: result.FastGasPrice || '0',
-            maxFee: result.FastGasPrice || '0',
-            estimatedTime: this.estimateConfirmationTime(result),
-            lastUpdated: Math.floor(Date.now() / 1000),
-          };
-
-          this.gasPriceCache.set(api.network, gasPriceData);
-        }
-      } catch (error) {
-        console.error(`Failed to fetch gas price for ${api.network}:`, error);
-      }
-    }
-  }
-
-  private estimateConfirmationTime(gasData: any): number {
-    // Simple estimation based on gas price tier
-    if (gasData.FastGasPrice) {
-      return 30; // 30 seconds for fast
-    } else if (gasData.ProposeGasPrice || gasData.SafeGasPrice) {
-      return 120; // 2 minutes for standard
-    }
-    return 300; // 5 minutes default
-  }
-
+  
   private savePriceToDatabase(priceData: PriceData): void {
     try {
       // Double-check price validity before database insertion
@@ -262,37 +206,7 @@ export class PriceService {
     }
   }
 
-  async getGasPrice(network: string): Promise<GasPriceData | null> {
-    const cachedGasPrice = this.gasPriceCache.get(network);
-    if (cachedGasPrice) {
-      return cachedGasPrice;
-    }
-
-    // Default gas price data
-    const defaultGasPrices: Record<string, GasPriceData> = {
-      ethereum: {
-        network: 'ethereum',
-        gasPrice: '30',
-        baseFee: '20',
-        priorityFee: '2',
-        maxFee: '35',
-        estimatedTime: 60,
-        lastUpdated: Math.floor(Date.now() / 1000),
-      },
-      polygon: {
-        network: 'polygon',
-        gasPrice: '30',
-        baseFee: '20',
-        priorityFee: '1',
-        maxFee: '35',
-        estimatedTime: 30,
-        lastUpdated: Math.floor(Date.now() / 1000),
-      },
-    };
-
-    return defaultGasPrices[network] || null;
-  }
-
+  
   async getPricesForSymbols(symbols: string[]): Promise<Record<string, number>> {
     const prices: Record<string, number> = {};
 
@@ -385,13 +299,11 @@ export class PriceService {
 
   clearCache(): void {
     this.priceCache.clear();
-    this.gasPriceCache.clear();
   }
 
   forceUpdate(): void {
     this.clearCache();
     this.updateAllPrices();
-    this.updateGasPrices();
   }
 
   /**
@@ -449,18 +361,12 @@ export class PriceService {
   async getPriceSummary(): Promise<{
     totalValue: number;
     tokenPrices: Record<string, PriceData>;
-    gasPrices: Record<string, GasPriceData>;
     lastUpdated: number;
   }> {
     const tokenPrices: Record<string, PriceData> = {};
-    const gasPrices: Record<string, GasPriceData> = {};
 
     for (const [symbol, priceData] of this.priceCache) {
       tokenPrices[symbol] = priceData;
-    }
-
-    for (const [network, gasData] of this.gasPriceCache) {
-      gasPrices[network] = gasData;
     }
 
     const totalValue = Object.values(tokenPrices).reduce((sum, price) => sum + price.price, 0);
@@ -468,7 +374,6 @@ export class PriceService {
     return {
       totalValue,
       tokenPrices,
-      gasPrices,
       lastUpdated: Math.floor(Date.now() / 1000),
     };
   }

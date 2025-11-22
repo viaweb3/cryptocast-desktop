@@ -34,13 +34,14 @@ export class BlockchainService {
     address: string,
     chain: string,
     tokenAddress?: string,
+    tokenDecimals?: number,
     rpcUrl?: string
   ): Promise<BalanceData> {
     try {
       if (this.isSolanaChain(chain)) {
         return await this.getSolanaBalance(address, tokenAddress, rpcUrl);
       } else {
-        return await this.getEVMBalance(address, chain, tokenAddress, rpcUrl);
+        return await this.getEVMBalance(address, chain, tokenAddress, tokenDecimals, rpcUrl);
       }
     } catch (error) {
       console.error('Failed to get balance:', error);
@@ -56,6 +57,7 @@ export class BlockchainService {
     address: string,
     chain: string,
     tokenAddress?: string,
+    tokenDecimals?: number,
     rpcUrl?: string
   ): Promise<BalanceData> {
     const provider = new ethers.JsonRpcProvider(rpcUrl || this.getDefaultRPC(chain));
@@ -64,21 +66,27 @@ export class BlockchainService {
     const nativeBalance = await provider.getBalance(address);
 
     let tokenBalance: string | undefined;
-    if (tokenAddress) {
+    if (tokenAddress && tokenDecimals !== undefined) {
       try {
-        // ERC20 ABI (只包含balanceOf)
+        // ERC20 ABI (只需要balanceOf，不需要查询decimals)
         const erc20Abi = [
-          'function balanceOf(address owner) view returns (uint256)',
-          'function decimals() view returns (uint8)'
+          'function balanceOf(address owner) view returns (uint256)'
         ];
 
         const contract = new ethers.Contract(tokenAddress, erc20Abi, provider);
-        const decimals = await contract.decimals();
-        const balance = await contract.balanceOf(address);
 
-        tokenBalance = ethers.formatUnits(balance, decimals);
+        // 直接使用已知的精度查询余额
+        const balance = await contract.balanceOf(address);
+        tokenBalance = ethers.formatUnits(balance, tokenDecimals);
+
       } catch (error) {
-        console.error('Failed to get token balance:', error);
+        console.error('Failed to get token balance:', {
+          error: error instanceof Error ? error.message : error,
+          tokenAddress,
+          tokenDecimals,
+          chain,
+          address
+        });
         tokenBalance = '0';
       }
     }

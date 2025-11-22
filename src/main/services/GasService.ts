@@ -103,6 +103,7 @@ export class GasService {
   private getFallbackGasInfo(network: string, tokenPrice: number = 0): GasInfo {
     const fallbackGasPrices: Record<string, number> = {
       'ethereum': 30,      // 30 Gwei
+      'sepolia': 10,       // 10 Gwei base + 20% buffer = 12 Gwei (Sepolia Testnet)
       'polygon': 30,       // 30 Gwei
       'arbitrum': 0.5,    // 0.5 Gwei
       'optimism': 0.5,    // 0.5 Gwei
@@ -208,27 +209,124 @@ export class GasService {
   }
 
   /**
-   * Get gas price for a specific network (simplified version)
+   * Get real-time gas price from RPC for a specific chain
+   * Supports both EIP-1559 and legacy transactions with safety buffer
    */
-  async getGasPrice(chainId: string): Promise<string> {
+  async getGasPriceFromRPC(rpcUrl: string, chainId: string): Promise<{
+    gasPrice: string;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+    isEIP1559: boolean;
+  }> {
     try {
-      // For now, use fallback gas prices
-      // In a real implementation, you would use RPC to get real-time gas price
-      const fallbackGasPrices: Record<string, number> = {
-        '1': 30,      // Ethereum
-        '137': 30,    // Polygon
-        '42161': 0.5, // Arbitrum
-        '10': 0.5,    // Optimism
-        '8453': 0.5,  // Base
-        '56': 5,      // BSC
-      };
+      console.log(`🔍 [GasService] Fetching gas price from RPC for chain ${chainId}: ${rpcUrl}`);
 
-      const gasPrice = fallbackGasPrices[chainId] || 20;
-      return (gasPrice * this.GAS_MULTIPLIER).toFixed(2);
+      const provider = new ethers.JsonRpcProvider(rpcUrl, undefined, {
+        batchMaxCount: 1,
+        polling: false,
+      });
+
+      // Set timeout for RPC call
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Gas price RPC request timeout')), 10000);
+      });
+
+      const feeData = await Promise.race([
+        provider.getFeeData(),
+        timeoutPromise
+      ]) as ethers.FeeData;
+
+      // Check if network supports EIP-1559
+      // Special handling for testnets and networks that don't properly support EIP-1559
+      const nonEIP1559Chains = ['11155111']; // Sepolia Testnet
+      const isNonEIP1559Chain = nonEIP1559Chains.includes(chainId);
+
+      if (!isNonEIP1559Chain && feeData.maxFeePerGas && feeData.maxPriorityFeePerGas &&
+          feeData.maxFeePerGas > 0n && feeData.maxPriorityFeePerGas > 0n) {
+        console.log(`✓ [GasService] EIP-1559 detected for chain ${chainId}`);
+
+        // Apply safety buffer (20% on maxFee, 50% on priority)
+        const adjustedMaxFee = (feeData.maxFeePerGas * BigInt(Math.floor(this.GAS_MULTIPLIER * 100))) / 100n;
+        const adjustedPriorityFee = (feeData.maxPriorityFeePerGas * BigInt(Math.floor(this.PRIORITY_FEE_MULTIPLIER * 100))) / 100n;
+
+        // Ensure maxPriorityFeePerGas never exceeds maxFeePerGas (EIP-1559 requirement)
+        const finalPriorityFee = adjustedPriorityFee > adjustedMaxFee ? adjustedMaxFee : adjustedPriorityFee;
+
+        const maxFeePerGas = ethers.formatUnits(adjustedMaxFee, 'gwei');
+        const maxPriorityFeePerGas = ethers.formatUnits(finalPriorityFee, 'gwei');
+
+        console.log(`✓ [GasService] Chain ${chainId} Gas: maxFee=${maxFeePerGas} Gwei, priority=${maxPriorityFeePerGas} Gwei`);
+
+        return {
+          gasPrice: maxFeePerGas,
+          maxFeePerGas,
+          maxPriorityFeePerGas,
+          isEIP1559: true,
+        };
+      } else if (feeData.gasPrice && feeData.gasPrice > 0n) {
+        console.log(`✓ [GasService] Legacy gas pricing detected for chain ${chainId} ${isNonEIP1559Chain ? '(forced legacy)' : ''}`);
+
+        // Legacy transaction with 20% buffer
+        const adjustedGasPrice = (feeData.gasPrice * BigInt(Math.floor(this.GAS_MULTIPLIER * 100))) / 100n;
+        const gasPrice = ethers.formatUnits(adjustedGasPrice, 'gwei');
+
+        console.log(`✓ [GasService] Chain ${chainId} Gas: ${gasPrice} Gwei (legacy)`);
+
+        return {
+          gasPrice,
+          isEIP1559: false,
+        };
+      } else {
+        throw new Error('No gas price data available from RPC');
+      }
     } catch (error) {
-      console.error('Failed to get gas price:', error);
-      return '20.0';
+      console.error(`❌ [GasService] Failed to get gas price from RPC for chain ${chainId}:`, error);
+      throw error;
     }
+  }
+
+  /**
+   * Get gas price for a specific chain (with RPC fallback)
+   * This is the main method used by CampaignEstimator
+   */
+  async getGasPrice(chainId: string, rpcUrl?: string): Promise<string> {
+    try {
+      // If RPC URL is provided, try to get real-time gas price
+      if (rpcUrl) {
+        const gasData = await this.getGasPriceFromRPC(rpcUrl, chainId);
+        return gasData.gasPrice;
+      }
+
+      // Fallback to preset values with safety buffer
+      console.warn(`⚠️  [GasService] No RPC URL provided for chain ${chainId}, using fallback values`);
+      return this.getFallbackGasPriceForChain(chainId);
+    } catch (error) {
+      console.error(`❌ [GasService] Failed to get gas price for chain ${chainId}:`, error);
+      return this.getFallbackGasPriceForChain(chainId);
+    }
+  }
+
+  /**
+   * Get fallback gas price with safety buffer
+   */
+  private getFallbackGasPriceForChain(chainId: string): string {
+    const fallbackGasPrices: Record<string, number> = {
+      '1': 30,         // Ethereum Mainnet
+      '11155111': 10,  // Sepolia Testnet (10 Gwei base + 20% buffer = 12 Gwei)
+      '137': 30,       // Polygon
+      '42161': 0.1,    // Arbitrum One
+      '10': 0.1,       // Optimism
+      '8453': 0.1,     // Base
+      '56': 5,         // BSC
+      '43114': 25,     // Avalanche C-Chain
+    };
+
+    const basePrice = fallbackGasPrices[chainId] || 20;
+    const priceWithBuffer = basePrice * this.GAS_MULTIPLIER;
+
+    console.log(`📌 [GasService] Using fallback gas price for chain ${chainId}: ${priceWithBuffer.toFixed(2)} Gwei`);
+
+    return priceWithBuffer.toFixed(2);
   }
 
   /**

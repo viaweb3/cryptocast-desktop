@@ -8,6 +8,9 @@ export interface CampaignData {
   description?: string;
   chain: string;
   tokenAddress: string;
+  tokenSymbol?: string;
+  tokenName?: string;
+  tokenDecimals?: number;
   batchSize?: number;
   sendInterval?: number;
   recipients: Array<{
@@ -23,6 +26,8 @@ export interface Campaign {
   chain: string;
   tokenAddress: string;
   tokenSymbol?: string;
+  tokenName?: string;
+  tokenDecimals?: number;
   status: 'CREATED' | 'FUNDED' | 'READY' | 'SENDING' | 'PAUSED' | 'COMPLETED' | 'FAILED';
   totalRecipients: number;
   completedRecipients: number;
@@ -58,24 +63,63 @@ export class CampaignService {
     const id = uuidv4();
     const now = new Date().toISOString();
 
+    console.log('🚀 [CampaignService] createCampaign STARTED - MODIFIED VERSION');
+    console.log('🚀 [CampaignService] ID:', id);
+
     try {
       // 根据链类型创建钱包
       const wallet = this.createWalletForChain(data.chain);
 
+      console.log('🔑 [CampaignService] Wallet created:', {
+        address: wallet.address,
+        hasPrivateKey: !!wallet.privateKeyBase64,
+        privateKeyLength: wallet.privateKeyBase64?.length || 0,
+        chain: data.chain
+      });
+
+      // Determine chain type and ID from the chain value
+      let chainType = 'evm';
+      let chainId = parseInt(data.chain);
+      let network = null;
+
+      // Handle Solana chains (they use chain_id 501+ in our schema)
+      if (typeof data.chain === 'string' && data.chain.toLowerCase().includes('solana')) {
+        chainType = 'solana';
+        chainId = data.chain.includes('mainnet') ? 501 : 502; // Solana chain IDs in our schema
+        network = data.chain.includes('mainnet') ? 'mainnet-beta' : 'devnet';
+      }
+
       const insertCampaign = this.db.prepare(`
         INSERT INTO campaigns (
-          id, name, description, chain, token_address, status, total_recipients,
+          id, name, description, chain_type, chain_id, network, token_address, token_symbol, token_name, token_decimals, status, total_recipients,
           wallet_address, wallet_private_key_base64, batch_size, send_interval,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      insertCampaign.run(
+      console.log('💾 [CampaignService] Inserting campaign data:', {
+        id,
+        name: data.name,
+        chain: data.chain,
+        chainType,
+        chainId,
+        walletAddress: wallet.address,
+        privateKeyProvided: !!wallet.privateKeyBase64,
+        privateKeyLength: wallet.privateKeyBase64?.length || 0,
+        recipientsCount: data.recipients.length
+      });
+
+      await insertCampaign.run(
         id,
         data.name,
         data.description || null,
-        data.chain,
+        chainType,
+        chainId,
+        network,
         data.tokenAddress,
+        data.tokenSymbol || null,
+        data.tokenName || null,
+        data.tokenDecimals || null,
         'CREATED',
         data.recipients.length,
         wallet.address,
@@ -86,16 +130,18 @@ export class CampaignService {
         now
       );
 
+      console.log('✅ [CampaignService] Campaign inserted successfully');
+
       // 插入接收者
       const insertRecipient = this.db.prepare(`
         INSERT INTO recipients (
-          campaign_id, address, amount, status, created_at, updated_at
-        ) VALUES (?, ?, ?, 'PENDING', ?, ?)
+          campaign_id, address, amount, status, created_at
+        ) VALUES (?, ?, ?, 'PENDING', ?)
       `);
 
-      data.recipients.forEach(recipient => {
-        insertRecipient.run(id, recipient.address, recipient.amount, now, now);
-      });
+      for (const recipient of data.recipients) {
+        await insertRecipient.run(id, recipient.address, recipient.amount, now);
+      }
 
       
       const campaign = await this.getCampaignById(id);
@@ -152,7 +198,7 @@ export class CampaignService {
         params.push(filters.offset);
       }
 
-      const campaigns = await this.db.prepare(query).all(...params) as any[];
+      const campaigns = await this.db.prepare(query).all(...params) as any[] || [];
       return campaigns.map(this.mapRowToCampaign);
     } catch (error) {
       console.error('Failed to list campaigns:', error);
@@ -162,7 +208,7 @@ export class CampaignService {
 
   async getCampaignById(id: string): Promise<Campaign | null> {
     try {
-      const row = this.db.prepare('SELECT * FROM campaigns WHERE id = ?').get(id) as any;
+      const row = await this.db.prepare('SELECT * FROM campaigns WHERE id = ?').get(id) as any;
       return row ? this.mapRowToCampaign(row) : null;
     } catch (error) {
       console.error('Failed to get campaign by ID:', error);
@@ -175,7 +221,8 @@ export class CampaignService {
       id: row.id,
       name: row.name,
       description: row.description,
-      chain: row.chain,
+      // For backward compatibility, construct chain from the new schema
+      chain: row.chain || (row.chain_type === 'evm' ? row.chain_id?.toString() : row.network),
       tokenAddress: row.token_address,
       tokenSymbol: row.token_symbol,
       status: row.status,
@@ -188,8 +235,8 @@ export class CampaignService {
       contractDeployedAt: row.contract_deployed_at,
       batchSize: row.batch_size || 100,
       sendInterval: row.send_interval || 2000,
-      gasUsed: row.gas_used || 0,
-      gasCostUsd: row.gas_cost_usd || 0,
+      gasUsed: row.total_gas_used || 0,
+      gasCostUsd: row.total_cost_usd || 0,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       completedAt: row.completed_at,
@@ -199,7 +246,7 @@ export class CampaignService {
   async updateCampaignStatus(id: string, status: Campaign['status']): Promise<void> {
     try {
       const now = new Date().toISOString();
-      this.db.prepare(
+      await this.db.prepare(
         'UPDATE campaigns SET status = ?, updated_at = ? WHERE id = ?'
       ).run(status, now, id);
     } catch (error) {
@@ -262,7 +309,7 @@ export class CampaignService {
   async updateProgress(id: string, completedCount: number): Promise<void> {
     try {
       const now = new Date().toISOString();
-      this.db.prepare(
+      await this.db.prepare(
         'UPDATE campaigns SET completed_recipients = ?, updated_at = ? WHERE id = ?'
       ).run(completedCount, now, id);
     } catch (error) {
@@ -300,7 +347,7 @@ export class CampaignService {
       }
 
       const now = new Date().toISOString();
-      const result = this.db.prepare(`
+      const result = await this.db.prepare(`
         UPDATE campaigns
         SET contract_address = ?, contract_deployed_at = ?, status = 'READY', updated_at = ?
         WHERE id = ? AND status IN ('CREATED', 'FUNDED') AND contract_address IS NULL
@@ -338,7 +385,7 @@ export class CampaignService {
     }
   }
 
-  async getCampaignRecipients(id: string): Promise<Array<{
+  async getCampaignRecipients(campaignId: string): Promise<Array<{
     id: number;
     address: string;
     amount: string;
@@ -350,9 +397,19 @@ export class CampaignService {
     updatedAt: string;
   }>> {
     try {
-      const recipients = this.db.prepare(`
+      if (!campaignId || campaignId === 'undefined') {
+        console.warn('getCampaignRecipients: Invalid campaignId provided:', campaignId);
+        return [];
+      }
+
+      const recipients = await this.db.prepare(`
         SELECT * FROM recipients WHERE campaign_id = ? ORDER BY created_at
-      `).all(id) as any[];
+      `).all(campaignId) as any[] || [];
+
+      if (!Array.isArray(recipients)) {
+        console.warn('getCampaignRecipients: Database did not return an array, got:', typeof recipients, recipients);
+        return [];
+      }
 
       return recipients.map(row => ({
         id: row.id,
@@ -367,7 +424,7 @@ export class CampaignService {
       }));
     } catch (error) {
       console.error('Failed to get campaign recipients:', error);
-      throw new Error('Campaign recipients retrieval failed');
+      return []; // Return empty array instead of throwing error
     }
   }
 
@@ -381,7 +438,7 @@ export class CampaignService {
   ): Promise<void> {
     try {
       const now = new Date().toISOString();
-      this.db.prepare(`
+      await this.db.prepare(`
         UPDATE recipients
         SET status = ?, tx_hash = ?, gas_used = ?, error_message = ?, updated_at = ?
         WHERE campaign_id = ? AND address = ?
@@ -402,19 +459,14 @@ export class CampaignService {
 
   async deleteCampaign(id: string): Promise<void> {
     try {
-      // 开始事务
-      const transaction = this.db.transaction(() => {
-        // 删除相关的接收者记录
-        this.db.prepare('DELETE FROM recipients WHERE campaign_id = ?').run(id);
+      // 删除相关的接收者记录
+      await this.db.prepare('DELETE FROM recipients WHERE campaign_id = ?').run(id);
 
-        // 删除相关的交易记录
-        this.db.prepare('DELETE FROM transactions WHERE campaign_id = ?').run(id);
+      // 删除相关的交易记录
+      await this.db.prepare('DELETE FROM transactions WHERE campaign_id = ?').run(id);
 
-        // 删除活动
-        this.db.prepare('DELETE FROM campaigns WHERE id = ?').run(id);
-      });
-
-      transaction();
+      // 删除活动
+      await this.db.prepare('DELETE FROM campaigns WHERE id = ?').run(id);
     } catch (error) {
       console.error('Failed to delete campaign:', error);
       throw new Error('Campaign deletion failed');
@@ -447,6 +499,11 @@ export class CampaignService {
     confirmedAt?: string;
   }>> {
     try {
+      if (!campaignId || campaignId === 'undefined') {
+        console.warn('getCampaignTransactions: Invalid campaignId provided:', campaignId);
+        return [];
+      }
+
       let query = `
         SELECT * FROM transactions
         WHERE campaign_id = ?
@@ -464,7 +521,12 @@ export class CampaignService {
         params.push(options.offset);
       }
 
-      const transactions = this.db.prepare(query).all(...params) as any[];
+      const transactions = await this.db.prepare(query).all(...params) as any[] || [];
+
+      if (!Array.isArray(transactions)) {
+        console.warn('getCampaignTransactions: Database did not return an array, got:', typeof transactions, transactions);
+        return [];
+      }
 
       return transactions.map(row => ({
         id: row.id,
@@ -484,7 +546,7 @@ export class CampaignService {
       }));
     } catch (error) {
       console.error('Failed to get campaign transactions:', error);
-      throw new Error('Campaign transactions retrieval failed');
+      return []; // Return empty array instead of throwing error
     }
   }
 
@@ -564,7 +626,7 @@ export class CampaignService {
       }
 
       // 获取接收者统计
-      const recipientStats = this.db.prepare(`
+      const recipientStats = await this.db.prepare(`
         SELECT
           COUNT(*) as total,
           SUM(CASE WHEN status = 'SENT' THEN 1 ELSE 0 END) as completed,

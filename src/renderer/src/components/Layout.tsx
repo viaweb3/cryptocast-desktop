@@ -1,6 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+const { electronAPI } = window as any;
+
 interface LayoutProps {
   children: ReactNode;
 }
@@ -16,12 +18,38 @@ interface PriceInfo {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [priceInfo, setPriceInfo] = useState<PriceInfo>({
-    eth: 3685.42,
-    bnb: 612.35,
-    pol: 0.48,
-    avax: 35.82,
-    sol: 178.35
+    eth: 0,
+    bnb: 0,
+    pol: 0,
+    avax: 0,
+    sol: 0
   });
+
+  // Fetch real-time prices on component mount and set up interval
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const prices = await electronAPI.price.getPrices(['ETH', 'BNB', 'POL', 'AVAX', 'SOL']);
+        setPriceInfo({
+          eth: prices.ETH || 0,
+          bnb: prices.BNB || 0,
+          pol: prices.POL || 0,
+          avax: prices.AVAX || 0,
+          sol: prices.SOL || 0
+        });
+      } catch (error) {
+        console.error('Failed to fetch prices:', error);
+      }
+    };
+
+    // Initial fetch
+    fetchPrices();
+
+    // Set up interval to fetch prices every 3 minutes (180000 ms)
+    const interval = setInterval(fetchPrices, 180000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     { path: '/', label: '仪表盘', icon: '🏠' },
@@ -32,6 +60,7 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   const formatPrice = (price: number) => {
+    if (price === 0) return '$--.--';
     return `$${price.toFixed(2)}`;
   };
 
@@ -115,32 +144,6 @@ export default function Layout({ children }: LayoutProps) {
                   <span className="text-xs font-medium">SOL</span>
                 </div>
                 <span className="text-xs font-bold text-primary">{formatPrice(priceInfo.sol)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Gas Prices */}
-          <div className="bg-base-200 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">⚡</span>
-              <h3 className="text-xs font-semibold text-warning uppercase tracking-wide">Gas价格</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium">Ethereum</span>
-                <div className="badge badge-warning badge-sm whitespace-nowrap">28 Gwei</div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium">Polygon</span>
-                <div className="badge badge-success badge-sm whitespace-nowrap">95 Gwei</div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium">BSC</span>
-                <div className="badge badge-info badge-sm whitespace-nowrap">12 Gwei</div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium">Avalanche</span>
-                <div className="badge badge-purple badge-sm whitespace-nowrap">25 Gwei</div>
               </div>
             </div>
           </div>
