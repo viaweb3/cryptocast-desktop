@@ -25,13 +25,13 @@ export default function Layout({ children }: LayoutProps) {
     sol: 0
   });
 
-  // Fetch real-time prices on component mount and set up interval
+  // Fetch cached prices on component mount and set up interval
   useEffect(() => {
-    const fetchPrices = async () => {
+    const fetchCachedPrices = async () => {
       try {
-        console.log('[Layout] Fetching prices...');
-        const prices = await electronAPI.price.getPrices(['ETH', 'BNB', 'POL', 'AVAX', 'SOL']);
-        console.log('[Layout] Received prices:', prices);
+        console.log('[Layout] Fetching cached prices...');
+        const prices = await electronAPI.price.getCachedPrices(['ETH', 'BNB', 'POL', 'AVAX', 'SOL']);
+        console.log('[Layout] Received cached prices:', prices);
         setPriceInfo({
           eth: prices.ETH || 0,
           bnb: prices.BNB || 0,
@@ -39,17 +39,33 @@ export default function Layout({ children }: LayoutProps) {
           avax: prices.AVAX || 0,
           sol: prices.SOL || 0
         });
-        console.log('[Layout] Updated priceInfo state');
+        console.log('[Layout] Updated priceInfo state with cached data');
       } catch (error) {
-        console.error('[Layout] Failed to fetch prices:', error);
+        console.error('[Layout] Failed to fetch cached prices:', error);
+        // Fallback to regular price fetch if cache is empty
+        try {
+          console.log('[Layout] Fallback: fetching fresh prices...');
+          const freshPrices = await electronAPI.price.getPrices(['ETH', 'BNB', 'POL', 'AVAX', 'SOL']);
+          console.log('[Layout] Received fresh prices:', freshPrices);
+          setPriceInfo({
+            eth: freshPrices.ETH || 0,
+            bnb: freshPrices.BNB || 0,
+            pol: freshPrices.POL || 0,
+            avax: freshPrices.AVAX || 0,
+            sol: freshPrices.SOL || 0
+          });
+        } catch (fallbackError) {
+          console.error('[Layout] Fallback price fetch also failed:', fallbackError);
+        }
       }
     };
 
-    // Initial fetch
-    fetchPrices();
+    // Initial fetch of cached prices
+    fetchCachedPrices();
 
-    // Set up interval to fetch prices every 3 minutes (180000 ms)
-    const interval = setInterval(fetchPrices, 180000);
+    // Set up interval to refresh cached prices every 3 minutes (180000 ms)
+    // This will use cached data and only trigger new API calls if cache is empty
+    const interval = setInterval(fetchCachedPrices, 180000);
 
     return () => clearInterval(interval);
   }, []);

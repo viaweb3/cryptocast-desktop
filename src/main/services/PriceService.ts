@@ -74,11 +74,16 @@ export class PriceService {
       }
     }, 180000);
 
-    // Initial price update
-    console.log('[PriceService] Running initial price update...');
-    this.updateAllPrices().catch(error => {
-      console.error('[PriceService] Initial price update failed:', error);
-    });
+    // Delay initial price update to avoid startup conflicts
+    console.log('[PriceService] Scheduling initial price update delay...');
+    setTimeout(async () => {
+      try {
+        console.log('[PriceService] Running delayed initial price update...');
+        await this.updateAllPrices();
+      } catch (error) {
+        console.error('[PriceService] Delayed initial price update failed:', error);
+      }
+    }, 5000); // 5 second delay
   }
 
   private async updateAllPrices(): Promise<void> {

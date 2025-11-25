@@ -95,6 +95,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   price: {
     getPrice: (symbol: string) => ipcRenderer.invoke('price:getPrice', symbol),
     getPrices: (symbols: string[]) => ipcRenderer.invoke('price:getPrices', symbols),
+    getCachedPrices: (symbols: string[]) => ipcRenderer.invoke('price:getCachedPrices', symbols),
     getSummary: () => ipcRenderer.invoke('price:getSummary'),
   },
 

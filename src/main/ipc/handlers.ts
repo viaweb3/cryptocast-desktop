@@ -492,17 +492,48 @@ export async function setupIPCHandlers() {
   });
 
 
-  // Temporarily commented out - getSummary method not implemented in PriceService
-  // ipcMain.handle('price:getSummary', async (_event) => {
-  //   try {
-  //     console.log('获取价格汇总');
-  //     const summary = await priceService.getSummary();
-  //     return summary;
-  //   } catch (error) {
-  //     console.error('获取价格汇总失败:', error);
-  //     throw new Error(`获取价格汇总失败: ${error instanceof Error ? error.message : '未知错误'}`);
-  //   }
-  // });
+  // Get cached prices without triggering new API calls
+  ipcMain.handle('price:getCachedPrices', async (_event, symbols: string[]) => {
+    try {
+      console.log('[IPC] price:getCachedPrices called with symbols:', symbols);
+      if (!priceService) {
+        throw new Error('PriceService not initialized');
+      }
+
+      const prices: Record<string, number> = {};
+
+      for (const symbol of symbols) {
+        const priceData = await priceService.getPriceData(symbol);
+        if (priceData) {
+          prices[symbol] = priceData.price;
+        } else {
+          prices[symbol] = 0;
+        }
+      }
+
+      console.log('[IPC] price:getCachedPrices success, returning cached prices:', prices);
+      return prices;
+    } catch (error) {
+      console.error('[IPC] price:getCachedPrices failed:', error);
+      throw new Error(`获取缓存价格失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  // Get price summary with all cached data
+  ipcMain.handle('price:getSummary', async (_event) => {
+    try {
+      console.log('[IPC] price:getSummary called');
+      if (!priceService) {
+        throw new Error('PriceService not initialized');
+      }
+      const summary = await priceService.getPriceSummary();
+      console.log('[IPC] price:getSummary success, returning summary');
+      return summary;
+    } catch (error) {
+      console.error('[IPC] price:getSummary failed:', error);
+      throw new Error(`获取价格汇总失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
 
   // 重试失败的交易
   ipcMain.handle('campaign:retryFailedTransactions', async (_event, campaignId) => {
