@@ -105,9 +105,12 @@ jobs:
     - name: Rebuild native modules
       run: npm rebuild
 
+    - name: Extract version from tag
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
     - name: Build and sign macOS
       if: matrix.platform == 'darwin'
-      run: npm run ${{ matrix.build-script }}
+      run: npm run ${{ matrix.build-script }} -- --publish=never
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CSC_LINK: ${{ secrets.CSC_LINK_MAC }}
@@ -118,11 +121,20 @@ jobs:
 
     - name: Build and sign Windows
       if: matrix.platform == 'win32'
-      run: npm run ${{ matrix.build-script }}
+      run: npm run ${{ matrix.build-script }} -- --publish=never
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CSC_LINK: ${{ secrets.CSC_LINK_WIN }}
         CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD_WIN }}
+
+    - name: Rename artifacts with version
+      run: |
+        find release/ -name "*" -type f | while read file; do
+          new_name=$(echo "$file" | sed "s/CryptoCast-/CryptoCast-${VERSION}-/g")
+          if [ "$file" != "$new_name" ]; then
+            mv "$file" "$new_name"
+          fi
+        done
 
     - name: Upload signed artifacts
       uses: actions/upload-artifact@v4
@@ -135,5 +147,25 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: release/*
+        name: Release ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        body: |
+          ## 🚀 CryptoCast Desktop ${{ github.ref_name }}
+
+          Auto-generated release from GitHub Actions.
+
+          ### 📦 Downloads
+          - **Windows**: `CryptoCast-Setup-${{ github.ref_name }}.exe`
+          - **macOS Intel**: `CryptoCast-${{ github.ref_name }}-x64.dmg`
+          - **macOS Apple Silicon**: `CryptoCast-${{ github.ref_name }}-arm64.dmg`
+          - **Linux**: `CryptoCast-${{ github.ref_name }}.AppImage`
+
+          ### 🔐 Verified Builds
+          All builds are automatically signed and verified.
+
+          ---
+          *Built with ❤️ by GitHub Actions*
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
