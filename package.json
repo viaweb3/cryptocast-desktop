@@ -13,6 +13,8 @@
     "build:ci": "node scripts/build-ci.js",
     "build:win": "npm run build -- --win",
     "build:mac": "npm run build -- --mac",
+    "build:mac-intel": "npm run build -- --mac --x64",
+    "build:mac-arm": "npm run build -- --mac --arm64",
     "build:linux": "npm run build -- --linux",
     "preview": "vite preview",
     "test": "jest --config jest.config.mjs",
@@ -66,7 +68,9 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "png-to-ico": "^3.0.1",
     "postcss": "^8.4.49",
+    "sharp": "^0.34.5",
     "solc": "^0.8.18",
     "supertest": "^7.0.0",
     "tailwindcss": "^3.4.18",
@@ -87,20 +91,24 @@
       "assets/**/*"
     ],
     "npmRebuild": false,
+    "icon": "assets/icon.png",
     "mac": {
       "category": "public.app-category.finance",
+      "icon": "assets/icon.icns",
       "target": [
         "dmg",
         "zip"
       ]
     },
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         "nsis",
         "portable"
       ]
     },
     "linux": {
+      "icon": "assets/icon",
       "target": [
         "AppImage",
         "deb"
