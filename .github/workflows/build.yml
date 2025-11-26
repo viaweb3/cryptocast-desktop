@@ -90,7 +90,7 @@ jobs:
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
-        files: artifacts/**/*.exe artifacts/**/*.dmg artifacts/**/*.AppImage artifacts/**/*.zip artifacts/**/*.deb
+        files: artifacts/**/*
         name: Release ${{ github.ref_name }}
         tag_name: ${{ github.ref_name }}
         body: |
