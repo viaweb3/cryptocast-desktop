@@ -76,11 +76,16 @@ export class CampaignExecutor {
         throw new Error(`Campaign must be in READY or PAUSED status to execute (current: ${campaign.status})`);
       }
 
-      // Decode private key from base64
+      // Prepare wallet with private key
       if (!campaign.walletPrivateKeyBase64) {
         throw new Error('Campaign wallet private key missing');
       }
-      const privateKey = this.walletService.exportPrivateKey(campaign.walletPrivateKeyBase64);
+
+      // For Solana, keep base64 format; for EVM, export to hex format
+      const isSolana = ChainUtils.isSolanaChain(campaign.chain);
+      const privateKey = isSolana
+        ? campaign.walletPrivateKeyBase64 // Keep base64 for Solana
+        : this.walletService.exportEVMPrivateKey(campaign.walletPrivateKeyBase64); // Export to hex for EVM
       const wallet = { privateKey };
 
       // Get pending recipients
@@ -315,9 +320,11 @@ export class CampaignExecutor {
     batchNumber: number,
     totalBatches: number
   ): Promise<{ txHash: string; gasUsed: number }> {
-    // Normalize addresses using ethers.getAddress() to ensure proper checksum
-    // Convert to lowercase first to avoid checksum validation errors
-    const addresses = recipients.map(r => ethers.getAddress(r.address.toLowerCase()));
+    // Normalize addresses based on chain type
+    const isSolana = ChainUtils.isSolanaChain(campaign.chain);
+    const addresses = isSolana
+      ? recipients.map(r => r.address) // Solana addresses don't need normalization
+      : recipients.map(r => ethers.getAddress(r.address.toLowerCase())); // EVM addresses need checksum
     const amounts = recipients.map(r => r.amount);
 
     try {
@@ -326,14 +333,15 @@ export class CampaignExecutor {
 
       let result;
 
-      if (ChainUtils.isSolanaChain(campaign.chain)) {
+      if (isSolana) {
         // Solana批量转账 - 直接转账，不需要授权和合约
         result = await this.solanaService.batchTransfer(
           rpcUrl,
           wallet.privateKey,
           addresses,
           amounts,
-          campaign.tokenAddress
+          campaign.tokenAddress,
+          campaign.batchSize  // 传递用户设置的批次大小
         );
       } else {
         // EVM batch transfer process
@@ -539,7 +547,8 @@ export class CampaignExecutor {
       id: row.id,
       name: row.name,
       status: row.status,
-      chain: row.chain || (row.chain_type === 'evm' ? row.chain_id?.toString() : row.network),
+      chain: row.chain_id?.toString() || '',
+      chainType: row.chain_type,
       tokenAddress: row.token_address,
       tokenDecimals: row.token_decimals || 18,
       walletAddress: row.wallet_address,
@@ -705,7 +714,7 @@ export class CampaignExecutor {
   private async getRpcUrlForChain(chain: string): Promise<string> {
     if (ChainUtils.isSolanaChain(chain)) {
       const rpc = await this.db.prepare(
-        'SELECT rpc_url FROM chains WHERE type = ? AND enabled = 1 ORDER BY priority ASC LIMIT 1'
+        'SELECT rpc_url FROM chains WHERE type = ? ORDER BY name ASC LIMIT 1'
       ).get('solana') as { rpc_url: string } | undefined;
       return rpc?.rpc_url || 'https://api.mainnet-beta.solana.com';
     } else {
@@ -715,14 +724,14 @@ export class CampaignExecutor {
 
       if (!isNaN(chainId)) {
         evmChain = await this.db.prepare(
-          'SELECT rpc_url FROM chains WHERE type = ? AND chain_id = ? AND enabled = 1'
+          'SELECT rpc_url FROM chains WHERE type = ? AND chain_id = ?'
         ).get('evm', chainId) as { rpc_url: string } | undefined;
       }
 
       // Fallback to name-based search
       if (!evmChain) {
         evmChain = await this.db.prepare(
-          'SELECT rpc_url FROM chains WHERE type = ? AND name LIKE ? AND enabled = 1'
+          'SELECT rpc_url FROM chains WHERE type = ? AND name LIKE ?'
         ).get('evm', `%${chain}%`) as { rpc_url: string } | undefined;
       }
 

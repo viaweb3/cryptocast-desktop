@@ -8,7 +8,6 @@ export type ChainType = 'evm' | 'solana';
 export interface ChainInfo {
   type: ChainType;
   chainId?: number;
-  network?: string;
   name: string;
 }
 
@@ -20,9 +19,14 @@ export class ChainUtils {
     if (!chain) return false;
 
     const chainStr = chain.toString().toLowerCase();
+
+    // Check for Solana chain IDs (501 = mainnet, 502 = devnet/testnet)
+    const chainIdAsNumber = parseInt(chainStr);
+    if (chainIdAsNumber === 501 || chainIdAsNumber === 502) {
+      return true;
+    }
+
     return chainStr.includes('solana') ||
-           chainStr === '501' ||
-           chainStr === '502' ||
            chainStr === 'mainnet-beta' ||
            chainStr === 'devnet' ||
            chainStr === 'testnet';
@@ -45,18 +49,35 @@ export class ChainUtils {
 
   /**
    * 规范化链标识符
+   * @param chain 链ID或名称
+   * @param chains 可选的链信息数组，用于避免硬编码
    */
-  static normalizeChainIdentifier(chain: string | number | undefined): string {
+  static normalizeChainIdentifier(
+    chain: string | number | undefined,
+    chains?: Array<{name: string, type?: string, chain_id?: number}>
+  ): string {
     if (!chain) return '';
 
     if (typeof chain === 'number') {
       return chain.toString();
     }
 
-    // 处理字符串类型的链标识符
-    const lowerChain = chain.toLowerCase();
+    const chainStr = chain.toString();
+    const lowerChain = chainStr.toLowerCase();
 
-    // Solana 网络映射
+    // 如果提供了链信息数组，优先使用数据库中的信息
+    if (chains) {
+      const chainInfo = chains.find(c =>
+        (c.chain_id && c.chain_id.toString() === chainStr) ||
+        c.name.toLowerCase().includes(lowerChain) ||
+        c.name === chainStr
+      );
+      if (chainInfo) {
+        return chainInfo.name;
+      }
+    }
+
+    // Fallback to Solana network mapping (deprecated)
     if (lowerChain.includes('mainnet') || lowerChain === 'mainnet-beta') {
       return 'mainnet-beta';
     }
@@ -67,18 +88,41 @@ export class ChainUtils {
       return 'testnet';
     }
 
+    // Fallback to hardcoded Solana chain IDs (deprecated)
+    console.warn('[ChainUtils] normalizeChainIdentifier: Using hardcoded chain IDs. Please provide chains parameter.');
+    const chainIdAsNumber = parseInt(chainStr);
+    if (chainIdAsNumber === 501) return 'mainnet-beta';
+    if (chainIdAsNumber === 502) return 'devnet';
+
     return chain;
   }
 
   /**
    * 获取链的显示名称
+   * @param chain 链ID或名称
+   * @param chains 可选的链信息数组，用于避免硬编码
    */
-  static getChainDisplayName(chain: string | number | undefined): string {
+  static getChainDisplayName(
+    chain: string | number | undefined,
+    chains?: Array<{name: string, type?: string, chain_id?: number}>
+  ): string {
     if (!chain) return 'Unknown';
 
     const chainStr = chain.toString();
 
-    // Solana 网络显示名称
+    // 如果提供了链信息数组，优先使用
+    if (chains) {
+      const chainInfo = chains.find(c =>
+        (c.chain_id && c.chain_id.toString() === chainStr) ||
+        c.name.toLowerCase().includes(chainStr.toLowerCase()) ||
+        c.name === chainStr
+      );
+      if (chainInfo) {
+        return chainInfo.name;
+      }
+    }
+
+    // Fallback to Solana network display names
     if (this.isSolanaChain(chain)) {
       const normalized = this.normalizeChainIdentifier(chainStr);
       switch (normalized) {
@@ -89,7 +133,8 @@ export class ChainUtils {
       }
     }
 
-    // EVM 链显示名称映射
+    // Fallback to hardcoded EVM chain names (deprecated - should use chains parameter)
+    console.warn('[ChainUtils] getChainDisplayName: Using hardcoded chain names. Please provide chains parameter.');
     const evmChainNames: Record<string, string> = {
       '1': 'Ethereum',
       '11155111': 'Sepolia',
@@ -159,12 +204,10 @@ export class ChainUtils {
    */
   static getChainConfig(chain: string | number | undefined): Partial<ChainInfo> {
     const type = this.getChainType(chain);
-    const normalized = this.normalizeChainIdentifier(chain);
 
     return {
       type,
-      chainId: type === 'evm' ? parseInt(chain?.toString() || '0') : undefined,
-      network: type === 'solana' ? normalized : undefined,
+      chainId: parseInt(chain?.toString() || '0'),
       name: this.getChainDisplayName(chain),
     };
   }

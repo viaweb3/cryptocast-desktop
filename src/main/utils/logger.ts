@@ -3,9 +3,9 @@
  * 提供结构化、分级别的日志记录功能
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export enum LogLevel {
   DEBUG = 0,

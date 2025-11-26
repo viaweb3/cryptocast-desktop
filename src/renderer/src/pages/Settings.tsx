@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import {
   AppSettings,
   EVMChain,
-  SolanaRPC,
+  SolanaChain,
   ChainConfigurationForm,
   NetworkTestResult
 } from '../types';
@@ -48,7 +48,6 @@ function ChainEditModal({ isOpen, onClose, chain, onSave }: SettingsModalProps) 
     gasLimit: 210000,
     batchSize: 100,
     sendInterval: 2000,
-    enabled: true,
     isCustom: false,
   });
 
@@ -75,7 +74,6 @@ function ChainEditModal({ isOpen, onClose, chain, onSave }: SettingsModalProps) 
         gasLimit: 210000,
         batchSize: 100,
         sendInterval: 2000,
-        enabled: chain.enabled,
         isCustom: chain.isCustom,
       });
     }
@@ -366,6 +364,276 @@ function ChainEditModal({ isOpen, onClose, chain, onSave }: SettingsModalProps) 
   return createPortal(modalContent, document.body);
 }
 
+interface SolanaEditModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  chain: SolanaChain | null;
+  onSave: (chainData: SolanaChain) => void;
+}
+
+function SolanaEditModal({ isOpen, onClose, chain, onSave }: SolanaEditModalProps) {
+  const [formData, setFormData] = useState<SolanaChain>({
+    type: 'solana',
+    name: '',
+    rpcUrl: '',
+    rpcBackup: '',
+    explorerUrl: '',
+    symbol: 'SOL',
+    decimals: 9,
+    isCustom: false,
+  });
+
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ latency: number; blockNumber: number } | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (chain) {
+      setFormData({
+        id: chain.id,
+        type: 'solana',
+        chainId: chain.chainId,
+        name: chain.name,
+        rpcUrl: chain.rpcUrl,
+        rpcBackup: chain.rpcBackup || '',
+        explorerUrl: chain.explorerUrl || '',
+        symbol: chain.symbol,
+        decimals: chain.decimals,
+        color: chain.color,
+        badgeColor: chain.badgeColor,
+        isCustom: chain.isCustom,
+      });
+    }
+  }, [chain]);
+
+  if (!isOpen || !chain) {
+    return null;
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const handleTestRPC = async () => {
+    if (isTesting || !formData.rpcUrl) {
+      return;
+    }
+
+    setIsTesting(true);
+    setTestError(null);
+    setTestResult(null);
+
+    try {
+      if (window.electronAPI?.chain) {
+        const result = await window.electronAPI.chain.testSolanaRPC(formData.rpcUrl);
+        if (result.success && result.latency !== undefined && result.blockNumber !== undefined) {
+          setTestResult({ latency: result.latency, blockNumber: result.blockNumber });
+        } else {
+          setTestError(result.error || '连接失败');
+        }
+      }
+    } catch (error) {
+      console.error('Solana RPC测试失败:', error);
+      setTestError(error instanceof Error ? error.message : '连接失败');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const modalContent = (
+    <div className="modal modal-open">
+      <div className="modal-box w-11/12 max-w-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">
+            ⚙️ 编辑 {chain.name} 配置
+          </h2>
+          <button
+            onClick={onClose}
+            className="btn btn-sm btn-circle btn-ghost"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {/* Basic Information */}
+          <div className="collapse collapse-arrow bg-base-200 mb-4">
+            <input type="checkbox" defaultChecked className="min-w-fit" />
+            <div className="collapse-title text-lg font-semibold">
+              🔗 基础信息
+            </div>
+            <div className="collapse-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">链名称</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input input-bordered"
+                    style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Chain ID</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.chainId || ''}
+                    onChange={(e) => setFormData({ ...formData, chainId: parseInt(e.target.value) || undefined })}
+                    className="input input-bordered"
+                    style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                    placeholder="501"
+                  />
+                </div>
+              </div>
+
+              <div className="form-control mt-4">
+                <label className="label">
+                  <span className="label-text font-medium">RPC URL</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={formData.rpcUrl}
+                    onChange={(e) => {
+                      setFormData({ ...formData, rpcUrl: e.target.value });
+                      setTestResult(null);
+                      setTestError(null);
+                    }}
+                    className="input input-bordered flex-1"
+                    style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                    placeholder="https://api.mainnet-beta.solana.com"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestRPC}
+                    disabled={isTesting || !formData.rpcUrl}
+                    className="btn btn-outline btn-sm"
+                  >
+                    {isTesting ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs"></span>
+                        测试中
+                      </>
+                    ) : (
+                      '🧪 测试'
+                    )}
+                  </button>
+                </div>
+                {testResult && (
+                  <div className="alert alert-success mt-2">
+                    <div className="text-sm">
+                      ✅ 延迟: {testResult.latency}ms | 槽位: {testResult.blockNumber}
+                    </div>
+                  </div>
+                )}
+                {testError && (
+                  <div className="alert alert-error mt-2">
+                    <div className="text-sm">
+                      ❌ {testError}
+                    </div>
+                  </div>
+                )}
+                <label className="label">
+                  <span className="label-text-alt">主 RPC 节点 URL</span>
+                </label>
+              </div>
+
+              <div className="form-control mt-4">
+                <label className="label">
+                  <span className="label-text font-medium">备用 RPC URL</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.rpcBackup}
+                  onChange={(e) => setFormData({ ...formData, rpcBackup: e.target.value })}
+                  className="input input-bordered"
+                  style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                  placeholder="https://api.devnet.solana.com"
+                />
+              </div>
+
+              <div className="form-control mt-4">
+                <label className="label">
+                  <span className="label-text font-medium">区块链浏览器 URL</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.explorerUrl}
+                  onChange={(e) => setFormData({ ...formData, explorerUrl: e.target.value })}
+                  className="input input-bordered"
+                  style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                  placeholder="https://solscan.io"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">代币符号</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.symbol}
+                    onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
+                    className="input input-bordered"
+                    style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                    placeholder="SOL"
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">代币精度</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.decimals}
+                    onChange={(e) => setFormData({ ...formData, decimals: parseInt(e.target.value) })}
+                    className="input input-bordered"
+                    style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
+                    min="0"
+                    max="18"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="modal-action">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-ghost"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+            >
+              💾 保存设置
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  return createPortal(modalContent, document.body);
+}
+
 export default function Settings() {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<AppSettings>({
@@ -402,7 +670,9 @@ export default function Settings() {
   const [activeTab] = useState<'chains'>('chains');
   const [editingChain, setEditingChain] = useState<EVMChain | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [solanaRPCs, setSolanaRPCs] = useState<SolanaRPC[]>([]);
+  const [solanaChains, setSolanaChains] = useState<SolanaChain[]>([]);
+  const [editingSolanaChain, setEditingSolanaChain] = useState<SolanaChain | null>(null);
+  const [isSolanaModalOpen, setIsSolanaModalOpen] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -433,14 +703,14 @@ export default function Settings() {
         setSettings(prev => ({ ...prev, chains }));
         console.log('🔍 [Settings] loadChains: Chains set to state');
 
-        // Load Solana RPCs
+        // Load Solana chains
         try {
-          const solanaRPCData = await window.electronAPI.chain.getSolanaRPCs();
-          console.log(`🔍 [Settings] loadChains: Received ${solanaRPCData.length} Solana RPCs from API`);
-          setSolanaRPCs(solanaRPCData);
-          console.log('🔍 [Settings] loadChains: Solana RPCs set to state');
+          const solanaChainData = await window.electronAPI.chain.getSolanaRPCs();
+          console.log(`🔍 [Settings] loadChains: Received ${solanaChainData.length} Solana chains from API`);
+          setSolanaChains(solanaChainData);
+          console.log('🔍 [Settings] loadChains: Solana chains set to state');
         } catch (error) {
-          console.warn('🔍 [Settings] loadChains: Failed to load Solana RPCs:', error);
+          console.warn('🔍 [Settings] loadChains: Failed to load Solana chains:', error);
         }
       } else {
         console.log('🔍 [Settings] loadChains: window.electronAPI.chain is not available');
@@ -467,7 +737,6 @@ export default function Settings() {
       explorerUrl: '',
       symbol: '',
       decimals: 18,
-      enabled: true,
       isCustom: true,
     };
     setEditingChain(newChain);
@@ -509,7 +778,6 @@ export default function Settings() {
             explorerUrl: chainData.explorerUrl,
             symbol: chainData.symbol,
             decimals: chainData.decimals,
-            enabled: chainData.enabled,
             isCustom: true,
           };
           return {
@@ -527,8 +795,34 @@ export default function Settings() {
     }
   };
 
+  const handleEditSolanaChain = (chain: SolanaChain) => {
+    setEditingSolanaChain(chain);
+    setIsSolanaModalOpen(true);
+  };
 
-  
+  const handleSaveSolanaChain = async (chainData: SolanaChain) => {
+    try {
+      if (window.electronAPI?.chain && chainData.id) {
+        // Update Solana chain in database
+        await window.electronAPI.chain.updateEVMChain(chainData.id, chainData);
+      }
+
+      // Update local state
+      setSolanaChains(prev =>
+        prev.map(chain =>
+          chain.id === chainData.id ? chainData : chain
+        )
+      );
+
+      setIsSolanaModalOpen(false);
+      setEditingSolanaChain(null);
+    } catch (error) {
+      console.error('Failed to save Solana chain:', error);
+      alert('保存 Solana 网络配置失败，请重试');
+    }
+  };
+
+
   return (
     <>
       <div className="p-6">
@@ -622,15 +916,10 @@ export default function Settings() {
             <span>Solana 网络</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {solanaRPCs.map((rpc) => {
-              const networkName = rpc.network === 'mainnet-beta' ? 'Solana Mainnet' :
-                                 rpc.network === 'devnet' ? 'Solana Devnet' :
-                                 rpc.network === 'testnet' ? 'Solana Testnet' :
-                                 `Solana ${rpc.network}`;
-
+            {solanaChains.map((chain) => {
               return (
                 <div
-                  key={rpc.id}
+                  key={chain.id}
                   className="card bg-base-100 shadow-sm hover:shadow-md transition-all border-2 border-transparent hover:border-accent/20"
                 >
                   <div className="card-body">
@@ -638,45 +927,43 @@ export default function Settings() {
                       <div className="avatar placeholder">
                         <div
                           className="text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold"
-                          style={{ backgroundColor: rpc.network === 'mainnet-beta' ? '#00FFA3' : '#00D4AA' }}
+                          style={{ backgroundColor: chain.color || '#00FFA3' }}
                         >
-                          S
+                          {getChainInitial(chain.name, chain.symbol)}
                         </div>
                       </div>
                       <div className="flex-1">
-                        <h2 className="card-title text-lg">{rpc.name}</h2>
+                        <h2 className="card-title text-lg">{chain.name}</h2>
                         <div className="flex items-center gap-2">
-                          <div className="badge badge-accent badge-sm">SOL</div>
-                          {rpc.enabled && <div className="badge badge-success badge-sm">启用</div>}
+                          <div className={`badge ${chain.badgeColor || 'badge-accent'} badge-sm`}>{chain.symbol}</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Solana Details */}
+                    {/* Divider */}
                     <div className="divider my-2"></div>
 
+                    {/* Chain Details */}
                     <div className="space-y-3 mb-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-base-content/60">网络</span>
-                        <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded">{networkName}</div>
+                        <span className="text-sm text-base-content/60">Chain ID</span>
+                        <div className="font-mono text-sm bg-base-200 px-2 py-1 rounded">{chain.chainId || 'N/A'}</div>
                       </div>
 
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-base-content/60">优先级</span>
-                        <span className="text-sm font-medium">{rpc.priority}</span>
+                        <span className="text-sm text-base-content/60">精度</span>
+                        <span className="text-sm font-medium">{chain.decimals}</span>
                       </div>
-
-                      {rpc.latency && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-base-content/60">延迟</span>
-                          <span className="text-sm font-medium">{rpc.latency}ms</span>
-                        </div>
-                      )}
                     </div>
 
-                    {/* RPC URL */}
-                    <div className="text-xs text-base-content/60 truncate mb-2" title={rpc.rpcUrl}>
-                      {rpc.rpcUrl}
+                    {/* Actions */}
+                    <div className="card-actions justify-end">
+                      <button
+                        onClick={() => handleEditSolanaChain(chain)}
+                        className="btn btn-sm btn-outline"
+                      >
+                        ⚙️ 编辑
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -686,7 +973,7 @@ export default function Settings() {
         </div>
 
         {/* Empty State */}
-        {(!settings.chains || settings.chains.length === 0) && solanaRPCs.length === 0 && (
+        {(!settings.chains || settings.chains.length === 0) && solanaChains.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🌐</div>
             <div className="text-lg font-medium mb-2">暂无区块链网络</div>
@@ -727,6 +1014,17 @@ export default function Settings() {
         }}
         chain={editingChain}
         onSave={handleSaveChain}
+      />
+
+      {/* Solana Edit Modal */}
+      <SolanaEditModal
+        isOpen={isSolanaModalOpen}
+        onClose={() => {
+          setIsSolanaModalOpen(false);
+          setEditingSolanaChain(null);
+        }}
+        chain={editingSolanaChain}
+        onSave={handleSaveSolanaChain}
       />
     </>
   );

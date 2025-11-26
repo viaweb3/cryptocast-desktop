@@ -1,5 +1,8 @@
 import { ethers } from 'ethers';
 import { Keypair } from '@solana/web3.js';
+import bs58 from 'bs58';
+import { ChainUtils } from '../utils/chain-utils';
+import { KeyUtils } from '../utils/keyUtils';
 
 interface WalletData {
   address: string;
@@ -18,7 +21,7 @@ export class WalletService {
   createEVMWallet(): WalletData {
     try {
       const wallet = ethers.Wallet.createRandom();
-      const privateKeyBase64 = Buffer.from(wallet.privateKey.slice(2), 'hex').toString('base64');
+      const privateKeyBase64 = KeyUtils.encodeEVMPrivateKey(wallet.privateKey);
 
       return {
         address: wallet.address,
@@ -37,7 +40,7 @@ export class WalletService {
   createSolanaWallet(): WalletData {
     try {
       const keypair = Keypair.generate();
-      const privateKeyBase64 = Buffer.from(keypair.secretKey).toString('base64');
+      const privateKeyBase64 = KeyUtils.encodeSolanaPrivateKey(keypair.secretKey);
 
       return {
         address: keypair.publicKey.toBase58(),
@@ -55,8 +58,7 @@ export class WalletService {
    */
   decodePrivateKey(privateKeyBase64: string): string {
     try {
-      const privateKeyBuffer = Buffer.from(privateKeyBase64, 'base64');
-      return '0x' + privateKeyBuffer.toString('hex');
+      return KeyUtils.decodeToEVMHex(privateKeyBase64);
     } catch (error) {
       console.error('Failed to decode private key:', error);
       throw new Error('Private key decode failed');
@@ -65,9 +67,38 @@ export class WalletService {
 
   /**
    * Export private key from base64 (for display or export)
+   * @deprecated Use exportEVMPrivateKey or exportSolanaPrivateKey instead
    */
   exportPrivateKey(privateKeyBase64: string): string {
     return this.decodePrivateKey(privateKeyBase64);
+  }
+
+  /**
+   * Export EVM private key in hex format (0x...)
+   */
+  exportEVMPrivateKey(privateKeyBase64: string): string {
+    return this.decodePrivateKey(privateKeyBase64);
+  }
+
+  /**
+   * Export Solana private key in array format (compatible with Phantom)
+   */
+  exportSolanaPrivateKey(privateKeyBase64: string): string {
+    try {
+      const privateKeyBytes = KeyUtils.decodeToSolanaBytes(privateKeyBase64);
+
+      // 验证私钥长度
+      if (privateKeyBytes.length !== 64) {
+        throw new Error(`Invalid Solana private key length: ${privateKeyBytes.length}. Expected 64 bytes.`);
+      }
+
+      // 转换为数组格式 [1,2,3,...]
+      const keypairArray = Array.from(privateKeyBytes);
+      return '[' + keypairArray.join(',') + ']';
+    } catch (error) {
+      console.error('Failed to export Solana private key:', error);
+      throw new Error('Solana private key export failed');
+    }
   }
 
   /**
@@ -88,8 +119,8 @@ export class WalletService {
    */
   getSolanaKeypair(privateKeyBase64: string): Keypair {
     try {
-      const privateKeyBuffer = Buffer.from(privateKeyBase64, 'base64');
-      return Keypair.fromSecretKey(privateKeyBuffer);
+      const privateKeyBytes = KeyUtils.decodeToSolanaBytes(privateKeyBase64);
+      return Keypair.fromSecretKey(privateKeyBytes);
     } catch (error) {
       console.error('Failed to get Solana keypair:', error);
       throw new Error('Solana keypair retrieval failed');
@@ -97,16 +128,7 @@ export class WalletService {
   }
 
   validateAddress(address: string, type: 'evm' | 'solana'): boolean {
-    if (type === 'evm') {
-      return ethers.isAddress(address);
-    } else {
-      // 简单的Solana地址验证
-      try {
-        return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-      } catch {
-        return false;
-      }
-    }
+    return ChainUtils.isValidAddress(address, type);
   }
 
   /**

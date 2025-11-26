@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { EVMChain } from '../types';
 import BigNumber from 'bignumber.js';
+import { isSolanaChain, exportPrivateKey } from '../utils/chainTypeUtils';
 
 
 interface Campaign {
@@ -107,7 +108,7 @@ export default function CampaignDetail() {
   const loadChains = async () => {
     try {
       if (window.electronAPI?.chain) {
-        const chainsData = await window.electronAPI.chain.getEVMChains();
+        const chainsData = await window.electronAPI.chain.getAllChains();
         setChains(chainsData);
       }
     } catch (error) {
@@ -433,10 +434,7 @@ export default function CampaignDetail() {
     }
   };
 
-  const isSolanaChain = (chain: string | undefined): boolean => {
-    return chain?.toLowerCase().includes('solana') || false;
-  };
-
+  
   const getSolanaSpecificErrorMessage = (error: any): string => {
     const errorMessage = error?.message || error?.toString() || '';
 
@@ -587,23 +585,13 @@ export default function CampaignDetail() {
     }
 
     try {
-      // 使用浏览器兼容的 Base64 解码
-      const base64Data = campaign.walletPrivateKeyBase64.replace(/[^A-Za-z0-9+/=]/g, '');
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      // 转换为十六进制
-      const privateKeyHex = '0x' + Array.from(bytes)
-        .map(byte => byte.toString(16).padStart(2, '0'))
-        .join('');
+      // 使用统一的私钥导出函数
+      const privateKeyDisplay = await exportPrivateKey(campaign.walletPrivateKeyBase64 || '', campaign);
 
       // 显示自定义私钥弹窗
       setExportedWallet({
         address: campaign.walletAddress || '',
-        privateKey: privateKeyHex
+        privateKey: privateKeyDisplay
       });
       setShowPrivateKeyModal(true);
       setCopied(false);
@@ -679,7 +667,20 @@ export default function CampaignDetail() {
     const chain = getChainByName(campaign.chain);
     if (!chain?.explorerUrl) return '#';
 
-    // Ensure explorerUrl ends with /
+    // Special handling for Solana explorers with cluster parameters
+    if (chain.type === 'solana') {
+      const url = new URL(chain.explorerUrl);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      const clusterParam = url.searchParams.get('cluster');
+
+      if (clusterParam) {
+        return `${baseUrl}/tx/${txHash}?cluster=${clusterParam}`;
+      } else {
+        return `${baseUrl}/tx/${txHash}`;
+      }
+    }
+
+    // Handle other chains (EVM, etc.)
     const baseUrl = chain.explorerUrl.endsWith('/') ? chain.explorerUrl : chain.explorerUrl + '/';
     return `${baseUrl}tx/${txHash}`;
   };
@@ -797,13 +798,18 @@ export default function CampaignDetail() {
       if (window.electronAPI?.wallet && campaign.walletAddress) {
         let nativeBalance, tokenBalance = null;
 
-        if (isSolanaChain(campaign.chain)) {
+        if (isSolanaChain(campaign)) {
           // Solana逻辑
           if (window.electronAPI?.solana) {
             try {
               // 获取SOL余额
+              const chainRpcUrl = getChainByName(campaign.chain)?.rpcUrl;
+              if (!chainRpcUrl) {
+                console.error('No RPC URL found for Solana chain');
+                return;
+              }
               const solBalance = await window.electronAPI.solana.getBalance(
-                getChainByName(campaign.chain)?.rpcUrl || 'https://solana-rpc.publicnode.com',
+                chainRpcUrl,
                 campaign.walletAddress
               );
 
@@ -813,8 +819,13 @@ export default function CampaignDetail() {
               if (campaign.tokenAddress &&
                   campaign.tokenAddress !== 'So11111111111111111111111111111111111111112') {
                 try {
+                  const chainRpcUrl = getChainByName(campaign.chain)?.rpcUrl;
+                  if (!chainRpcUrl) {
+                    console.error('No RPC URL found for Solana chain');
+                    return;
+                  }
                   const splBalance = await window.electronAPI.solana.getBalance(
-                    getChainByName(campaign.chain)?.rpcUrl || 'https://solana-rpc.publicnode.com',
+                    chainRpcUrl,
                     campaign.walletAddress,
                     campaign.tokenAddress
                   );
@@ -972,7 +983,7 @@ export default function CampaignDetail() {
           <h1 className="text-3xl font-bold">{campaign.name}</h1>
         </div>
         <div className="flex gap-2">
-          {campaign && (campaign.status === 'CREATED' || campaign.status === 'FUNDED') && !isSolanaChain(campaign.chain) && (
+          {campaign && (campaign.status === 'CREATED' || campaign.status === 'FUNDED') && !isSolanaChain(campaign) && (
             <button
               onClick={handleDeployContract}
               className="btn btn-primary"
@@ -980,15 +991,25 @@ export default function CampaignDetail() {
                 🚀 部署合约
             </button>
           )}
-          {campaign && campaign.status === 'FUNDED' && isSolanaChain(campaign.chain) && (
+          {campaign && campaign.status === 'CREATED' && isSolanaChain(campaign) && (
             <button
-              onClick={handleStartCampaign}
-              className="btn btn-success"
+              onClick={async () => {
+                if (!id) return;
+                try {
+                  await window.electronAPI.campaign.updateStatus(id, 'READY');
+                  await loadCampaign();
+                  alert('活动已标记为就绪状态！');
+                } catch (error) {
+                  console.error('Failed to update status:', error);
+                  alert('更新状态失败');
+                }
+              }}
+              className="btn btn-primary"
             >
-                🚀 开始发送
+              ✅ 标记为已充值
             </button>
           )}
-          {campaign && campaign.status === 'READY' && !isSolanaChain(campaign.chain) && (
+          {campaign && campaign.status === 'READY' && (
             <button
               onClick={handleStartCampaign}
               className="btn btn-success"
@@ -1554,7 +1575,9 @@ export default function CampaignDetail() {
             <div className="bg-base-200 p-4 rounded-lg mb-4">
               <h4 className="font-semibold mb-2 text-sm">安全提示</h4>
               <ul className="text-sm space-y-1 text-base-content/80">
-                <li>• 私钥可以导入到 MetaMask、Trust Wallet 等钱包</li>
+                <li>• EVM私钥可以导入到 MetaMask、Trust Wallet 等钱包</li>
+                <li>• Solana私钥为64字节数组格式，可导入到 Phantom、Solflare 等钱包</li>
+                <li>• 格式示例：[135,23,98,189,91,220,102,232,69,78,173,75,129,198,30,190,...]</li>
                 <li>• 请将私钥保存在安全的地方（如密码管理器）</li>
                 <li>• 不要截图或通过互联网传输私钥</li>
                 <li>• 任何拥有私钥的人都可以控制钱包资金</li>

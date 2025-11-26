@@ -13,9 +13,14 @@ export class ChainUtils {
     if (!chain) return false;
 
     const chainStr = chain.toString().toLowerCase();
+
+    // Check for Solana chain IDs (501 = mainnet, 502 = devnet/testnet)
+    const chainIdAsNumber = parseInt(chainStr);
+    if (chainIdAsNumber === 501 || chainIdAsNumber === 502) {
+      return true;
+    }
+
     return chainStr.includes('solana') ||
-           chainStr === '501' ||
-           chainStr === '502' ||
            chainStr === 'mainnet-beta' ||
            chainStr === 'devnet' ||
            chainStr === 'testnet';

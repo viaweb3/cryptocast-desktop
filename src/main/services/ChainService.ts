@@ -13,10 +13,6 @@ export interface Chain {
   decimals: number;
   color?: string;
   badgeColor?: string;
-  network?: string;  // Solana网络类型 (mainnet-beta, devnet, testnet)
-  priority?: number;  // 主要用于Solana RPC优先级
-  latency?: number;  // 延迟测试结果(ms)
-  enabled: boolean;
   isCustom: boolean;
   createdAt?: string;
 }
@@ -28,19 +24,8 @@ export interface EVMChain extends Chain {
 
 export interface SolanaChain extends Chain {
   type: 'solana';
-  network: 'mainnet-beta' | 'devnet' | 'testnet';
 }
 
-export interface SolanaRPC {
-  id?: number;
-  network: 'mainnet-beta' | 'devnet' | 'testnet';
-  name: string;
-  rpcUrl: string;
-  wsUrl?: string;
-  priority: number;
-  enabled: boolean;
-  createdAt?: string;
-}
 
 export interface RPCTestResult {
   success: boolean;
@@ -57,19 +42,12 @@ export class ChainService {
   }
 
   // 统一获取所有链的方法
-  async getAllChains(onlyEnabled = true): Promise<Chain[]> {
+  async getAllChains(): Promise<Chain[]> {
     try {
       console.log('🔍 [ChainService] getAllChains: Starting to fetch chains from database');
-      let query = 'SELECT * FROM chains';
-      const params: any[] = [];
+      const query = 'SELECT * FROM chains ORDER BY type, name';
 
-      if (onlyEnabled) {
-        query += ' WHERE enabled = 1';
-      }
-
-      query += ' ORDER BY type, name';
-
-      const chains = await this.db.prepare(query).all(...params) as any[];
+      const chains = await this.db.prepare(query).all() as any[];
       console.log(`🔍 [ChainService] getAllChains: Retrieved ${chains.length} chains from database`);
 
       const mappedChains = chains.map(this.mapRowToChain);
@@ -83,17 +61,11 @@ export class ChainService {
   }
 
   // 获取EVM链（向后兼容）
-  async getEVMChains(onlyEnabled = true): Promise<EVMChain[]> {
+  async getEVMChains(): Promise<EVMChain[]> {
     try {
       console.log('🔍 [ChainService] getEVMChains: Starting to fetch EVM chains from database');
-      let query = 'SELECT * FROM chains WHERE type = ?';
+      const query = 'SELECT * FROM chains WHERE type = ? ORDER BY name';
       const params: any[] = ['evm'];
-
-      if (onlyEnabled) {
-        query += ' AND enabled = 1';
-      }
-
-      query += ' ORDER BY name';
 
       const chains = await this.db.prepare(query).all(...params) as any[];
       console.log(`🔍 [ChainService] getEVMChains: Retrieved ${chains.length} EVM chains from database`);
@@ -285,22 +257,11 @@ export class ChainService {
   }
 
   // 获取Solana链（新的统一方法）
-  async getSolanaChains(network?: string, onlyEnabled = true): Promise<SolanaChain[]> {
+  async getSolanaChains(): Promise<SolanaChain[]> {
     try {
-      console.log(`🔍 [ChainService] getSolanaChains: ${network || 'all'} enabled=${onlyEnabled}`);
-      let query = 'SELECT * FROM chains WHERE type = ?';
+      console.log('🔍 [ChainService] getSolanaChains: Starting to fetch Solana chains from database');
+      const query = 'SELECT * FROM chains WHERE type = ? ORDER BY name';
       const params: any[] = ['solana'];
-
-      if (network) {
-        query += ' AND network = ?';
-        params.push(network);
-      }
-
-      if (onlyEnabled) {
-        query += ' AND enabled = 1';
-      }
-
-      query += ' ORDER BY priority, name';
 
       const chains = await this.db.prepare(query).all(...params) as any[];
       console.log(`🔍 [ChainService] getSolanaChains: Retrieved ${chains.length} Solana chains from database`);
@@ -316,45 +277,19 @@ export class ChainService {
   }
 
   // 向后兼容的Solana RPC获取方法
-  async getSolanaRPCs(network?: string, onlyEnabled = true): Promise<SolanaChain[]> {
-    return this.getSolanaChains(network, onlyEnabled);
+  async getSolanaRPCs(): Promise<SolanaChain[]> {
+    return this.getSolanaChains();
   }
 
   
-  async addSolanaRPC(rpcData: Omit<SolanaRPC, 'id'>): Promise<number> {
-    try {
-      // 测试RPC连接
-      const testResult = await this.testSolanaRPC(rpcData.rpcUrl);
-      if (!testResult.success) {
-        throw new Error(`RPC connection failed`);
-      }
-
-      const insertRPC = this.db.prepare(`
-        INSERT INTO solana_rpcs (
-          network, name, rpc_url, ws_url, priority, enabled, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const result = insertRPC.run(
-        rpcData.network,
-        rpcData.name,
-        rpcData.rpcUrl,
-        rpcData.wsUrl,
-        rpcData.priority,
-        rpcData.enabled ? 1 : 0,
-        new Date().toISOString()
-      );
-
-      return result.lastInsertRowid as number;
-    } catch (error) {
-      console.error('Failed to add Solana RPC:', error);
-      throw new Error('Solana RPC addition failed');
-    }
+  async addSolanaRPC(rpcData: any): Promise<number> {
+    // This method is deprecated, use addEVMChain for Solana chains instead
+    throw new Error('addSolanaRPC is deprecated, use addEVMChain for Solana chains instead');
   }
 
   async updateSolanaRPCPriority(id: number, priority: number): Promise<void> {
     try {
-      await this.db.prepare('UPDATE solana_rpcs SET priority = ? WHERE id = ?').run(priority, id);
+      await this.db.prepare('UPDATE chains SET chain_id = ? WHERE id = ? AND type = ?').run(priority, id, 'solana');
     } catch (error) {
       console.error('Failed to update Solana RPC priority:', error);
       throw new Error('Solana RPC priority update failed');
@@ -363,7 +298,7 @@ export class ChainService {
 
   async deleteSolanaRPC(id: number): Promise<void> {
     try {
-      await this.db.prepare('DELETE FROM solana_rpcs WHERE id = ?').run(id);
+      await this.db.prepare('DELETE FROM chains WHERE id = ? AND type = ?').run(id, 'solana');
     } catch (error) {
       console.error('Failed to delete Solana RPC:', error);
       throw new Error('Solana RPC deletion failed');
@@ -392,35 +327,8 @@ export class ChainService {
     }
   }
 
-  async healthCheckSolanaRPCs(): Promise<void> {
-    try {
-      const rpcs = await this.getSolanaRPCs(undefined, true);
-      const updateRPC = this.db.prepare(`
-        UPDATE solana_rpcs
-        SET latency = ?, uptime_24h = ?, last_checked = ?
-        WHERE id = ?
-      `);
-
-      for (const rpc of rpcs) {
-        try {
-          const testResult = await this.testSolanaRPC(rpc.rpcUrl);
-          const uptime = testResult.success ? 100 : 0;
-
-          updateRPC.run(
-            testResult.latency || null,
-            uptime,
-            new Date().toISOString(),
-            rpc.id
-          );
-        } catch (error) {
-          updateRPC.run(null, 0, new Date().toISOString(), rpc.id);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to perform health check:', error);
-      throw new Error('Solana RPC health check failed');
-    }
-  }
+  // Health check functionality removed as part of database cleanup
+  // Latency, uptime_24h, and last_checked fields no longer exist in unified chains table
 
   // 新的统一映射方法
   private mapRowToChain(row: any): Chain {
@@ -449,7 +357,6 @@ export class ChainService {
       decimals: row.decimals || (row.type === 'solana' ? 9 : 18),
       color: color,
       badgeColor: badgeColor,
-      enabled: Boolean(row.enabled),
       isCustom: Boolean(row.is_custom),
       createdAt: row.created_at,
     };
@@ -466,9 +373,6 @@ export class ChainService {
       const solanaChain: SolanaChain = {
         ...baseChain,
         type: 'solana',
-        network: row.network,
-        priority: row.priority,
-        latency: row.latency,
       };
       return solanaChain;
     }
@@ -508,24 +412,5 @@ export class ChainService {
 
   async getEVMChainById(chainId: number): Promise<EVMChain | null> {
     return this.getChainByChainId(chainId);
-  }
-
-  // 统一的链切换方法
-  async toggleChain(chainId: number, enabled: boolean): Promise<void> {
-    try {
-      await this.db.prepare('UPDATE chains SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, chainId);
-    } catch (error) {
-      console.error('Failed to toggle chain:', error);
-      throw new Error('Chain toggle failed');
-    }
-  }
-
-  // 向后兼容的切换方法
-  async toggleEVMChain(chainId: number, enabled: boolean): Promise<void> {
-    return this.toggleChain(chainId, enabled);
-  }
-
-  async toggleSolanaRPC(rpcId: number, enabled: boolean): Promise<void> {
-    return this.toggleChain(rpcId, enabled);
   }
 }

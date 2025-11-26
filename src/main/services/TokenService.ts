@@ -1,5 +1,8 @@
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
+import { publicKey } from '@metaplex-foundation/umi';
+import { fetchDigitalAsset } from '@metaplex-foundation/mpl-token-metadata';
 
 export interface TokenInfo {
   name: string;
@@ -74,8 +77,8 @@ export class TokenService {
    */
   async getTokenInfo(tokenAddress: string, chainId: string): Promise<TokenInfo | null> {
     try {
-      // 获取链信息
-      const chain = await this.chainService.getChainByChainId(parseInt(chainId));
+      // 获取链信息 (支持 EVM 和 Solana)
+      const chain = await this.chainService.getChainById(parseInt(chainId));
 
       if (!chain) {
         throw new Error(`Chain ${chainId} not found`);
@@ -174,12 +177,36 @@ export class TokenService {
       }
 
       const parsedData = accountData.parsed.info;
+      const decimals = parsedData.decimals || 0;
 
-      // 对于SPL token，我们返回基本信息
+      // 尝试获取 Metaplex token metadata
+      let name = 'SPL Token';
+      let symbol = 'SPL';
+
+      try {
+        const umi = createUmi(chain.rpcUrl);
+        const mint = publicKey(tokenAddress);
+
+        // 获取数字资产元数据
+        const asset = await fetchDigitalAsset(umi, mint);
+
+        if (asset?.metadata) {
+          name = asset.metadata.name || name;
+          symbol = asset.metadata.symbol || symbol;
+        }
+      } catch (metadataError) {
+        console.warn(`Failed to fetch token metadata for ${tokenAddress}, using defaults:`, metadataError);
+        // 如果获取元数据失败，尝试从已知列表获取
+        const knownName = this.getTokenNameFromMint(tokenAddress);
+        const knownSymbol = this.getTokenSymbolFromMint(tokenAddress);
+        if (knownName) name = knownName;
+        if (knownSymbol) symbol = knownSymbol;
+      }
+
       return {
-        name: this.getTokenNameFromMint(tokenAddress) || 'SPL Token',
-        symbol: this.getTokenSymbolFromMint(tokenAddress) || 'SPL',
-        decimals: parsedData.decimals || 0,
+        name,
+        symbol,
+        decimals,
         address: tokenAddress,
         chainType: 'solana',
       };
@@ -264,7 +291,7 @@ export class TokenService {
     error?: string;
   }> {
     try {
-      const chain = await this.chainService.getChainByChainId(parseInt(chainId));
+      const chain = await this.chainService.getChainById(parseInt(chainId));
 
       if (!chain) {
         return { isValid: false, error: `Chain ${chainId} not found` };

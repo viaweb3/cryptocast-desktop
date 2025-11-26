@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { GasService, GasInfo } from './GasService';
+import { DEFAULTS } from '../config/defaults';
 
 // Batch Airdrop Contract ABI
 const BATCH_AIRDROP_CONTRACT_ABI = [
@@ -79,10 +80,10 @@ export class ContractService {
 
       // Deploy contract
       // Our contract has no constructor arguments, so we pass tx options directly
-      // Gas limit optimized (actual usage ~306K, setting to 500K for safety)
+      // 使用配置化的Gas limit
       const deployOptions = {
         ...txOptions,
-        gasLimit: BigInt(500000) // 500K gas for contract deployment (63% buffer)
+        gasLimit: BigInt(DEFAULTS.GAS_LIMITS.campaign_deploy)
       };
 
       const contract = await contractFactory.deploy(deployOptions);
@@ -170,12 +171,46 @@ export class ContractService {
       const bigintAmounts = amounts.map(amount => ethers.parseUnits(amount.toString(), tokenDecimals));
 
       // Get gas info for this batch
+      console.log(`[ContractService] 📊 Getting gas estimate for ${recipients.length} recipients`);
       const gasInfo = await this.gasService.getBatchGasEstimate(rpcUrl, 'ethereum', recipients.length);
+
+      console.log(`[ContractService] ⛽ Gas Info Received:`);
+      console.log(`  - Gas Price: ${gasInfo.gasPrice} Gwei`);
+      console.log(`  - Max Fee: ${gasInfo.maxFeePerGas || 'N/A'} Gwei`);
+      console.log(`  - Priority Fee: ${gasInfo.maxPriorityFeePerGas || 'N/A'} Gwei`);
+      console.log(`  - Estimated Gas Limit: ${gasInfo.estimatedGasLimit}`);
+      console.log(`  - Estimated Cost: ${gasInfo.estimatedCost} ETH`);
+
       const txOptions = this.gasService.getTransactionOptions(gasInfo);
 
+      console.log(`[ContractService] 🔧 Transaction Options:`);
+      if (txOptions.gasPrice) {
+        console.log(`  - Gas Price: ${ethers.formatUnits(txOptions.gasPrice, 'gwei')} Gwei`);
+      }
+      if (txOptions.maxFeePerGas) {
+        console.log(`  - Max Fee: ${ethers.formatUnits(txOptions.maxFeePerGas, 'gwei')} Gwei`);
+      }
+      if (txOptions.maxPriorityFeePerGas) {
+        console.log(`  - Priority Fee: ${ethers.formatUnits(txOptions.maxPriorityFeePerGas, 'gwei')} Gwei`);
+      }
+      console.log(`  - Gas Limit: ${txOptions.gasLimit?.toString() || 'auto'}`);
+
+      // Get wallet balance before transaction
+      const balance = await provider.getBalance(wallet.address);
+      console.log(`[ContractService] 💰 Wallet Balance: ${ethers.formatEther(balance)} ETH`);
+
       // 执行批量转账
+      console.log(`[ContractService] 🚀 Executing batch transfer...`);
       const tx = await contract.batchTransfer(tokenAddress, recipients, bigintAmounts, txOptions);
+      console.log(`[ContractService] 📝 Transaction submitted: ${tx.hash}`);
+      console.log(`[ContractService] ⛽ Gas Limit in TX: ${tx.gasLimit?.toString() || 'unknown'}`);
+      console.log(`[ContractService] 💸 Gas Price in TX: ${tx.gasPrice ? ethers.formatUnits(tx.gasPrice, 'gwei') : 'unknown'} Gwei`);
+
       const receipt = await tx.wait();
+      console.log(`[ContractService] ✅ Transaction confirmed!`);
+      console.log(`[ContractService] ⛽ Gas Used: ${receipt?.gasUsed?.toString() || 'unknown'}`);
+      console.log(`[ContractService] 💸 Actual Gas Price: ${receipt?.gasPrice ? ethers.formatUnits(receipt.gasPrice, 'gwei') : 'unknown'} Gwei`);
+      console.log(`[ContractService] 💰 Actual Cost: ${receipt ? ethers.formatEther(receipt.gasUsed * receipt.gasPrice) : 'unknown'} ETH`);
 
       // 计算总金额
       const totalAmount = bigintAmounts.reduce((sum, amount) => sum + amount, 0n);

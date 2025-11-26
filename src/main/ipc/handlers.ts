@@ -11,6 +11,7 @@ import { ContractService } from '../services/ContractService';
 import { CampaignEstimator } from '../services/CampaignEstimator';
 import { TokenService } from '../services/TokenService';
 import { SolanaService } from '../services/SolanaService';
+import { KeyUtils } from '../utils/keyUtils';
 
 let databaseManager: DatabaseManager;
 let campaignService: CampaignService;
@@ -26,63 +27,33 @@ let campaignEstimator: CampaignEstimator;
 let tokenService: TokenService;
 
 export async function setupIPCHandlers() {
-  // 初始化服务
   try {
-    console.log('Initializing database manager...');
     databaseManager = new DatabaseManager();
     await databaseManager.initialize();
-    console.log('Database initialized successfully');
 
-    console.log('Initializing campaign service...');
     campaignService = new CampaignService(databaseManager);
-
-    console.log('Initializing wallet service...');
     walletService = new WalletService();
-
-    console.log('Initializing wallet management service...');
     walletManagementService = new WalletManagementService(databaseManager);
-
-    console.log('Initializing price service...');
     priceService = new PriceService(databaseManager);
-
-    console.log('Initializing blockchain service...');
     blockchainService = new BlockchainService(priceService, databaseManager);
-
-    console.log('Initializing chain service...');
     chainService = new ChainService(databaseManager);
-
-    console.log('Initializing file service...');
     fileService = new FileService(databaseManager);
-
-    
-    console.log('Initializing contract service...');
     contractService = new ContractService();
 
-    console.log('Initializing Solana service...');
     solanaService = new SolanaService();
-
-    console.log('Initializing campaign estimator...');
     campaignEstimator = new CampaignEstimator(databaseManager);
-
-    console.log('Initializing token service...');
     tokenService = new TokenService(chainService);
-
-    console.log('All services initialized successfully');
   } catch (error) {
     console.error('Failed to initialize services:', error);
     throw error;
   }
 
-  // 活动相关
   ipcMain.handle('campaign:create', async (_event, data) => {
     try {
-      console.log('创建活动:', data);
       const campaign = await campaignService.createCampaign(data);
-      console.log('✅ 活动创建成功:', campaign.id);
       return campaign;
     } catch (error) {
       console.error('❌ 创建活动失败:', error);
-      console.error('错误堆栈:', error instanceof Error ? error.stack : 'No stack trace');
       throw new Error(`创建活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   });
@@ -148,7 +119,18 @@ export async function setupIPCHandlers() {
     }
   });
 
-  
+  ipcMain.handle('campaign:updateStatus', async (_event, id, status) => {
+    try {
+      console.log('更新活动状态:', id, status);
+      await campaignService.updateCampaignStatus(id, status);
+      return { success: true };
+    } catch (error) {
+      console.error('更新活动状态失败:', error);
+      throw new Error(`更新活动状态失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+
   ipcMain.handle('campaign:getDetails', async (_event, id) => {
     try {
       console.log('获取活动详情:', id);
@@ -306,6 +288,17 @@ export async function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle('chain:getAllChains', async (_event) => {
+    try {
+      console.log('获取所有链列表');
+      const chains = await chainService.getAllChains();
+      return chains;
+    } catch (error) {
+      console.error('获取所有链列表失败:', error);
+      throw new Error(`获取所有链列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
   ipcMain.handle('chain:addEVMChain', async (_event, chainData) => {
     try {
       console.log('添加EVM链:', chainData);
@@ -348,10 +341,10 @@ export async function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('chain:getSolanaRPCs', async (_event, network, onlyEnabled) => {
+  ipcMain.handle('chain:getSolanaRPCs', async (_event) => {
     try {
-      console.log('获取Solana RPC列表:', network, onlyEnabled);
-      const rpcs = await chainService.getSolanaRPCs(network, onlyEnabled);
+      console.log('获取Solana RPC列表');
+      const rpcs = await chainService.getSolanaRPCs();
       return rpcs;
     } catch (error) {
       console.error('获取Solana RPC列表失败:', error);
@@ -402,15 +395,7 @@ export async function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('chain:healthCheckSolanaRPCs', async (_event) => {
-    try {
-      console.log('健康检查Solana RPCs');
-      await chainService.healthCheckSolanaRPCs();
-    } catch (error) {
-      console.error('健康检查Solana RPCs失败:', error);
-      throw new Error(`健康检查Solana RPCs失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  });
+  // Health check functionality removed - no longer supported in unified chains database
 
   
   // 文件操作
@@ -565,7 +550,10 @@ export async function setupIPCHandlers() {
         }
 
         // 2. 解码私钥
-        const privateKey = walletService.exportPrivateKey(campaign.walletPrivateKeyBase64);
+        const chainInfo = await chainService.getChainById(parseInt(campaign.chain));
+        const privateKey = chainInfo?.type === 'solana'
+          ? walletService.exportSolanaPrivateKey(campaign.walletPrivateKeyBase64)
+          : walletService.exportEVMPrivateKey(campaign.walletPrivateKeyBase64);
 
         // 3. 获取链配置
         const chain = await chainService.getEVMChainById(parseInt(campaign.chain));
@@ -663,14 +651,16 @@ export async function setupIPCHandlers() {
         throw new Error('活动钱包信息缺失');
       }
 
-      // Decode private key
-      const privateKey = walletService.exportPrivateKey(campaign.walletPrivateKeyBase64);
-
-      // Get chain config
+      // Get chain config first
       const chain = await chainService.getChainById(parseInt(campaign.chain));
       if (!chain) {
         throw new Error('Chain not found');
       }
+
+      // Decode private key using chain-specific method
+      const privateKey = chain.type === 'solana'
+        ? Buffer.from(KeyUtils.decodeToSolanaBytes(campaign.walletPrivateKeyBase64)).toString('hex')
+        : walletService.exportEVMPrivateKey(campaign.walletPrivateKeyBase64);
 
       let result;
 
@@ -716,14 +706,16 @@ export async function setupIPCHandlers() {
         throw new Error('活动钱包信息缺失');
       }
 
-      // Decode private key
-      const privateKey = walletService.exportPrivateKey(campaign.walletPrivateKeyBase64);
-
-      // Get chain config
+      // Get chain config first
       const chain = await chainService.getChainById(parseInt(campaign.chain));
       if (!chain) {
         throw new Error('Chain not found');
       }
+
+      // Decode private key using chain-specific method
+      const privateKey = chain.type === 'solana'
+        ? Buffer.from(KeyUtils.decodeToSolanaBytes(campaign.walletPrivateKeyBase64)).toString('hex')
+        : walletService.exportEVMPrivateKey(campaign.walletPrivateKeyBase64);
 
       let result;
 
@@ -750,6 +742,29 @@ export async function setupIPCHandlers() {
     } catch (error) {
       console.error('回收原生代币失败:', error);
       throw new Error(`回收原生代币失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  // Private key export handlers with chain type support
+  ipcMain.handle('wallet:exportEVMPrivateKey', async (_event, privateKeyBase64: string) => {
+    try {
+      console.log('导出EVM私钥');
+      const privateKey = walletService.exportEVMPrivateKey(privateKeyBase64);
+      return { success: true, privateKey };
+    } catch (error) {
+      console.error('导出EVM私钥失败:', error);
+      throw new Error(`导出EVM私钥失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+
+  ipcMain.handle('wallet:exportSolanaPrivateKey', async (_event, privateKeyBase64: string) => {
+    try {
+      console.log('导出Solana私钥');
+      const privateKey = walletService.exportSolanaPrivateKey(privateKeyBase64);
+      return { success: true, privateKey };
+    } catch (error) {
+      console.error('导出Solana私钥失败:', error);
+      throw new Error(`导出Solana私钥失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   });
 

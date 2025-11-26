@@ -1,7 +1,7 @@
 import * as sqlite3 from 'sqlite3';
 import { Database, open } from 'sqlite';
-import path from 'path';
-import os from 'os';
+import * as path from 'path';
+import * as os from 'os';
 import { DatabaseAdapter } from './db-adapter';
 
 /**
@@ -12,6 +12,7 @@ export interface Campaign {
   name: string;
   description?: string;
   chain: string;
+  chain_type: 'evm' | 'solana';
   token_address: string;
   token_symbol?: string;
   status: 'CREATED' | 'FUNDED' | 'READY' | 'SENDING' | 'PAUSED' | 'COMPLETED' | 'FAILED';
@@ -29,6 +30,25 @@ export interface Campaign {
   created_at: string;
   updated_at: string;
   completed_at?: string;
+}
+
+/**
+ * Chain information from database
+ */
+export interface ChainInfo {
+  id: number;
+  type: 'evm' | 'solana';
+  chain_id?: number;
+  name: string;
+  rpc_url: string;
+  rpc_backup?: string;
+  explorer_url?: string;
+  symbol: string;
+  decimals: number;
+  color: string;
+  badge_color: string;
+  is_custom: boolean;
+  created_at: string;
 }
 
 /**
@@ -125,7 +145,6 @@ export class DatabaseManager {
         description TEXT,
         chain_type TEXT NOT NULL CHECK (chain_type IN ('evm', 'solana')),
         chain_id INTEGER,
-        network TEXT,
         token_address TEXT NOT NULL,
         token_symbol TEXT,
         token_name TEXT,
@@ -205,10 +224,6 @@ export class DatabaseManager {
         decimals INTEGER DEFAULT 18,
         color TEXT DEFAULT '#3B82F6',
         badge_color TEXT DEFAULT 'badge-primary',
-        network TEXT,
-        priority INTEGER DEFAULT 5,
-        latency INTEGER,
-        enabled BOOLEAN DEFAULT 1,
         is_custom BOOLEAN DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -251,18 +266,8 @@ export class DatabaseManager {
    * Migrate existing database to handle schema changes
    */
   private async migrateDatabase(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    console.log('[Database] Running database migrations...');
-
-    try {
-      // Skip migration for now - the table schema already includes updated_at in new tables
-      console.log('[Database] Database migrations skipped (schema already updated)');
-    } catch (error) {
-      console.error('[Database] Database migration failed:', error);
-      // Don't throw error for migration failures to prevent app startup issues
-      console.warn('[Database] Continuing without migration...');
-    }
+    // No migrations needed for fresh installations
+    console.log('[Database] Database migrations skipped (using final schema)');
   }
 
   /**
@@ -294,9 +299,9 @@ export class DatabaseManager {
       CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(tx_type);
 
       -- Chain indexes
-      CREATE INDEX IF NOT EXISTS idx_chains_type_enabled ON chains(type, enabled);
+      CREATE INDEX IF NOT EXISTS idx_chains_type ON chains(type);
       CREATE INDEX IF NOT EXISTS idx_chains_chain_id ON chains(chain_id);
-      CREATE INDEX IF NOT EXISTS idx_chains_network ON chains(network);
+      CREATE INDEX IF NOT EXISTS idx_chains_name ON chains(name);
       CREATE UNIQUE INDEX IF NOT EXISTS idx_chains_name ON chains(name);
 
       -- Price history indexes
@@ -424,13 +429,11 @@ export class DatabaseManager {
         name: 'Solana Mainnet',
         rpc_url: 'https://api.mainnet-beta.solana.com',
         rpc_backup: null,
-        explorer_url: 'https://explorer.solana.com',
+        explorer_url: 'https://solscan.io',
         symbol: 'SOL',
         decimals: 9,
         color: '#00FFA3',
         badge_color: 'badge-accent',
-        network: 'mainnet-beta',
-        priority: 1,
       },
       {
         type: 'solana',
@@ -438,13 +441,11 @@ export class DatabaseManager {
         name: 'Solana Devnet',
         rpc_url: 'https://api.devnet.solana.com',
         rpc_backup: null,
-        explorer_url: 'https://explorer.solana.com',
+        explorer_url: 'https://solscan.io/?cluster=devnet',
         symbol: 'SOL',
         decimals: 9,
         color: '#00D4AA',
         badge_color: 'badge-info',
-        network: 'devnet',
-        priority: 1,
       },
     ];
 
@@ -455,8 +456,8 @@ export class DatabaseManager {
         await this.db.run(`
           INSERT OR REPLACE INTO chains (
             type, chain_id, name, rpc_url, rpc_backup, explorer_url, symbol, decimals,
-            color, badge_color, network, priority, enabled, is_custom, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            color, badge_color, is_custom, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
           chain.type,
           chain.chain_id,
@@ -468,10 +469,7 @@ export class DatabaseManager {
           chain.decimals,
           chain.color,
           chain.badge_color,
-          (chain as any).network || null,
-          (chain as any).priority || null,
-          1, // enabled
-          0, // is_custom
+          0, // is_custom (default chains are built-in)
           new Date().toISOString()
         ]);
       } catch (error) {
@@ -492,6 +490,7 @@ export class DatabaseManager {
     return new DatabaseAdapter(this.db);
   }
 
+  
   /**
    * Close database connection
    */

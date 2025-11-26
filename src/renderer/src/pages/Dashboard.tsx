@@ -56,50 +56,23 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchChains = async () => {
       try {
-        console.log('🔍 [Dashboard] fetchChains: Starting to fetch chains from database');
         const allChains: any[] = [];
 
         if (electronAPI?.chain) {
           // Load EVM chains
           const evmChains = await electronAPI.chain.getEVMChains();
-          console.log(`🔍 [Dashboard] fetchChains: Received ${evmChains.length} EVM chains from API`);
           allChains.push(...evmChains);
 
-          // Load Solana networks
+          // Load Solana chains
           try {
-            const solanaRPCs = await electronAPI.chain.getSolanaRPCs(undefined, true);
-            console.log(`🔍 [Dashboard] fetchChains: Received ${solanaRPCs.length} Solana RPCs from API`);
-
-            // Group by network and get the highest priority RPC for each network
-            const networkMap = new Map<string, any>();
-            solanaRPCs.forEach((rpc: any) => {
-              const existing = networkMap.get(rpc.network);
-              if (!existing || rpc.priority > existing.priority) {
-                networkMap.set(rpc.network, rpc);
-              }
-            });
-
-            // Convert Solana networks to chain format
-            networkMap.forEach((rpc, network) => {
-              const chainName = network === 'mainnet-beta' ? 'Solana Mainnet' :
-                               network === 'devnet' ? 'Solana Devnet' :
-                               network === 'testnet' ? 'Solana Testnet' :
-                               `Solana ${network}`;
-
-              allChains.push({
-                name: chainName,
-                chainId: `solana-${network}`,
-                symbol: 'SOL',
-                color: rpc.color || (network === 'mainnet-beta' ? '#00FFA3' : '#00D4AA'),
-                badgeColor: rpc.badgeColor || 'badge-accent',
-                type: 'solana',
-                network: network
-              });
-            });
+            const solanaChains = await electronAPI.chain.getSolanaRPCs();
+            console.log(`🔍 [Dashboard] fetchChains: Received ${solanaChains.length} Solana chains from API`);
+            allChains.push(...solanaChains);
           } catch (error) {
-            console.warn('🔍 [Dashboard] fetchChains: Failed to load Solana RPCs:', error);
+            console.warn('🔍 [Dashboard] fetchChains: Failed to load Solana chains:', error);
           }
 
+  
           console.log('🔍 [Dashboard] fetchChains: Total chains loaded:', allChains.length);
           console.log('🔍 [Dashboard] fetchChains: Chain data:', allChains.map(chain => ({
             name: chain.name,
@@ -330,11 +303,7 @@ export default function Dashboard() {
               if (chain.type === 'evm' && chain.chainId) {
                 activityCount = chainActivity[chain.chainId.toString()] || 0;
               }
-              // For Solana networks, match by network identifier (e.g., "mainnet-beta", "devnet")
-              else if (chain.type === 'solana' && chain.network) {
-                activityCount = chainActivity[chain.network] || 0;
-              }
-              // Fallback: try matching by the chainId string representation
+                // Fallback: try matching by the chainId string representation
               else if (chain.chainId) {
                 activityCount = chainActivity[chain.chainId.toString()] || 0;
               }

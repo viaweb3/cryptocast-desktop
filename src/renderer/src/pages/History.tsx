@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCampaign } from '../contexts/CampaignContext';
 import { Campaign, CampaignStatus, EVMChain } from '../types';
+import { isSolanaChain, getChainType, getChainDisplayName, getChainDisplayBadge } from '../utils/chainTypeUtils';
 
 interface HistoryFilters {
   timeRange: 'all' | 'today' | 'week' | 'month' | 'custom';
@@ -42,7 +43,7 @@ export default function History() {
     try {
       console.log('🔍 [History] loadChains: Starting to fetch chains from database');
       if (window.electronAPI?.chain) {
-        const chainsData = await window.electronAPI.chain.getEVMChains();
+        const chainsData = await window.electronAPI.chain.getAllChains();
         console.log(`🔍 [History] loadChains: Received ${chainsData.length} chains from API`);
         setChains(chainsData);
         console.log('🔍 [History] loadChains: Chains set to state');
@@ -78,8 +79,11 @@ export default function History() {
 
   // Helper function to get chain icon based on chain name (dynamically generated)
   const getChainIcon = (chainName: string): string => {
+    // Solana特殊图标
+    if (chainName.toLowerCase().includes('solana')) return '🔥';
+
     // Generate consistent icons based on chain name hash for dynamic chains
-    const icons = ['🔷', '🟣', '🔵', '🟡', '🔴', '🟢', '🟠', '🔺', '⚡', '🌟', '💎', '🚀'];
+    const icons = ['🔷', '🟣', '🔵', '🟡', '🔴', '🟢', '🟠', '⚡', '🌟', '🚀'];
 
     // Use a simple hash to get consistent icon for the same chain name
     let hash = 0;
@@ -249,42 +253,41 @@ export default function History() {
   };
 
   const getChainBadge = (chainValue: string | number | undefined, chainId?: number) => {
-    // Try to find chain by the primary value, then by chainId
-    let chain = getChainByName(chainValue);
+    // 通过多种方式查找链信息
+    const foundChain = chains.find(c => {
+      // 1. 通过 chainId 精确匹配
+      if (chainId && c.chainId === chainId) return true;
 
-    // If not found by primary value, try by chainId parameter
-    if (!chain && chainId) {
-      chain = chains.find(c => c.chainId === chainId);
-    }
+      // 2. 通过 chainValue 匹配 chainId
+      if (chainValue && c.chainId?.toString() === chainValue?.toString()) return true;
 
-    // Use the best available name for display
-    const displayName = chain ? chain.name :
-                        (chainValue ? (isNaN(parseInt(String(chainValue))) ? String(chainValue) : `Chain ${chainValue}`) : 'Unknown Chain');
+      // 3. 通过名称匹配
+      if (chainValue && c.name === chainValue) return true;
 
-    console.log('🔍 [History] getChainBadge:', { chainValue, chainId, foundChain: !!chain, displayName });
+      return false;
+    });
 
-    // 如果找到链信息，使用数据库中的颜色和名称
-    if (chain) {
+    // 如果找到了链信息，直接使用
+    if (foundChain) {
       return (
         <div
-          className="badge text-xs font-medium px-2 py-1 gap-1 border-0"
+          className="badge text-xs font-medium px-2 py-1 border-0"
           style={{
-            backgroundColor: `${chain.color}20`,
-            color: chain.color,
-            border: `1px solid ${chain.color}40`
+            backgroundColor: `${foundChain.color}20`,
+            color: foundChain.color,
+            border: `1px solid ${foundChain.color}40`
           }}
         >
-          <span>{getChainIcon(chain.name)}</span>
-          <span>{chain.name}</span>
+          {foundChain.name}
         </div>
       );
     }
 
-    // 如果没有找到链信息，显示为灰色徽章，但使用友好的名称
+    // 如果没找到，使用简单的显示名称
+    const displayName = getChainDisplayName(chainValue, chains);
     return (
-      <div className="badge bg-gray-100 text-gray-600 border-gray-200 text-xs font-medium px-2 py-1 gap-1">
-        <span>{getChainIcon(displayName)}</span>
-        <span>{displayName}</span>
+      <div className="badge badge-neutral text-xs font-medium px-2 py-1">
+        {displayName}
       </div>
     );
   };

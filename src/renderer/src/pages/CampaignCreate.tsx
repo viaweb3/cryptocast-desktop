@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCampaign } from '../contexts/CampaignContext';
 import { Campaign, CSVValidationResult, TokenInfo } from '../types';
+import { parseCSV } from '../utils/csvValidator';
+import BigNumber from 'bignumber.js';
+import { DEFAULTS } from '../config/defaults';
+import { isSolanaChain, validateAddressForChain } from '../utils/chainTypeUtils';
 
 interface CampaignFormData {
   name: string;
@@ -26,21 +30,17 @@ export default function CampaignCreate() {
   const [formData, setFormData] = useState<CampaignFormData>({
     name: '',
     description: '',
-    chain: '56', // Default to BSC
+    chain: DEFAULTS.CAMPAIGN_FORM.chain,
     tokenAddress: '',
-    batchSize: 50,
-    sendInterval: '15000' // Default to 15 seconds
+    batchSize: DEFAULTS.CAMPAIGN_FORM.batchSize.evm,
+    sendInterval: DEFAULTS.CAMPAIGN_FORM.sendInterval.evm
   });
   const [csvContent, setCsvContent] = useState<string>('');
   const [csvValidation, setCsvValidation] = useState<CSVValidationResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [csvData, setCsvData] = useState<any[]>([]);
 
-  // 链类型检测
-  const isSolanaChain = (chain: string): boolean => {
-    return chain?.toLowerCase().includes('solana');
-  };
-  const [tokenAddressError, setTokenAddressError] = useState<string>('');
+    const [tokenAddressError, setTokenAddressError] = useState<string>('');
   const [estimation, setEstimation] = useState<any>(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [availableChains, setAvailableChains] = useState<ChainOption[]>([]);
@@ -54,8 +54,9 @@ export default function CampaignCreate() {
   }, []);
 
   // 获取代币信息的函数
-  const fetchTokenInfo = async (tokenAddress: string) => {
-    if (!formData.chain) {
+  const fetchTokenInfo = async (tokenAddress: string, chainId?: string) => {
+    const targetChainId = chainId || formData.chain;
+    if (!targetChainId) {
       return; // 需要先选择链
     }
 
@@ -63,14 +64,11 @@ export default function CampaignCreate() {
     setTokenInfoError('');
 
     try {
-      console.log('获取代币信息:', { tokenAddress, chainId: formData.chain });
-
       if (window.electronAPI?.token) {
-        const tokenData = await window.electronAPI.token.getInfo(tokenAddress, formData.chain);
+        const tokenData = await window.electronAPI.token.getInfo(tokenAddress, targetChainId);
 
         if (tokenData) {
           setTokenInfo(tokenData);
-          console.log('代币信息获取成功:', tokenData);
         } else {
           setTokenInfoError('无法获取代币信息，请检查合约地址是否正确');
           setTokenInfo(null);
@@ -95,7 +93,7 @@ export default function CampaignCreate() {
 
       // Load EVM chains
       if (window.electronAPI?.chain) {
-        const evmChains = await window.electronAPI.chain.getEVMChains(true);
+        const evmChains = await window.electronAPI.chain.getEVMChains();
         evmChains.forEach((chain: any) => {
           chains.push({
             id: chain.chainId.toString(),
@@ -107,44 +105,28 @@ export default function CampaignCreate() {
 
         // Load Solana networks
         try {
-          const solanaRPCs = await window.electronAPI.chain.getSolanaRPCs(undefined, true);
-
-          // Group by network and get the highest priority RPC for each network
-          const networkMap = new Map<string, any>();
-          solanaRPCs.forEach((rpc: any) => {
-            const existing = networkMap.get(rpc.network);
-            if (!existing || rpc.priority > existing.priority) {
-              networkMap.set(rpc.network, rpc);
-            }
-          });
+          const solanaRPCs = await window.electronAPI.chain.getSolanaRPCs();
 
           // Add Solana networks to chains
-          networkMap.forEach((rpc, network) => {
-            const chainName = network === 'mainnet-beta' ? 'Solana Mainnet' :
-                             network === 'devnet' ? 'Solana Devnet' :
-                             network === 'testnet' ? 'Solana Testnet' :
-                             `Solana ${network}`;
-
-            chains.push({
-              id: `solana-${network}`,
-              name: chainName,
-              symbol: 'SOL',
-              type: 'solana',
-              network: network
+          solanaRPCs.forEach((rpc: any) => {
+                        chains.push({
+              id: rpc.chainId.toString(),
+              name: rpc.name,
+              symbol: rpc.symbol,
+              type: rpc.type
             });
           });
         } catch (error) {
-          console.warn('Failed to load Solana RPCs, using fallback:', error);
-          // Fallback: add default Solana networks
+                    // Fallback: add default Solana networks using database chain IDs
           chains.push({
-            id: 'solana-mainnet-beta',
+            id: '501',
             name: 'Solana Mainnet',
             symbol: 'SOL',
             type: 'solana',
             network: 'mainnet-beta'
           });
           chains.push({
-            id: 'solana-devnet',
+            id: '502',
             name: 'Solana Devnet',
             symbol: 'SOL',
             type: 'solana',
@@ -164,7 +146,6 @@ export default function CampaignCreate() {
       });
 
       setAvailableChains(chains);
-      console.log('Available chains loaded:', chains);
     } catch (error) {
       console.error('Failed to load chains:', error);
       // 如果加载失败，使用默认链列表作为备选
@@ -185,49 +166,45 @@ export default function CampaignCreate() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value
-    }));
 
-    // 如果链发生变化，重新获取代币信息
-    if (name === 'chain' && formData.tokenAddress && !tokenAddressError) {
-      setTokenInfo(null);
-      setTokenInfoError('');
-      if (value) {
-        setTimeout(() => fetchTokenInfo(formData.tokenAddress), 100);
+    // 如果链发生变化，调整批量参数
+    if (name === 'chain') {
+      const selectedChain = availableChains.find(c => c.id === value);
+      const isSolana = isSolanaChain(selectedChain || {});
+
+      setFormData(prev => ({
+        ...prev,
+        chain: value,
+        // 根据链类型自动调整批量参数
+        batchSize: isSolana ? DEFAULTS.CAMPAIGN_FORM.batchSize.solana : DEFAULTS.CAMPAIGN_FORM.batchSize.evm,
+        sendInterval: isSolana ? DEFAULTS.CAMPAIGN_FORM.sendInterval.solana : DEFAULTS.CAMPAIGN_FORM.sendInterval.evm
+      }));
+
+      // 重新获取代币信息
+      if (formData.tokenAddress && !tokenAddressError) {
+        setTokenInfo(null);
+        setTokenInfoError('');
+        if (value) {
+          // 传递新的 chainId，避免使用旧的 formData.chain
+          setTimeout(() => fetchTokenInfo(formData.tokenAddress, value), 100);
+        }
       }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value
+      }));
     }
 
     // 实时校验代币合约地址
     if (name === 'tokenAddress') {
       if (value.trim()) {
-        // EVM地址：以0x开头，后面40个十六进制字符（总共42字符）
-        const isEVMAddress = /^0x[a-fA-F0-9]{40}$/i.test(value);
-        // Solana地址：Base58编码，44个字符
-        const isSolanaAddress = /^[1-9A-HJ-NP-Za-km-z]{44}$/.test(value);
+        // 使用统一的地址验证函数
+        const selectedChain = availableChains.find(c => c.id === formData.chain);
+        const isValidAddress = validateAddressForChain(value, selectedChain || {});
 
-        console.log('校验:', {
-          value: value,
-          length: value.length,
-          isEVMAddress,
-          isSolanaAddress
-        });
-
-        if (!isEVMAddress && !isSolanaAddress) {
-          let errorMsg = '请输入有效的代币合约地址。';
-          if (value.startsWith('0x')) {
-            if (value.length !== 42) {
-              errorMsg += 'EVM地址应为42字符（以0x开头）';
-            } else {
-              errorMsg += 'EVM地址包含无效字符';
-            }
-          } else if (value.length < 43 || value.length > 44) {
-            errorMsg += 'Solana地址应为43-44字符';
-          } else {
-            errorMsg += '当前格式不被支持';
-          }
-          setTokenAddressError(errorMsg);
+        if (!isValidAddress) {
+          setTokenAddressError('请输入有效的代币合约地址');
           setTokenInfo(null);
           setTokenInfoError('');
         } else {
@@ -249,58 +226,10 @@ export default function CampaignCreate() {
 
     if (content.trim()) {
       try {
-        // Parse CSV content (no headers expected)
-        const lines = content.trim().split('\n').filter(line => line.trim());
+        // Use unified CSV validator (no headers expected for textarea input)
+        const validation = parseCSV(content, { hasHeaders: false });
 
-        // Parse data rows (expecting address,amount format)
-        const data = [];
-        const errors = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-
-          const values = line.split(',').map(v => v.trim());
-
-          if (values.length < 2) {
-            errors.push(`第 ${i + 1} 行: 格式错误，需要包含地址和金额`);
-            continue;
-          }
-
-          const address = values[0];
-          const amount = values[1];
-
-          // Validate address format (EVM or Solana)
-          const isEVMAddress = /^0x[a-fA-F0-9]{40}$/.test(address);
-          const isSolanaAddress = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-
-          if (!isEVMAddress && !isSolanaAddress) {
-            errors.push(`第 ${i + 1} 行: 地址格式无效`);
-            continue;
-          }
-
-          // Validate amount
-          const amountNum = parseFloat(amount);
-          if (isNaN(amountNum) || amountNum <= 0) {
-            errors.push(`第 ${i + 1} 行: 金额必须是大于0的数字`);
-            continue;
-          }
-
-          data.push({
-            address: address,
-            amount: amount
-          });
-        }
-
-        setCsvData(data);
-        const validation = {
-          isValid: data.length > 0,
-          totalRecords: lines.length,
-          validRecords: data.length,
-          invalidRecords: lines.length - data.length,
-          errors: errors,
-          sampleData: data.slice(0, 5)
-        };
+        setCsvData(validation.data);  // 使用所有数据而不是 sampleData
         setCsvValidation(validation);
       } catch (error) {
         console.error('Failed to parse CSV:', error);
@@ -310,7 +239,8 @@ export default function CampaignCreate() {
           validRecords: 0,
           invalidRecords: 0,
           errors: ['CSV内容解析失败'],
-          sampleData: []
+          sampleData: [],
+          data: []
         });
       }
     } else {
@@ -601,19 +531,19 @@ export default function CampaignCreate() {
                 <div className="flex flex-wrap gap-2">
                   {(() => {
                     // 根据链类型调整推荐设置
-                    const isSolana = formData.chain && isSolanaChain(formData.chain);
+                    const selectedChain = availableChains.find(c => c.id === formData.chain);
+                    const isSolana = isSolanaChain(selectedChain || {});
                     if (isSolana) {
-                      // Solana网络 - 基于QuickNode最佳实践
-      // SPL代币：每交易最多8个转账地址（需要创建账户指令）
-      // SOL转账：每交易最多15个转账地址（基于QuickNode的10条指令建议优化）
-                      return [5, 8, 12, 15].map(size => (
+                      // Solana网络 - 简化配置
+      // 统一批量大小：ATA创建和转账使用相同的批量设置
+                      return [5, 10].map(size => (
                         <button
                           key={size}
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, batchSize: size }))}
                           className={`btn ${formData.batchSize === size ? 'btn-primary' : 'btn-outline'}`}
                         >
-                          {size} {size === 8 && '(推荐)'} ⚡
+                          {size}
                         </button>
                       ));
                     } else {
@@ -625,7 +555,7 @@ export default function CampaignCreate() {
                           onClick={() => setFormData(prev => ({ ...prev, batchSize: size }))}
                           className={`btn ${formData.batchSize === size ? 'btn-primary' : 'btn-outline'}`}
                         >
-                          {size} {size === 50 && '(推荐)'}
+                          {size}
                         </button>
                       ));
                     }
@@ -640,12 +570,13 @@ export default function CampaignCreate() {
                 <div className="flex flex-wrap gap-2">
                   {(() => {
                     // 根据链类型调整推荐设置
-                    const isSolana = formData.chain && isSolanaChain(formData.chain);
+                    const selectedChain = availableChains.find(c => c.id === formData.chain);
+                    const isSolana = isSolanaChain(selectedChain || {});
                     if (isSolana) {
                       // Solana网络 - 考虑到批量变小，总体需要更快频率来补偿
                       return [
                         { value: '3000', label: '3秒' },
-                        { value: '5000', label: '5秒', recommended: true },
+                        { value: '5000', label: '5秒' },
                         { value: '8000', label: '8秒' },
                         { value: '10000', label: '10秒' },
                         { value: '15000', label: '15秒' }
@@ -656,13 +587,13 @@ export default function CampaignCreate() {
                           onClick={() => setFormData(prev => ({ ...prev, sendInterval: interval.value }))}
                           className={`btn ${formData.sendInterval === interval.value ? 'btn-primary' : 'btn-outline'}`}
                         >
-                          {interval.label} {interval.recommended && '(推荐)'} ⚡
+                          {interval.label}
                         </button>
                       ));
                     } else {
                       // EVM网络 - 保持原有设置
                       return [
-                        { value: '15000', label: '15秒', recommended: true },
+                        { value: '15000', label: '15秒' },
                         { value: '20000', label: '20秒' },
                         { value: '30000', label: '30秒' },
                         { value: '45000', label: '45秒' },
@@ -674,17 +605,17 @@ export default function CampaignCreate() {
                           onClick={() => setFormData(prev => ({ ...prev, sendInterval: interval.value }))}
                           className={`btn ${formData.sendInterval === interval.value ? 'btn-primary' : 'btn-outline'}`}
                         >
-                          {interval.label} {interval.recommended && '(推荐)'}
+                          {interval.label}
                         </button>
                       ));
                     }
                   })()}
                 </div>
                 {/* Solana优化提示 */}
-                {isSolanaChain(formData.chain) && (
+                {isSolanaChain(availableChains.find(c => c.id === formData.chain) || {}) && (
                   <div className="mt-2">
                     <span className="text-xs text-warning">
-                      <strong>⚡ Solana限制：</strong>由于交易大小限制，SPL代币每批仅支持8个地址，但通过更高频率补偿总体效率
+                      <strong>⚡ Solana限制：</strong>每批支持5-10个地址（ATA创建和转账使用相同配置）
                     </span>
                   </div>
                 )}
@@ -745,7 +676,9 @@ export default function CampaignCreate() {
                         <div className="stat bg-base-200 rounded-lg p-4">
                           <div className="stat-title text-xs">总代币数</div>
                           <div className="stat-value text-2xl">
-                            {csvData.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            {csvData.reduce((sum, item) => {
+                              return sum.plus(new BigNumber(item.amount || 0));
+                            }, new BigNumber(0)).toString()}
                           </div>
                         </div>
 

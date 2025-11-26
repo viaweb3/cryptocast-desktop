@@ -5,6 +5,7 @@ import {
   WalletBalance,
   EVMChain
 } from '../types';
+import { isSolanaChain, exportPrivateKey, getChainDisplayName, getChainDisplayBadge } from '../utils/chainTypeUtils';
 
 export default function WalletManagement() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export default function WalletManagement() {
   const loadChains = async () => {
     try {
       if (window.electronAPI?.chain) {
-        const chainsData = await window.electronAPI.chain.getEVMChains();
+        const chainsData = await window.electronAPI.chain.getAllChains();
         setChains(chainsData);
       }
     } catch (error) {
@@ -73,22 +74,13 @@ export default function WalletManagement() {
     }
 
     try {
-      // 使用浏览器原生 API 解码 Base64 私钥
-      const base64String = wallet.privateKeyBase64 || '';
-      // 解码 Base64 到二进制字符串
-      const binaryString = atob(base64String);
-      // 转换为十六进制
-      let hexString = '';
-      for (let i = 0; i < binaryString.length; i++) {
-        const hex = binaryString.charCodeAt(i).toString(16).padStart(2, '0');
-        hexString += hex;
-      }
-      const privateKeyHex = '0x' + hexString;
+      // 使用统一的私钥导出函数
+      const privateKeyDisplay = await exportPrivateKey(wallet.privateKeyBase64 || '', wallet);
 
       // 显示自定义私钥弹窗
       setExportedWallet({
         address: wallet.address,
-        privateKey: privateKeyHex
+        privateKey: privateKeyDisplay
       });
       setShowPrivateKeyModal(true);
       setCopied(false);
@@ -156,19 +148,8 @@ export default function WalletManagement() {
   };
 
   const getChainName = (chainValue: string) => {
-    // Try to find chain by chainId first (most common case for EVM)
-    const chainIdNum = parseInt(chainValue);
-    if (!isNaN(chainIdNum)) {
-      const chain = chains.find(c => c.chainId === chainIdNum);
-      if (chain) return chain.name;
-    }
-
-    // Try to match by name (for Solana networks like 'mainnet-beta', 'devnet')
-    const chain = chains.find(c => c.name.toLowerCase() === chainValue.toLowerCase());
-    if (chain) return chain.name;
-
-    // Fallback: return the value as-is or with "Chain" prefix
-    return chainValue || 'Unknown Chain';
+    // 使用统一的链显示工具，直接传递 chainValue
+    return getChainDisplayName(chainValue, chains);
   };
 
   return (
@@ -422,7 +403,9 @@ export default function WalletManagement() {
             <div className="bg-base-200 p-4 rounded-lg mb-4">
               <h4 className="font-semibold mb-2 text-sm">安全提示</h4>
               <ul className="text-sm space-y-1 text-base-content/80">
-                <li>• 私钥可以导入到 MetaMask、Trust Wallet 等钱包</li>
+                <li>• EVM私钥可以导入到 MetaMask、Trust Wallet 等钱包</li>
+                <li>• Solana私钥为64字节数组格式，可导入到 Phantom、Solflare 等钱包</li>
+                <li>• 格式示例：[135,23,98,189,91,220,102,232,69,78,173,75,129,198,30,190,...]</li>
                 <li>• 请将私钥保存在安全的地方（如密码管理器）</li>
                 <li>• 不要截图或通过互联网传输私钥</li>
                 <li>• 任何拥有私钥的人都可以控制钱包资金</li>

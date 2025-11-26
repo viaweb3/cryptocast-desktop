@@ -1,9 +1,11 @@
 import { GasService } from './GasService';
 import { ChainService } from './ChainService';
+import { ChainUtils } from '../utils/chain-utils';
 import type { DatabaseManager } from '../database/sqlite-schema';
 
 export interface EstimateRequest {
   chain: string;
+  chainType?: 'evm' | 'solana';
   tokenAddress: string;
   recipientCount: number;
   batchSize?: number;
@@ -60,6 +62,25 @@ export class CampaignEstimator {
    * Estimate campaign costs and duration
    */
   async estimate(request: EstimateRequest): Promise<EstimateResult> {
+    try {
+      // 使用统一的链类型判断工具
+      const chainType = request.chainType || ChainUtils.getChainType(request.chain);
+
+      if (chainType === 'solana') {
+        return this.estimateSolana(request);
+      }
+
+      return this.estimateEVM(request);
+    } catch (error) {
+      console.error('Failed to estimate campaign:', error);
+      throw new Error('Campaign estimation failed');
+    }
+  }
+
+  /**
+   * Estimate EVM campaign costs and duration
+   */
+  private async estimateEVM(request: EstimateRequest): Promise<EstimateResult> {
     try {
       const batchSize = request.batchSize || this.DEFAULT_BATCH_SIZE;
       const totalBatches = Math.ceil(request.recipientCount / batchSize);
@@ -153,6 +174,92 @@ export class CampaignEstimator {
       console.error('Failed to estimate campaign:', error);
       throw new Error('Campaign estimation failed');
     }
+  }
+
+  /**
+   * Estimate Solana campaign costs and duration
+   */
+  private async estimateSolana(request: EstimateRequest): Promise<EstimateResult> {
+    try {
+      const batchSize = request.batchSize || 10; // Default Solana batch size is 10
+      const totalBatches = Math.ceil(request.recipientCount / batchSize);
+
+      // Get Solana chain configuration
+      const solanaChains = await this.chainService.getSolanaChains();
+      const chainConfig = solanaChains.find(c => c.chainId?.toString() === request.chain);
+
+      if (!chainConfig) {
+        throw new Error(`Solana chain configuration not found for chain ${request.chain}`);
+      }
+
+      // Solana transaction fee estimation
+      // Base fee: ~0.000005 SOL per signature
+      // For token transfers: 1 signature for sender
+      // For ATA creation: Additional ~0.00203928 SOL rent-exempt minimum
+      const BASE_FEE_PER_TX = 0.000005; // SOL per transaction
+      const ATA_CREATION_FEE = 0.00203928; // SOL for ATA creation (rent-exempt minimum)
+
+      // Assume 20% of recipients might need ATA creation
+      const estimatedATACreations = Math.ceil(request.recipientCount * 0.2);
+
+      // Calculate total fees
+      const totalTransferFees = request.recipientCount * BASE_FEE_PER_TX;
+      const totalATAFees = estimatedATACreations * ATA_CREATION_FEE;
+      const totalFeesSOL = totalTransferFees + totalATAFees;
+
+      // Duration estimation
+      // Solana is much faster than EVM chains
+      const SECONDS_PER_SOLANA_BATCH = 5; // Conservative estimate
+      const totalTimeSeconds = totalBatches * SECONDS_PER_SOLANA_BATCH;
+      const totalTimeMinutes = totalTimeSeconds / 60;
+
+      // Calculate optimal batch size for Solana
+      const optimalBatchSize = this.calculateOptimalSolanaBatchSize(request.recipientCount);
+
+      const result: EstimateResult = {
+        totalRecipients: request.recipientCount,
+        estimatedBatches: totalBatches,
+        estimatedGasPerBatch: (totalFeesSOL / totalBatches).toFixed(9),
+        estimatedTotalGas: totalFeesSOL.toFixed(9),
+        estimatedGasCost: totalFeesSOL.toFixed(6),
+        estimatedDuration: totalTimeMinutes.toFixed(1),
+        gasPrice: BASE_FEE_PER_TX.toFixed(9), // Not really "gas price" but transaction fee
+        isEIP1559: false,
+        tokenSymbol: 'SOL',
+        recommendations: {
+          optimalBatchSize,
+          estimatedTimePerBatch: SECONDS_PER_SOLANA_BATCH.toString(),
+          totalEstimatedTime: totalTimeMinutes.toFixed(1),
+        },
+      };
+
+      return result;
+    } catch (error) {
+      console.error('Failed to estimate Solana campaign:', error);
+      throw new Error('Solana campaign estimation failed');
+    }
+  }
+
+  /**
+   * Calculate optimal batch size for Solana campaigns
+   */
+  private calculateOptimalSolanaBatchSize(recipientCount: number): number {
+    // Solana has different constraints than EVM
+    // Recommended batch sizes: 5, 10, 15, 20
+
+    if (recipientCount < 50) {
+      return 5;
+    }
+
+    if (recipientCount < 200) {
+      return 10;
+    }
+
+    if (recipientCount < 500) {
+      return 15;
+    }
+
+    return 20;
   }
 
   /**

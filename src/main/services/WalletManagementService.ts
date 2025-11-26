@@ -53,7 +53,6 @@ export class WalletManagementService {
           c.wallet_address as address,
           c.chain_type,
           c.chain_id,
-          c.network,
           c.status,
           c.token_address,
           c.token_symbol,
@@ -92,10 +91,8 @@ export class WalletManagementService {
 
       const wallets: ActivityWallet[] = await Promise.all(
         rows.map(async (row) => {
-          // Determine chain identifier based on chain type
-          const chain = row.chain_type === 'evm'
-            ? row.chain_id?.toString() || ''
-            : row.network || 'mainnet-beta';
+          // 统一使用 chain_id
+          const chain = row.chain_id?.toString() || '';
 
           // 为每个钱包获取余额信息（这里返回基本结构，实际余额需要链上查询）
           return {
@@ -180,10 +177,8 @@ export class WalletManagementService {
         chainConfig.rpcUrl
       );
 
-      // Determine chain identifier
-      const chain = campaign.chain_type === 'evm'
-        ? campaign.chain_id?.toString() || ''
-        : campaign.network || 'mainnet-beta';
+      // 统一使用 chain_id
+      const chain = campaign.chain_id?.toString() || '';
 
       return {
         address: campaign.wallet_address,

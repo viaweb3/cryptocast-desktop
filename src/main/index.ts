@@ -1,5 +1,5 @@
 import { app, BrowserWindow } from 'electron';
-import path from 'path';
+import * as path from 'path';
 import { setupIPCHandlers } from './ipc/handlers';
 
 let mainWindow: BrowserWindow | null = null;
@@ -40,11 +40,8 @@ function createWindow() {
 
 // 应用准备就绪
 app.whenReady().then(async () => {
-  console.log('App is ready, setting up IPC handlers...');
-
   try {
     await setupIPCHandlers();
-    console.log('IPC handlers set up successfully, creating window...');
     createWindow();
   } catch (error) {
     console.error('Failed to set up IPC handlers:', error);

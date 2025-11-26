@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { Campaign, Recipient, Transaction, CampaignEstimate, CSVValidationResult, CampaignStatus } from '../types';
+import { parseCSV } from '../utils/csvValidator';
+import { DEFAULTS } from '../config/defaults';
 
 interface CampaignState {
   campaigns: Campaign[];
@@ -202,67 +204,15 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     
     validateCSV: async (file) => {
       try {
-        // Mock CSV validation for now
+        // Read file content and use unified CSV validator
         const text = await file.text();
-        const lines = text.split('\n').filter(line => line.trim());
+        const result = parseCSV(text, { hasHeaders: true });
 
-        if (lines.length < 2) {
-          throw new Error('CSV file is empty or invalid');
+        if (!result.isValid) {
+          throw new Error(result.errors.join(', ') || 'CSV validation failed');
         }
 
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        if (!headers.includes('address') || !headers.includes('amount')) {
-          throw new Error('CSV must contain address and amount columns');
-        }
-
-        const recipients: Recipient[] = [];
-        const errors = [];
-
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(',').map(v => v.trim());
-          if (values.length < 2) continue;
-
-          const [address, amount] = values;
-          const recipient: Recipient = {
-            id: `temp-${i}`,
-            campaignId: 'temp',
-            address,
-            amount,
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-
-          // Basic validation
-          if (!address.startsWith('0x') || address.length !== 42) {
-            errors.push({
-              row: i + 1,
-              field: 'address',
-              value: address,
-              error: 'Invalid Ethereum address format',
-            });
-          }
-
-          if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-            errors.push({
-              row: i + 1,
-              field: 'amount',
-              value: amount,
-              error: 'Amount must be a positive number',
-            });
-          }
-
-          recipients.push(recipient);
-        }
-
-        return {
-          isValid: errors.length === 0,
-          totalRecords: recipients.length,
-          validRecords: recipients.length - errors.length,
-          invalidRecords: errors.length,
-          errors,
-          sampleData: recipients.slice(0, 5),
-        };
+        return result;
       } catch (error) {
         throw new Error(`CSV validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
@@ -274,7 +224,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
         const totalRecipients = campaignData.totalRecipients || 0;
         const totalAmount = campaignData.totalAmount || '0';
         const gasEstimate = (totalRecipients * 0.001).toString(); // 0.001 ETH per tx
-        const gasCostUSD = 2000 * parseFloat(gasEstimate); // Assuming $2000 ETH price
+        const gasCostUSD = DEFAULTS.PRICE_ASSUMPTIONS.ETH * parseFloat(gasEstimate);
         const estimatedTime = Math.ceil(totalRecipients / 100) * 2; // 100 tx per batch, 2 seconds per batch
         const batchCount = Math.ceil(totalRecipients / 100);
 

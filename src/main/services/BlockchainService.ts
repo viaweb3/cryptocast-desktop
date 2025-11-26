@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { Connection, PublicKey, LAMPORTS_PER_SOL, Keypair, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js';
+import { DEFAULTS } from '../config/defaults';
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createTransferInstruction, getAccount } from '@solana/spl-token';
 import { PriceService } from './PriceService';
 import { ChainUtils } from '../utils/chain-utils';
@@ -130,7 +131,11 @@ export class BlockchainService {
     tokenAddress?: string,
     rpcUrl?: string
   ): Promise<BalanceData> {
-    const connection = new Connection(rpcUrl || 'https://api.mainnet-beta.solana.com');
+    // 移除硬编码RPC URL，应该从链配置中获取
+    if (!rpcUrl) {
+      throw new Error('Solana RPC URL is required');
+    }
+    const connection = new Connection(rpcUrl);
     const publicKey = new PublicKey(address);
 
     // 获取SOL余额
@@ -217,8 +222,8 @@ export class BlockchainService {
       // 估算批量转账的gas
       gasLimit = await this.estimateBatchTransferGas(recipientCount);
     } else {
-      // 默认gas限制
-      gasLimit = BigInt('21000'); // 标准转账
+      // 使用配置化的默认gas限制
+      gasLimit = BigInt(DEFAULTS.GAS_LIMITS.standard); // 标准转账
     }
 
     const gasCost = gasLimit * gasPrice;
@@ -237,10 +242,9 @@ export class BlockchainService {
   }
 
   private async estimateBatchTransferGas(recipientCount: number): Promise<bigint> {
-    // 简化的gas估算，实际应该部署合约进行精确估算
-    // 每个ERC20转账约需要50000 gas
-    const gasPerTransfer = BigInt('50000');
-    const baseGas = BigInt('100000'); // 合约调用基础gas
+    // 使用配置化的gas估算
+    const gasPerTransfer = BigInt(DEFAULTS.GAS_LIMITS.token);
+    const baseGas = BigInt(DEFAULTS.GAS_LIMITS.campaign); // 合约调用基础gas
     return baseGas + (gasPerTransfer * BigInt(recipientCount));
   }
 
@@ -257,11 +261,11 @@ export class BlockchainService {
       // 获取最新的区块哈希
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
-      // 基础签名费用 (Solana 默认值)
-      const baseFeePerSignature = BigInt(5000);
+      // 使用配置化的Solana费用
+      const baseFeePerSignature = BigInt(DEFAULTS.SOLANA_FEES.base_fee_per_signature);
 
       // Solana交易的典型组件费用估算
-      const computeUnitsPerInstruction = 200000; // 典型的compute unit限制
+      const computeUnitsPerInstruction = DEFAULTS.SOLANA_FEES.compute_unit_limit;
       const computeUnitPrice = BigInt(0); // 默认为0
 
       // 对于批量转账，每个交易包含多个指令
@@ -274,7 +278,7 @@ export class BlockchainService {
       const signatureFees = baseFeePerSignature * BigInt(transactionCount + 1); // +1 for payer signature
 
       // SPL转账的额外费用（创建关联账户等）
-      const splAccountCreationFee = BigInt('2039280') * BigInt(Math.min(transactionCount, Math.floor(transactionCount * 0.3))); // 假设30%需要创建账户
+      const splAccountCreationFee = BigInt(DEFAULTS.SOLANA_FEES.spl_account_creation_fee) * BigInt(Math.min(transactionCount, Math.floor(transactionCount * 0.3))); // 假设30%需要创建账户
 
       const totalLamports = computeFee + signatureFees + splAccountCreationFee;
       const solCost = totalLamports / BigInt(LAMPORTS_PER_SOL);
@@ -303,7 +307,7 @@ export class BlockchainService {
     } catch (error) {
       console.error('Failed to get dynamic Solana gas estimation:', error);
       // Fallback to static estimation
-      const baseFeePerSignature = BigInt('5000');
+      const baseFeePerSignature = BigInt(DEFAULTS.SOLANA_FEES.base_fee_per_signature);
       const totalLamports = baseFeePerSignature * BigInt(transactionCount * 3); // 更保守的估算
       const solCost = totalLamports / BigInt(LAMPORTS_PER_SOL);
 
@@ -381,10 +385,10 @@ export class BlockchainService {
       return await this.priceService.getPrice('ETH');
     }
     try {
-      // Fallback to hardcoded price
-      return 2000; // 假设ETH价格为$2000
+      // Fallback to configured default price
+      return DEFAULTS.PRICE_ASSUMPTIONS.ETH;
     } catch (error) {
-      return 2000; // 默认价格
+      return DEFAULTS.PRICE_ASSUMPTIONS.ETH;
     }
   }
 
@@ -446,7 +450,11 @@ export class BlockchainService {
     txHash: string,
     rpcUrl?: string
   ): Promise<TransactionData> {
-    const connection = new Connection(rpcUrl || 'https://api.mainnet-beta.solana.com');
+    // 移除硬编码RPC URL，应该从链配置中获取
+    if (!rpcUrl) {
+      throw new Error('Solana RPC URL is required');
+    }
+    const connection = new Connection(rpcUrl);
 
     const signature = txHash;
     const status = await connection.getSignatureStatus(signature);
@@ -650,12 +658,16 @@ export class BlockchainService {
 
       const estimatedFee = fee.value || 5000;
 
-      // Calculate amount to send with 1.5x fee buffer
+      // Get minimum balance for rent exemption (account rent)
+      const rentExemptBalance = await connection.getMinimumBalanceForRentExemption(0); // 0 for basic account
+
+      // Calculate amount to send with 1.5x fee buffer AND rent exemption
       const feeBuffer = Math.ceil(estimatedFee * 1.5);
-      const amountToSend = balance - feeBuffer;
+      const totalReserve = feeBuffer + rentExemptBalance;
+      const amountToSend = balance - totalReserve;
 
       if (amountToSend <= 0) {
-        throw new Error('Insufficient SOL balance to cover transaction fee');
+        throw new Error(`Insufficient SOL balance. Available: ${balance} lamports, Required reserve: ${totalReserve} lamports (fee: ${feeBuffer}, rent: ${rentExemptBalance})`);
       }
 
       // Create the actual transfer transaction

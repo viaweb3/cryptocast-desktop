@@ -146,8 +146,18 @@ export class GasService {
     tokenPrice: number = 0
   ): Promise<GasInfo & { estimatedGasLimit: string; totalRecipients: number }> {
     try {
+      console.log(`[GasService] 🔍 Getting batch gas estimate for ${recipientCount} recipients on ${network}`);
+      console.log(`[GasService] 🌐 RPC URL: ${rpcUrl}`);
+
       const provider = new ethers.JsonRpcProvider(rpcUrl);
+
+      console.log(`[GasService] ⏳ Fetching fee data...`);
       const feeData = await provider.getFeeData();
+
+      console.log(`[GasService] 📊 Raw fee data received:`);
+      console.log(`  - maxFeePerGas: ${feeData.maxFeePerGas ? ethers.formatUnits(feeData.maxFeePerGas, 'gwei') : 'null'} Gwei`);
+      console.log(`  - maxPriorityFeePerGas: ${feeData.maxPriorityFeePerGas ? ethers.formatUnits(feeData.maxPriorityFeePerGas, 'gwei') : 'null'} Gwei`);
+      console.log(`  - gasPrice: ${feeData.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : 'null'} Gwei`);
 
       // Calculate gas limit for batch transfer
       // Industry best practice: Use RPC's eth_estimateGas when possible,
@@ -165,6 +175,12 @@ export class GasService {
       const baseGas = 80000;       // Base: 21k transaction + 50k contract overhead + buffer
       const perRecipientGas = 65000; // Conservative: Standard ERC20 transferFrom (worst case)
       const totalGasLimit = (baseGas + (perRecipientGas * recipientCount)).toString();
+
+      console.log(`[GasService] 🧮 Gas Limit Calculation:`);
+      console.log(`  - Base Gas: ${baseGas.toLocaleString()}`);
+      console.log(`  - Per Recipient Gas: ${perRecipientGas.toLocaleString()}`);
+      console.log(`  - Recipient Count: ${recipientCount}`);
+      console.log(`  - Total Gas Limit: ${totalGasLimit}`);
 
       let gasPrice = '0';
       let maxFeePerGas: string | undefined;
@@ -249,15 +265,35 @@ export class GasService {
 
       // Check if network supports EIP-1559
       // Special handling for testnets and networks that don't properly support EIP-1559
-      const nonEIP1559Chains = ['11155111']; // Sepolia Testnet
+      // Note: Sepolia (11155111) actually supports EIP-1559, so removed from list
+      const nonEIP1559Chains: string[] = []; // No chains currently need special handling
       const isNonEIP1559Chain = nonEIP1559Chains.includes(chainId);
+
+      console.log(`[GasService] 🔧 EIP-1559 Check:`);
+      console.log(`  - Chain ID: ${chainId}`);
+      console.log(`  - Is Non-EIP-1559 Chain: ${isNonEIP1559Chain}`);
+      console.log(`  - Has maxFeePerGas: ${feeData.maxFeePerGas ? 'YES' : 'NO'}`);
+      console.log(`  - Has maxPriorityFeePerGas: ${feeData.maxPriorityFeePerGas ? 'YES' : 'NO'}`);
+      console.log(`  - maxFeePerGas > 0: ${feeData.maxFeePerGas && feeData.maxFeePerGas > 0n ? 'YES' : 'NO'}`);
+      console.log(`  - maxPriorityFeePerGas > 0: ${feeData.maxPriorityFeePerGas && feeData.maxPriorityFeePerGas > 0n ? 'YES' : 'NO'}`);
 
       if (!isNonEIP1559Chain && feeData.maxFeePerGas && feeData.maxPriorityFeePerGas &&
           feeData.maxFeePerGas > 0n && feeData.maxPriorityFeePerGas > 0n) {
-        
+
+        console.log(`[GasService] ✅ Using EIP-1559 Path`);
+        console.log(`[GasService] 📊 Raw EIP-1559 Values:`);
+        console.log(`  - Raw maxFeePerGas: ${ethers.formatUnits(feeData.maxFeePerGas, 'gwei')} Gwei`);
+        console.log(`  - Raw maxPriorityFeePerGas: ${ethers.formatUnits(feeData.maxPriorityFeePerGas, 'gwei')} Gwei`);
+        console.log(`  - Gas Multiplier: ${this.GAS_MULTIPLIER} (${(this.GAS_MULTIPLIER - 1) * 100}% buffer)`);
+        console.log(`  - Priority Multiplier: ${this.PRIORITY_FEE_MULTIPLIER} (${(this.PRIORITY_FEE_MULTIPLIER - 1) * 100}% buffer)`);
+
         // Apply safety buffer (20% on maxFee, 50% on priority)
         const adjustedMaxFee = (feeData.maxFeePerGas * BigInt(Math.floor(this.GAS_MULTIPLIER * 100))) / 100n;
         const adjustedPriorityFee = (feeData.maxPriorityFeePerGas * BigInt(Math.floor(this.PRIORITY_FEE_MULTIPLIER * 100))) / 100n;
+
+        console.log(`[GasService] 📈 After Buffers:`);
+        console.log(`  - Adjusted maxFeePerGas: ${ethers.formatUnits(adjustedMaxFee, 'gwei')} Gwei`);
+        console.log(`  - Adjusted maxPriorityFeePerGas: ${ethers.formatUnits(adjustedPriorityFee, 'gwei')} Gwei`);
 
         // Ensure maxPriorityFeePerGas never exceeds maxFeePerGas (EIP-1559 requirement)
         const finalPriorityFee = adjustedPriorityFee > adjustedMaxFee ? adjustedMaxFee : adjustedPriorityFee;
@@ -265,7 +301,10 @@ export class GasService {
         const maxFeePerGas = ethers.formatUnits(adjustedMaxFee, 'gwei');
         const maxPriorityFeePerGas = ethers.formatUnits(finalPriorityFee, 'gwei');
 
-        
+        console.log(`[GasService] 🎯 Final EIP-1559 Values:`);
+        console.log(`  - Final maxFeePerGas: ${maxFeePerGas} Gwei`);
+        console.log(`  - Final maxPriorityFeePerGas: ${maxPriorityFeePerGas} Gwei`);
+
         return {
           gasPrice: maxFeePerGas,
           maxFeePerGas,
@@ -273,17 +312,25 @@ export class GasService {
           isEIP1559: true,
         };
       } else if (feeData.gasPrice && feeData.gasPrice > 0n) {
-        
+
+        console.log(`[GasService] ⚠️  Using Legacy Path (EIP-1559 not available)`);
+        console.log(`[GasService] 📊 Raw Legacy Values:`);
+        console.log(`  - Raw gasPrice: ${ethers.formatUnits(feeData.gasPrice, 'gwei')} Gwei`);
+        console.log(`  - Gas Multiplier: ${this.GAS_MULTIPLIER} (${(this.GAS_MULTIPLIER - 1) * 100}% buffer)`);
+
         // Legacy transaction with 20% buffer
         const adjustedGasPrice = (feeData.gasPrice * BigInt(Math.floor(this.GAS_MULTIPLIER * 100))) / 100n;
         const gasPrice = ethers.formatUnits(adjustedGasPrice, 'gwei');
 
-        
+        console.log(`[GasService] 📈 After Buffer:`);
+        console.log(`  - Adjusted gasPrice: ${gasPrice} Gwei`);
+
         return {
           gasPrice,
           isEIP1559: false,
         };
       } else {
+        console.log(`[GasService] ❌ No gas price data available from RPC`);
         throw new Error('No gas price data available from RPC');
       }
     } catch (error) {

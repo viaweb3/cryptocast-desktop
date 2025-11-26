@@ -3,19 +3,24 @@ import {
   Keypair,
   PublicKey,
   Transaction,
-  sendAndConfirmTransaction,
-  clusterApiUrl,
   LAMPORTS_PER_SOL,
+  sendAndConfirmTransaction,
   SystemProgram
 } from '@solana/web3.js';
+import { TokenService } from './TokenService';
+import { ChainUtils } from '../utils/chain-utils';
+import { DEFAULTS } from '../config/defaults';
+import { KeyUtils } from '../utils/keyUtils';
 import {
   createTransferInstruction,
+  createTransferCheckedInstruction,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
-  getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
+import BigNumber from 'bignumber.js';
 
 export interface SolanaBatchTransferResult {
   transactionHash: string;
@@ -36,6 +41,13 @@ export interface SolanaTokenInfo {
   decimals: number;
   symbol?: string;
   isNativeSOL: boolean;
+  programId: PublicKey;
+}
+
+interface ATAInfo {
+  owner: PublicKey;
+  ata: PublicKey;
+  amount: string;
 }
 
 export class SolanaService {
@@ -55,8 +67,29 @@ export class SolanaService {
    * 从base64私钥创建Keypair
    */
   private createKeypairFromBase64(privateKeyBase64: string): Keypair {
-    const privateKeyBytes = Buffer.from(privateKeyBase64, 'base64');
+    const privateKeyBytes = KeyUtils.decodeToSolanaBytes(privateKeyBase64);
     return Keypair.fromSecretKey(privateKeyBytes);
+  }
+
+  /**
+   * 检测 Token Program ID (Token Program v1 vs Token-2022)
+   */
+  private async detectTokenProgram(connection: Connection, mintAddress: PublicKey): Promise<PublicKey> {
+    const mintInfo = await connection.getAccountInfo(mintAddress);
+    if (!mintInfo) {
+      throw new Error('Mint account does not exist');
+    }
+
+    const owner = mintInfo.owner.toBase58();
+
+    if (owner === TOKEN_PROGRAM_ID.toBase58()) {
+      return TOKEN_PROGRAM_ID;
+    }
+    if (owner === TOKEN_2022_PROGRAM_ID.toBase58()) {
+      return TOKEN_2022_PROGRAM_ID;
+    }
+
+    throw new Error(`Unknown Token Program ID: ${owner}`);
   }
 
   /**
@@ -72,11 +105,17 @@ export class SolanaService {
           address: 'So11111111111111111111111111111111111111112',
           decimals: 9,
           symbol: 'SOL',
-          isNativeSOL: true
+          isNativeSOL: true,
+          programId: TOKEN_PROGRAM_ID
         };
       }
 
       const tokenMint = new PublicKey(tokenAddress);
+
+      // 检测 Token Program
+      const programId = await this.detectTokenProgram(connection, tokenMint);
+      console.log(`Token Program: ${programId.equals(TOKEN_2022_PROGRAM_ID) ? 'Token-2022' : 'Token Program v1'}`);
+
       const tokenInfo = await connection.getParsedAccountInfo(tokenMint);
 
       if (!tokenInfo || !tokenInfo.value) {
@@ -89,7 +128,8 @@ export class SolanaService {
       return {
         address: tokenAddress,
         decimals,
-        isNativeSOL: false
+        isNativeSOL: false,
+        programId
       };
     } catch (error) {
       console.error('Failed to get token info:', error);
@@ -112,7 +152,8 @@ export class SolanaService {
       } else {
         // SPL代币余额
         const tokenMint = new PublicKey(tokenAddress);
-        const tokenAccount = await getAssociatedTokenAddress(tokenMint, publicKey);
+        const programId = await this.detectTokenProgram(connection, tokenMint);
+        const tokenAccount = await getAssociatedTokenAddress(tokenMint, publicKey, false, programId);
 
         try {
           const tokenBalance = await connection.getTokenAccountBalance(tokenAccount);
@@ -129,14 +170,20 @@ export class SolanaService {
   }
 
   /**
-   * 批量SPL代币转账 - 符合Solana交易限制的实现
+   * 批量SPL代币转账 - 优化版本
+   * 流程：
+   * 1. 本地计算所有 ATA
+   * 2. 批量查询 ATA 是否存在
+   * 3. 批量创建缺失的 ATA
+   * 4. 批量发送代币
    */
   async batchTransfer(
     rpcUrl: string,
     privateKeyBase64: string,
     recipients: string[],
     amounts: string[],
-    tokenAddress: string
+    tokenAddress: string,
+    batchSize: number = DEFAULTS.BATCH_SIZES.solana  // 从配置文件读取默认批量大小
   ): Promise<SolanaBatchTransferResult> {
     try {
       const connection = this.initializeConnection(rpcUrl);
@@ -145,205 +192,357 @@ export class SolanaService {
       // 获取代币信息
       const tokenInfo = await this.getTokenInfo(rpcUrl, tokenAddress);
 
-      const results: Array<{ address: string; amount: string; status: 'success' | 'failed'; error?: string }> = [];
-      let totalGasUsed = 0;
-      const transactionHashes: string[] = [];
+      console.log(`开始批量转账: 总计 ${recipients.length} 个地址`);
+      console.log(`代币类型: ${tokenInfo.isNativeSOL ? 'SOL' : 'SPL'}`);
+      console.log(`Token Program: ${tokenInfo.programId.equals(TOKEN_2022_PROGRAM_ID) ? 'Token-2022' : 'Token v1'}`);
 
-      // Solana交易限制：基于QuickNode最佳实践
-      // 交易大小限制：1232字节，建议每交易最多10条指令
-      // 根据代币类型动态调整批量大小
-      const batchSize = tokenInfo.isNativeSOL ? 15 : 8; // SOL指令更简单，但仍需保守
+      // ========== Step 1: 本地计算所有 ATA ==========
+      const { ataList, skipped } = await this.calculateATAs(
+        recipients,
+        amounts,
+        tokenInfo,
+        wallet.publicKey
+      );
 
-      console.log(`Solana批量转账开始: 总计${recipients.length}个地址，每批${batchSize}个`);
+      // 为跳过的地址添加失败记录
+      const skippedDetails = skipped.map(item => ({
+        address: item.address,
+        amount: item.amount,
+        status: 'failed' as const,
+        error: `Invalid address: ${item.error}`
+      }));
 
-      // 分批处理
-      for (let batchStart = 0; batchStart < recipients.length; batchStart += batchSize) {
-        const batchEnd = Math.min(batchStart + batchSize, recipients.length);
-        const batchRecipients = recipients.slice(batchStart, batchEnd);
-        const batchAmounts = amounts.slice(batchStart, batchEnd);
+      if (!tokenInfo.isNativeSOL) {
+        // ========== Step 2: 批量查询 ATA 是否存在 ==========
+        const missingATAs = await this.checkMissingATAs(connection, ataList);
 
-        console.log(`处理批次 ${Math.floor(batchStart / batchSize) + 1}: 地址 ${batchStart + 1}-${batchEnd}`);
+        console.log(`缺失 ATA 数量: ${missingATAs.length}`);
 
-        try {
-          const batchResult = await this.executeBatchTransfer(
-            connection,
-            wallet,
-            batchRecipients,
-            batchAmounts,
-            tokenInfo,
-            batchStart
-          );
-
-          results.push(...batchResult.results);
-          totalGasUsed += batchResult.gasUsed;
-          transactionHashes.push(batchResult.transactionHash);
-
-          // 批次之间短暂延迟，避免网络拥堵
-          if (batchEnd < recipients.length) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-
-        } catch (error) {
-          console.error(`批次 ${Math.floor(batchStart / batchSize) + 1} 失败:`, error);
-
-          // 标记整个批次为失败
-          for (let i = 0; i < batchRecipients.length; i++) {
-            results.push({
-              address: batchRecipients[i],
-              amount: batchAmounts[i],
-              status: 'failed',
-              error: error instanceof Error ? error.message : '批次执行失败'
-            });
-          }
+        // ========== Step 3: 批量创建缺失的 ATA ==========
+        if (missingATAs.length > 0) {
+          await this.batchCreateATAs(connection, wallet, missingATAs, tokenInfo, batchSize);
         }
       }
 
-      // 计算总金额
-      const totalAmount = amounts.reduce((sum, amount) => {
-        const numAmount = parseFloat(amount) || 0;
-        return sum + numAmount;
-      }, 0);
+      // ========== Step 4: 批量发送代币 ==========
+      const results = await this.batchTransferTokens(
+        connection,
+        wallet,
+        ataList,
+        tokenInfo,
+        batchSize
+      );
 
-      const successCount = results.filter(r => r.status === 'success').length;
+      // 计算总金额
+      const totalAmount = amounts.reduce((sum: BigNumber, amount: string) => {
+        return sum.plus(new BigNumber(amount || '0'));
+      }, new BigNumber(0));
+
+      const allDetails = [...skippedDetails, ...results.details];
+      const successCount = allDetails.filter(r => r.status === 'success').length;
 
       return {
-        transactionHash: transactionHashes.join(','), // 多个交易哈希用逗号分隔
+        transactionHash: results.transactionHashes.join(','),
         totalAmount: totalAmount.toString(),
         recipientCount: successCount,
-        gasUsed: totalGasUsed.toString(),
+        gasUsed: results.totalGasUsed.toString(),
         status: successCount === recipients.length ? 'success' : successCount > 0 ? 'partial' : 'failed',
-        details: results
+        details: allDetails
       };
     } catch (error) {
       console.error('Solana batch transfer failed:', error);
-      throw new Error(`Solana批量转账失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      const errorMsg = error instanceof Error ? (error.message || error.toString()) : String(error);
+      throw new Error(`Solana批量转账失败: ${errorMsg}`);
     }
   }
 
   /**
-   * 执行单个批次的转账 - 基于QuickNode最佳实践优化
+   * Step 1: 本地计算所有 ATA（不走 RPC）
    */
-  private async executeBatchTransfer(
-    connection: Connection,
-    wallet: Keypair,
+  private async calculateATAs(
     recipients: string[],
     amounts: string[],
     tokenInfo: SolanaTokenInfo,
-    batchIndex: number
-  ): Promise<{ transactionHash: string; results: any[]; gasUsed: number }> {
-    const transaction = new Transaction();
-    const results: Array<{ address: string; amount: string; status: 'success' | 'failed'; error?: string }> = [];
+    senderPublicKey: PublicKey
+  ): Promise<{
+    ataList: ATAInfo[];
+    skipped: Array<{ address: string; amount: string; error: string }>;
+  }> {
+    console.log('📋 本地计算所有 ATA...');
+
+    const ataList: ATAInfo[] = [];
+    const skipped: Array<{ address: string; amount: string; error: string }> = [];
 
     for (let i = 0; i < recipients.length; i++) {
-      const recipientAddress = recipients[i];
-      const amount = amounts[i];
+      console.log(`[ATA ${i + 1}/${recipients.length}] Processing address: ${recipients[i]}`);
 
       try {
+        const owner = new PublicKey(recipients[i]);
+
         if (tokenInfo.isNativeSOL) {
-          // 原生SOL转账
-          const recipientPubkey = new PublicKey(recipientAddress);
-          const lamports = Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL);
-
-          transaction.add(
-            SystemProgram.transfer({
-              fromPubkey: wallet.publicKey,
-              toPubkey: recipientPubkey,
-              lamports,
-            })
-          );
-        } else {
-          // SPL代币转账
-          const recipientPubkey = new PublicKey(recipientAddress);
-          const tokenMint = new PublicKey(tokenInfo.address);
-          const senderATA = await getAssociatedTokenAddress(tokenMint, wallet.publicKey);
-          const recipientATA = await getAssociatedTokenAddress(tokenMint, recipientPubkey);
-
-          // 检查接收者的关联代币账户是否存在
-          const recipientAccountInfo = await connection.getAccountInfo(recipientATA);
-          if (!recipientAccountInfo) {
-            // 创建关联代币账户
-            transaction.add(
-              createAssociatedTokenAccountInstruction(
-                wallet.publicKey,
-                recipientATA,
-                tokenMint,
-                recipientPubkey
-              )
-            );
-          }
-
-          // 计算转账金额（考虑小数位数）
-          const decimals = Math.pow(10, tokenInfo.decimals);
-          const transferAmount = BigInt(Math.floor(parseFloat(amount) * decimals));
-
-          // 添加转账指令
-          transaction.add(
-            createTransferInstruction(
-              senderATA,
-              recipientATA,
-              wallet.publicKey,
-              transferAmount
-            )
-          );
-        }
-
-        results.push({
-          address: recipientAddress,
-          amount,
-          status: 'success'
+        // SOL 转账不需要 ATA，直接使用用户地址
+        ataList.push({
+          owner,
+          ata: owner, // SOL 转账时，ATA 就是用户地址
+          amount: amounts[i]
         });
+      } else {
+        // SPL 代币需要计算 ATA
+        const tokenMint = new PublicKey(tokenInfo.address);
+        const ata = await getAssociatedTokenAddress(
+          tokenMint,
+          owner,
+          false,
+          tokenInfo.programId,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+
+          ataList.push({
+            owner,
+            ata,
+            amount: amounts[i]
+          });
+        }
       } catch (error) {
-        console.error(`Failed to prepare transfer for ${recipientAddress}:`, error);
-        results.push({
-          address: recipientAddress,
-          amount,
-          status: 'failed',
-          error: error instanceof Error ? error.message : '指令准备失败'
+        // Skip addresses that cause errors (e.g., off-curve addresses that cannot have ATAs)
+        const errorName = error instanceof Error ? error.name : 'Unknown';
+        console.warn(`⚠️ Skipping address ${recipients[i]}: ${errorName}`);
+        skipped.push({
+          address: recipients[i],
+          amount: amounts[i],
+          error: errorName
         });
       }
     }
 
-    // 如果没有成功的转账，返回错误
-    const successCount = results.filter(r => r.status === 'success').length;
-    if (successCount === 0) {
-      throw new Error('批次中没有准备成功的转账');
-    }
+    console.log(`✅ 计算完成: ${ataList.length} 个有效地址 (${skipped.length} 个跳过)`);
+    return { ataList, skipped };
+  }
 
-    // 获取最新的区块哈希
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = wallet.publicKey;
+  /**
+   * Step 2: 批量查询 ATA 是否存在（1次 RPC 调用）
+   */
+  private async checkMissingATAs(
+    connection: Connection,
+    ataList: ATAInfo[]
+  ): Promise<ATAInfo[]> {
+    console.log('🔍 批量查询 ATA 是否存在...');
 
-    // 基于QuickNode最佳实践：检查交易大小
-    const transactionSize = transaction.serialize({ requireAllSignatures: false }).length;
-    const maxTransactionSize = 1232; // Solana交易大小限制
+    const ataAddresses = ataList.map(item => item.ata);
+    const accountInfos = await connection.getMultipleAccountsInfo(ataAddresses);
 
-    if (transactionSize > maxTransactionSize) {
-      console.warn(`批次 ${batchIndex + 1} 交易大小过大: ${transactionSize} bytes (限制: ${maxTransactionSize})`);
-      // 可以考虑拆分交易或减少批量大小
-    }
-
-    console.log(`批次 ${batchIndex + 1} 交易大小: ${transactionSize} bytes, 指令数: ${transaction.instructions.length}`);
-
-    // 签名并发送交易
-    const signature = await sendAndConfirmTransaction(connection, transaction, [wallet], {
-      commitment: 'confirmed',
-      maxRetries: 3
+    const missing: ATAInfo[] = [];
+    ataList.forEach((item, index) => {
+      if (accountInfos[index] === null) {
+        missing.push(item);
+      }
     });
 
-    // 获取交易详情以计算gas费用
-    const transactionDetails = await connection.getTransaction(signature, {
-      maxSupportedTransactionVersion: 0
-    });
+    console.log(`✅ 查询完成: ${missing.length} 个 ATA 需要创建`);
+    return missing;
+  }
 
-    const gasUsed = transactionDetails?.meta?.fee || 0;
+  /**
+   * Step 3: 批量创建 ATA
+   * 创建ATA指令较大，建议每批不超过15个
+   * 但我们使用用户设置的 batchSize，最大不超过15
+   */
+  private async batchCreateATAs(
+    connection: Connection,
+    wallet: Keypair,
+    missingATAs: ATAInfo[],
+    tokenInfo: SolanaTokenInfo,
+    userBatchSize: number
+  ): Promise<void> {
+    console.log('🏗️  批量创建 ATA...');
 
-    console.log(`批次 ${batchIndex + 1} 完成: 交易哈希 ${signature}, Gas费用 ${gasUsed} lamports`);
+    const tokenMint = new PublicKey(tokenInfo.address);
+    // ATA创建和转账使用统一的批量大小
+    // 简化配置：ATA创建和转账都使用用户设置的 batchSize
+    const CREATE_BATCH_SIZE = userBatchSize;
+
+    console.log(`创建 ATA 批次大小: ${CREATE_BATCH_SIZE}`);
+
+    // 分批创建
+    for (let i = 0; i < missingATAs.length; i += CREATE_BATCH_SIZE) {
+      const batch = missingATAs.slice(i, Math.min(i + CREATE_BATCH_SIZE, missingATAs.length));
+      const tx = new Transaction();
+
+      for (const item of batch) {
+        const ix = createAssociatedTokenAccountInstruction(
+          wallet.publicKey,      // payer
+          item.ata,              // associatedToken
+          item.owner,            // owner
+          tokenMint,             // mint
+          tokenInfo.programId,   // programId
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        tx.add(ix);
+      }
+
+      try {
+        const signature = await sendAndConfirmTransaction(connection, tx, [wallet], {
+          commitment: 'confirmed',
+          maxRetries: 3
+        });
+
+        console.log(`✅ 创建 ATA 批次 ${Math.floor(i / CREATE_BATCH_SIZE) + 1}: ${signature}`);
+        console.log(`   创建了 ${batch.length} 个 ATA`);
+      } catch (error) {
+        console.error(`❌ 创建 ATA 批次失败:`, error);
+        throw error;
+      }
+
+      // 批次之间短暂延迟
+      if (i + CREATE_BATCH_SIZE < missingATAs.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    console.log(`✅ ATA 创建完成: 共创建 ${missingATAs.length} 个`);
+  }
+
+  /**
+   * Step 4: 批量发送代币（根据用户设置的 batchSize）
+   */
+  private async batchTransferTokens(
+    connection: Connection,
+    wallet: Keypair,
+    ataList: ATAInfo[],
+    tokenInfo: SolanaTokenInfo,
+    batchSize: number
+  ): Promise<{
+    transactionHashes: string[];
+    totalGasUsed: number;
+    details: Array<{ address: string; amount: string; status: 'success' | 'failed'; error?: string }>;
+  }> {
+    console.log(`💸 批量发送代币 (每批 ${batchSize} 个)...`);
+
+    const transactionHashes: string[] = [];
+    const details: Array<{ address: string; amount: string; status: 'success' | 'failed'; error?: string }> = [];
+    let totalGasUsed = 0;
+
+    // 发送者的 ATA（SPL 代币需要）
+    let senderATA: PublicKey | undefined;
+    if (!tokenInfo.isNativeSOL) {
+      const tokenMint = new PublicKey(tokenInfo.address);
+      senderATA = await getAssociatedTokenAddress(
+        tokenMint,
+        wallet.publicKey,
+        false,
+        tokenInfo.programId,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+    }
+
+    // 分批处理
+    for (let i = 0; i < ataList.length; i += batchSize) {
+      const batch = ataList.slice(i, Math.min(i + batchSize, ataList.length));
+      const batchNumber = Math.floor(i / batchSize) + 1;
+
+      console.log(`📦 处理批次 ${batchNumber}: 地址 ${i + 1}-${Math.min(i + batchSize, ataList.length)}`);
+
+      try {
+        const tx = new Transaction();
+
+        for (const item of batch) {
+          if (tokenInfo.isNativeSOL) {
+            // 原生 SOL 转账
+            const lamports = Math.floor(parseFloat(item.amount) * LAMPORTS_PER_SOL);
+            tx.add(
+              SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey: item.owner,
+                lamports
+              })
+            );
+          } else {
+            // SPL 代币转账
+            const tokenMint = new PublicKey(tokenInfo.address);
+            const transferAmount = BigInt(Math.floor(parseFloat(item.amount) * Math.pow(10, tokenInfo.decimals)));
+
+            if (tokenInfo.programId.equals(TOKEN_2022_PROGRAM_ID)) {
+              // Token-2022 使用 transferChecked
+              tx.add(
+                createTransferCheckedInstruction(
+                  senderATA!,
+                  tokenMint,
+                  item.ata,
+                  wallet.publicKey,
+                  transferAmount,
+                  tokenInfo.decimals,
+                  [],
+                  tokenInfo.programId
+                )
+              );
+            } else {
+              // Token Program v1
+              tx.add(
+                createTransferInstruction(
+                  senderATA!,
+                  item.ata,
+                  wallet.publicKey,
+                  transferAmount,
+                  [],
+                  tokenInfo.programId
+                )
+              );
+            }
+          }
+        }
+
+        // 发送交易
+        const signature = await sendAndConfirmTransaction(connection, tx, [wallet], {
+          commitment: 'confirmed',
+          maxRetries: 3
+        });
+
+        // 获取交易详情计算 gas
+        const txDetails = await connection.getTransaction(signature, {
+          maxSupportedTransactionVersion: 0
+        });
+        const gasUsed = txDetails?.meta?.fee || 0;
+        totalGasUsed += gasUsed;
+
+        transactionHashes.push(signature);
+
+        // 标记所有地址为成功
+        batch.forEach(item => {
+          details.push({
+            address: item.owner.toBase58(),
+            amount: item.amount,
+            status: 'success'
+          });
+        });
+
+        console.log(`✅ 批次 ${batchNumber} 完成: ${signature} (Gas: ${gasUsed} lamports)`);
+
+      } catch (error) {
+        console.error(`❌ 批次 ${batchNumber} 失败:`, error);
+
+        // 标记整个批次为失败
+        batch.forEach(item => {
+          details.push({
+            address: item.owner.toBase58(),
+            amount: item.amount,
+            status: 'failed',
+            error: error instanceof Error ? error.message : '批次执行失败'
+          });
+        });
+      }
+
+      // 批次之间延迟
+      if (i + batchSize < ataList.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    console.log(`✅ 发送完成: ${transactionHashes.length} 个交易, 总 Gas: ${totalGasUsed} lamports`);
 
     return {
-      transactionHash: signature,
-      results,
-      gasUsed
+      transactionHashes,
+      totalGasUsed,
+      details
     };
   }
 
@@ -428,11 +627,11 @@ export class SolanaService {
       const connection = this.initializeConnection(rpcUrl);
 
       // 基础交易费用
-      let baseFee = 5000; // Solana基础交易费用（lamports）
+      let baseFee = DEFAULTS.SOLANA_FEES.base_fee_per_signature;
 
       // SPL代币转账需要额外的费用（每个转账可能需要创建关联代币账户）
       if (isSPLToken) {
-        baseFee += recipientCount * 2039280; // 估算的SPL转账费用
+        baseFee += recipientCount * DEFAULTS.SOLANA_FEES.spl_account_creation_fee;
       }
 
       // 添加一些缓冲
@@ -441,7 +640,7 @@ export class SolanaService {
       return Math.ceil(estimatedFee);
     } catch (error) {
       console.error('Failed to estimate fee:', error);
-      return 100000; // 默认估算费用
+      return DEFAULTS.SOLANA_FEES.spl_account_creation_fee;
     }
   }
 }

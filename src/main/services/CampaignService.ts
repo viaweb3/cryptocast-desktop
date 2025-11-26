@@ -80,34 +80,28 @@ export class CampaignService {
     });
 
     try {
+      // 使用统一的链类型判断工具
+      const chainType = ChainUtils.getChainType(data.chain);
+      // 统一使用 chain_id，不再使用 network 字段
+      const chainId = parseInt(data.chain);
+
       // 根据链类型创建钱包
-      const wallet = this.createWalletForChain(data.chain);
+      const wallet = this.createWalletForChain(chainType);
 
       logger.wallet('[CampaignService] Campaign wallet created', {
         address: wallet.address,
         chain: data.chain,
+        chainType,
         hasPrivateKey: !!wallet.privateKeyBase64,
         privateKeyLength: wallet.privateKeyBase64?.length || 0
       });
 
-      // Determine chain type and ID from the chain value
-      let chainType = 'evm';
-      let chainId = parseInt(data.chain);
-      let network = null;
-
-      // Handle Solana chains (they use chain_id 501+ in our schema)
-      if (typeof data.chain === 'string' && data.chain.toLowerCase().includes('solana')) {
-        chainType = 'solana';
-        chainId = data.chain.includes('mainnet') ? 501 : 502; // Solana chain IDs in our schema
-        network = data.chain.includes('mainnet') ? 'mainnet-beta' : 'devnet';
-      }
-
       const insertCampaign = this.db.prepare(`
         INSERT INTO campaigns (
-          id, name, description, chain_type, chain_id, network, token_address, token_symbol, token_name, token_decimals, status, total_recipients,
+          id, name, description, chain_type, chain_id, token_address, token_symbol, token_name, token_decimals, status, total_recipients,
           wallet_address, wallet_private_key_base64, batch_size, send_interval,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       logger.database('[CampaignService] Inserting campaign data into database', {
@@ -125,7 +119,6 @@ export class CampaignService {
         data.description || null,
         chainType,
         chainId,
-        network,
         data.tokenAddress,
         data.tokenSymbol || null,
         data.tokenName || null,
@@ -175,8 +168,8 @@ export class CampaignService {
     }
   }
 
-  private createWalletForChain(chain: string) {
-    if (chain.toLowerCase().includes('solana')) {
+  private createWalletForChain(chainType: 'evm' | 'solana') {
+    if (chainType === 'solana') {
       return this.walletService.createSolanaWallet();
     } else {
       return this.walletService.createEVMWallet();
@@ -241,8 +234,10 @@ export class CampaignService {
       id: row.id,
       name: row.name,
       description: row.description,
-      // For backward compatibility, construct chain from the new schema
-      chain: row.chain || (row.chain_type === 'evm' ? row.chain_id?.toString() : row.network),
+      // 统一使用 chain_id
+      chain: row.chain_id?.toString() || '',
+      chainId: row.chain_id,
+      chainType: row.chain_type,
       tokenAddress: row.token_address,
       tokenSymbol: row.token_symbol,
       tokenDecimals: row.token_decimals || 18,
@@ -287,14 +282,12 @@ export class CampaignService {
         throw new Error('Campaign not found');
       }
 
-      // Solana链不需要READY状态，可以直接从FUNDED开始
-      if (!ChainUtils.isSolanaChain(campaign.chain)) {
-        if (campaign.status !== 'READY' && campaign.status !== 'PAUSED') {
+      // 统一要求 READY 或 PAUSED 状态
+      if (campaign.status !== 'READY' && campaign.status !== 'PAUSED') {
+        if (!ChainUtils.isSolanaChain(campaign.chain)) {
           throw new Error('Campaign is not ready to start. Please deploy the contract first.');
-        }
-      } else {
-        if (campaign.status !== 'FUNDED' && campaign.status !== 'PAUSED') {
-          throw new Error('Solana campaign must be funded before starting.');
+        } else {
+          throw new Error('Solana campaign must be ready before starting.');
         }
       }
 

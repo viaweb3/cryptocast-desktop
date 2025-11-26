@@ -12,9 +12,12 @@ export interface ElectronAPI {
   wallet: {
     create: (type?: string) => Promise<{ address: string; privateKeyBase64: string }>;
     getBalance: (address: string, chain: string, tokenAddress?: string, tokenDecimals?: number) => Promise<BalanceData>;
+    exportEVMPrivateKey: (privateKeyBase64: string) => Promise<{ success: boolean; privateKey: string }>;
+    exportSolanaPrivateKey: (privateKeyBase64: string) => Promise<{ success: boolean; privateKey: string }>;
   };
   chain: {
     getEVMChains: (onlyEnabled?: boolean) => Promise<EVMChain[]>;
+    getAllChains: () => Promise<EVMChain[]>;
     addEVMChain: (chainData: any) => Promise<number>;
     updateEVMChain: (chainId: number, updates: any) => Promise<void>;
     deleteEVMChain: (chainId: number) => Promise<void>;
@@ -65,6 +68,7 @@ export interface Campaign {
   name: string;
   description?: string;
   chain: string;
+  chain_type?: 'evm' | 'solana'; // Added chain type for better handling
   tokenAddress: string;
   tokenSymbol: string;
   tokenDecimals: number;
@@ -191,6 +195,21 @@ export interface EVMChain {
   rpcUrl: string;
   rpcBackup?: string;
   explorerUrl: string;
+  symbol: string;
+  decimals: number;
+  color?: string;
+  badgeColor?: string;
+  isCustom: boolean;
+}
+
+export interface SolanaChain {
+  id?: number;
+  type: 'solana';
+  chainId?: number; // 501 for mainnet-beta, 502 for devnet
+  name: string;
+  rpcUrl: string;
+  rpcBackup?: string;
+  explorerUrl?: string;
   symbol: string;
   decimals: number;
   color?: string;

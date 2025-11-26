@@ -1,8 +1,9 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
-import path from 'path';
-import { parse } from 'csv-parse';
+import * as path from 'path';
 import { stringify } from 'csv-stringify';
+import { parseCSV } from '../utils/csvValidator';
+import BigNumber from 'bignumber.js';
 
 
 export interface CSVRow {
@@ -32,52 +33,14 @@ export class FileService {
 
       const fileContent = fs.readFileSync(filePath, 'utf-8');
 
-      return new Promise((resolve, reject) => {
-        parse(fileContent, {
-          columns: ['address', 'amount'],
-          skip_empty_lines: true,
-          trim: true,
-        }, (error, records: any[]) => {
-          if (error) {
-            reject(new Error(`CSV parsing failed: ${error.message}`));
-            return;
-          }
+      // Use unified CSV validator for files with headers
+      const result = parseCSV(fileContent, { hasHeaders: true });
 
-          try {
-            const validatedRecords = records.filter((record: any) => {
-              // 验证必填字段
-              if (!record.address || !record.amount) {
-                return false;
-              }
+      if (!result.isValid || result.validRecords === 0) {
+        throw new Error(result.errors.join(', ') || 'CSV file invalid or no valid records');
+      }
 
-              // 验证地址格式（简单检查）
-              if (record.address.length < 10) {
-                return false;
-              }
-
-              // 验证金额格式
-              const amount = parseFloat(record.amount);
-              if (isNaN(amount) || amount <= 0) {
-                return false;
-              }
-
-              return true;
-            }).map((record: any) => ({
-              address: record.address.trim(),
-              amount: record.amount
-            }));
-
-            if (validatedRecords.length === 0) {
-              reject(new Error('No valid records found in CSV file'));
-              return;
-            }
-
-            resolve(validatedRecords);
-          } catch (validationError) {
-            reject(new Error(`Data validation failed: ${validationError}`));
-          }
-        });
-      });
+      return result.sampleData;
     } catch (error) {
       console.error('Failed to read CSV:', error);
       throw new Error(`CSV file reading failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -120,10 +83,14 @@ export class FileService {
     const failedRecipients = recipients.filter((r: any) => r.status === 'FAILED').length;
     const pendingRecipients = recipients.filter((r: any) => r.status === 'PENDING').length;
 
-    const totalAmount = recipients.reduce((sum: number, r: any) => sum + parseFloat(r.amount || '0'), 0);
+    const totalAmount = recipients.reduce((sum: BigNumber, r: any) => {
+      return sum.plus(new BigNumber(r.amount || '0'));
+    }, new BigNumber(0));
     const sentAmount = recipients
       .filter((r: any) => r.status === 'SENT')
-      .reduce((sum: number, r: any) => sum + parseFloat(r.amount || '0'), 0);
+      .reduce((sum: BigNumber, r: any) => {
+        return sum.plus(new BigNumber(r.amount || '0'));
+      }, new BigNumber(0));
 
     const totalGasUsed = transactions.reduce((sum: number, t: any) => sum + (t.gas_used || 0), 0);
     const totalGasCost = transactions.reduce((sum: number, t: any) => sum + (t.gas_cost || 0), 0);
@@ -293,11 +260,11 @@ export class FileService {
 
       // 尝试解析CSV以获取有效行数
       try {
-        const csvData = await this.readCSV(filePath);
+        const result = parseCSV(fileContent, { hasHeaders: true });
         return {
           size: fileStats.size,
           lines: lines.length,
-          validRows: csvData.length
+          validRows: result.validRecords
         };
       } catch {
         return {
