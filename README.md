@@ -3,7 +3,8 @@
 > 🚀 支持多链的加密货币批量奖励分发平台 - 安全、高效、易用的桌面应用
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](.github/workflows/build.yml)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey.svg)](.github/workflows/build.yml)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/viaweb3/cryptocast-desktop/releases)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue.svg)](.github/workflows/build.yml)
 
 ---
@@ -30,10 +31,11 @@ CryptoCast Desktop 是一个基于 Electron 的专业级跨平台桌面应用，
 - **完全离线**: 核心功能可在离线模式下操作（交易签名等）。
 
 #### 💡 **用户体验**
-- **跨平台**: 支持 Windows, macOS, Linux。
-- **直观界面**: 现代化设计，交互简单清晰。
-- **成本估算**: 实时 Gas 费用和总成本估算。
-- **历史记录**: 完整的交易历史和状态追踪。
+- **跨平台**: 支持 Windows 和 macOS (Intel & Apple Silicon)
+- **直观界面**: 现代化设计，交互简单清晰
+- **成本估算**: 实时 Gas 费用和总成本估算
+- **历史记录**: 完整的交易历史和状态追踪
+- **结构化日志**: Winston 日志系统，便于调试和问题追踪
 
 ---
 
@@ -51,32 +53,30 @@ CryptoCast Desktop 是一个基于 Electron 的专业级跨平台桌面应用，
 
 ## 💾 下载和安装
 
-> **注意**: 以下链接为占位符, 请在项目发布后替换为真实的下载链接。
+**最新版本：v1.2.0**
 
-**最新版本下载：**
+| 平台 | 下载链接 | 说明 |
+|------|----------|------|
+| **Windows (x64)** | [📥 下载安装包](https://github.com/viaweb3/cryptocast-desktop/releases/latest) | 支持 Windows 10 及以上 |
+| **macOS (Intel)** | [📥 下载 DMG](https://github.com/viaweb3/cryptocast-desktop/releases/latest) | x64 架构 Mac |
+| **macOS (Apple Silicon)** | [📥 下载 DMG](https://github.com/viaweb3/cryptocast-desktop/releases/latest) | M1/M2/M3 芯片 Mac |
 
-| 平台 | 下载链接 | 文件类型 |
-|------|----------|----------|
-| **Windows** | [📥 CryptoCast Setup.exe](https://github.com/your-username/cryptocast-desktop/releases/latest/download/CryptoCast%20Setup%201.0.0.exe) | 安装包 |
-| **macOS (Intel & M1/M2)** | [📥 CryptoCast.dmg](https://github.com/your-username/cryptocast-desktop/releases/latest/download/CryptoCast-1.0.0.dmg) | DMG 镜像 |
-| **Linux** | [📥 CryptoCast.AppImage](https://github.com/your-username/cryptocast-desktop/releases/latest/download/CryptoCast-1.0.0.AppImage) | 便携版 |
-
-👉 [访问 Releases 页面查看所有版本](https://github.com/your-username/cryptocast-desktop/releases)
+👉 [访问 Releases 页面查看所有版本](https://github.com/viaweb3/cryptocast-desktop/releases)
 
 ### 📋 安装说明
 
 **Windows:**
-1. 下载 `CryptoCast Setup.exe` 并运行安装程序。
+1. 从 [Releases 页面](https://github.com/viaweb3/cryptocast-desktop/releases) 下载 `CryptoCast Setup *.exe`
+2. 运行安装程序并按提示完成安装
 
 **macOS:**
-1. 下载 `.dmg` 文件。
-2. 双击打开，并将 `CryptoCast` 应用拖拽到 `Applications` 文件夹。
-3. 首次运行时可能需要在系统偏好设置中允许。
+1. 从 [Releases 页面](https://github.com/viaweb3/cryptocast-desktop/releases) 下载对应架构的 `.dmg` 文件
+   - Intel Mac：下载 `*-x64.dmg` 或 `*-mac.dmg`
+   - Apple Silicon Mac：下载 `*-arm64.dmg`
+2. 双击打开 DMG 文件，将 `CryptoCast` 拖拽到 `Applications` 文件夹
+3. 首次运行时需要在系统偏好设置中允许（系统偏好设置 → 安全性与隐私）
 
-**Linux:**
-1. 下载 `.AppImage` 文件。
-2. 添加执行权限：`chmod +x CryptoCast-*.AppImage`
-3. 双击运行或在终端执行。
+> **注意**: 当前版本为未签名构建，仅用于开发和测试目的。
 
 ---
 
@@ -91,8 +91,7 @@ CryptoCast Desktop 是一个基于 Electron 的专业级跨平台桌面应用，
 ### 1. 克隆项目
 
 ```bash
-# 请将 your-username 替换为正确的用户名/组织名
-git clone https://github.com/your-username/cryptocast-desktop.git
+git clone https://github.com/viaweb3/cryptocast-desktop.git
 cd cryptocast-desktop
 ```
 
@@ -115,12 +114,22 @@ npm run dev
 npm run build
 
 # 分别构建特定平台的应用
-npm run build:win
-npm run build:mac
-npm run build:linux
+npm run build:win              # Windows x64
+npm run build:mac-intel        # macOS Intel (x64)
+npm run build:mac-arm          # macOS Apple Silicon (arm64)
 ```
 
 构建产物位于 `release/` 目录。
+
+### 5. 测试工具脚本
+
+```bash
+# 生成 EVM 测试空投列表（333个地址）
+node scripts/generate-evm-airdrop.js
+
+# 生成 Solana 测试空投列表（333个地址）
+node scripts/generate-solana-airdrop.js
+```
 
 ---
 
@@ -181,10 +190,11 @@ cryptocast-desktop/
 - **React Router**: 路由
 
 ### ⚙️ 后端 & 应用核心
-- **Node.js**: 运行时环境
-- **Electron**: 跨平台桌面应用框架
+- **Node.js 24+**: 运行时环境
+- **Electron 39.2.2**: 跨平台桌面应用框架
 - **SQLite**: 本地数据库
-- **TypeScript**: 类型系统
+- **TypeScript 5.7.3**: 类型系统
+- **Winston 3.18.3**: 结构化日志系统
 
 ### 🔗 区块链
 - **ethers.js**: EVM 链交互库

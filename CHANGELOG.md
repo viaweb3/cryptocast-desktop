@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-11-27
+
+### Added
+- **Winston Logging System**: Integrated Winston logger library for structured logging across all services
+  - Type-safe logger interface with `Record<string, unknown>` for metadata
+  - Contextual logging with categories (BLOCKCHAIN, CAMPAIGN, TRANSACTION, WALLET, etc.)
+  - Logger singleton pattern with child logger support for better traceability
+- **Airdrop Generation Scripts**: Added utility scripts for testing
+  - `scripts/generate-evm-airdrop.js`: Generate 333 test EVM addresses with random amounts
+  - `scripts/generate-solana-airdrop.js`: Generate 333 test Solana addresses with random amounts
+- **Type Definitions**: New type definition files for better TypeScript support
+  - `src/main/types/ipc.ts`: IPC channel type definitions
+  - `src/types/electron-api.ts`: Electron API type definitions
+
+### Changed
+- **Logging**: Replaced all `console.log/error/warn` calls with structured Winston logger
+  - BlockchainService: Enhanced error logging with context
+  - CampaignEstimator: Improved logging for cost estimation
+  - CampaignExecutor: Better transaction execution logging
+  - All services: Consistent logging patterns and error handling
+- **CI/CD Workflow**: Optimized build pipeline
+  - Removed Linux build support (focus on Windows and macOS)
+  - Enhanced artifact verification and version naming
+  - Improved build script robustness with better error handling
+  - Only upload final installer files (.dmg, .exe) to releases, excluding intermediate files
+- **Database Schema**: Enhanced with logging support
+- **IPC Handlers**: Updated with better type safety
+- **Preload Script**: Refactored for improved security and type definitions
+
+### Fixed
+- **Release Artifacts**: Fixed release upload to only include installer files
+  - Excluded .blockmap files (used for auto-updates, not needed by end users)
+  - Excluded helper executables (bundled in main installer)
+  - Excluded zip and portable builds (simplified to dmg and NSIS installer only)
+  - Reduced release artifacts from 153+ files to just 3 clean installers
+- **Build Configuration**: Removed duplicate version numbering in artifact filenames
+- **Electron Builder**: Optimized target configurations
+  - macOS: Only build DMG (removed zip)
+  - Windows: Only build NSIS installer (removed portable)
+
+### Removed
+- **Linux Support**: Removed Linux build from CI/CD pipeline (Windows and macOS only)
+- **Intermediate Build Files**: Cleaned up release artifacts for cleaner distribution
+
+### Technical Improvements
+- Enhanced type safety across main process services
+- Better error context in all logging calls
+- Improved database interaction patterns
+- Cleaner IPC communication layer
+
 ## [1.0.1] - 2025-01-25
 
 ### Fixed
