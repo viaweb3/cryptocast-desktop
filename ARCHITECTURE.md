@@ -60,16 +60,18 @@ CryptoCast Desktop 是一个基于 Electron 的跨平台桌面应用。其架构
 
 这是应用的核心，每个服务都有明确的职责：
 
--   `CampaignService`: 管理空投活动的整个生命周期，包括创建、状态更新、执行和查询。
--   `WalletManagementService` & `WalletService`: 负责钱包管理，包括为活动创建派生钱包、安全存储密钥、查询余额等。
+-   `CampaignService`: 管理空投活动的整个生命周期，包括创建、状态更新、执行和查询。它是核心协调者。
+-   `WalletManagementService`: **有状态**的服务，负责管理活动钱包的数据库记录、余额追踪和私钥的安全存储（通过数据库）。
+-   `WalletService`: **无状态**的工具服务，仅负责生成密钥对（EVM 和 Solana）和进行简单的密钥格式转换，不直接操作数据库。
 -   `ChainService`: 管理和维护支持的区块链网络配置（EVM 和 Solana），包括增删改查和延迟测试。
--   `BlockchainService`: 提供与 EVM 链交互的通用功能。
--   `SolanaService`: 提供与 Solana 链交互的特定功能。
--   `ContractService`: 负责 EVM 智能合约的部署和交互。
+-   `BlockchainService`: 提供区块链交互的通用门面接口。虽然设计为通用，但在实际实现中，它主要处理 EVM 链的通用逻辑（如余额查询），并包含部分 Solana 的特定逻辑（如 `withdrawRemainingSPLTokens`）。
+-   `SolanaService`: 专注于 Solana 链的特定交互逻辑（如构建交易、SPL 代币操作），以处理 Solana 独特的账户模型。
+-   `ContractService`: 专注于 EVM 智能合约的部署和交互（如 `withdrawRemainingTokens`, `batchTransfer`）。
+-   `GasService`: 负责从链上获取实时 Gas 价格，计算 EIP-1559 费用，并提供交易成本估算。
+-   `TokenService`: 负责获取代币的元数据（名称、符号、精度），支持 ERC20 和 SPL Token。
 -   `CampaignEstimator`: 在活动开始前估算所需成本（Gas费等）。
 -   `PriceService`: 从外部API获取和缓存加密货币的价格。
 -   `FileService`: 处理文件操作，如读取 CSV 地址列表和导出报告。
--   `TokenService`: 获取和验证代币信息。
 
 #### IPC 通信 (`src/main/ipc/handlers.ts`)
 
@@ -167,7 +169,21 @@ CREATE TABLE chains (
 
 ---
 
-## 5. 安全设计
+## 5. 智能合约 (Smart Contracts)
+
+项目包含一个高度优化的 EVM 批量转账合约 `BatchAirdropContract`。
+
+-   **设计目标**: 极简、省 Gas、安全。
+-   **特性**:
+    -   **无依赖**: 不依赖 OpenZeppelin 等外部库，减少合约体积和部署成本。
+    -   **Gas 优化**: 使用 `calldata` 代替 `memory`，缓存数组长度，使用 `unchecked` 进行循环计数，自定义 Error 替代 require 字符串。
+    -   **原子性**: 批量转账操作是原子的，只要有一笔失败，整个交易回滚，确保资金安全。
+    -   **功能**: 支持 `batchTransfer` (ERC20) 和 `batchTransferNative` (原生代币)。
+-   **位置**: `contracts/src/BatchAirdropContract.sol`。
+
+---
+
+## 6. 安全设计
 
 -   **私钥管理**:
     -   私钥 **永远不会离开用户本地设备**。
@@ -182,8 +198,8 @@ CREATE TABLE chains (
 
 -   **单元测试**: 使用 **Jest** 框架对主进程中的各个服务 (`/services`) 进行单元测试，以确保每个模块的业务逻辑正确。
 -   **组件测试**: 使用 **Jest** 和 **React Testing Library** 对前端组件进行测试。
--   **端到端 (E2E) 测试**: 使用 **Playwright** 模拟真实用户操作，覆盖从创建活动到完成发送的完整流程，确保前后端集成正常。
--   **测试命令**: `package.json` 中定义了多种测试脚本，如 `npm test` (运行单元测试), `npm run test:e2e` (运行E2E测试) 等。
+-   **集成测试**: 使用 **Jest** 测试服务与数据库或服务之间的交互。
+-   **测试命令**: `package.json` 中定义了多种测试脚本，如 `npm test` (运行所有测试), `npm run test:unit` (运行单元测试), `npm run test:integration` (集成测试) 等。
 -   **测试覆盖率**: `npm run test:coverage` 命令可以生成代码覆盖率报告。
 
 ---

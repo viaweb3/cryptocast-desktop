@@ -338,6 +338,22 @@ Array<{
 
 **返回值**: 刷新结果
 
+### 导出 EVM 私钥
+
+**接口**: `wallet:exportEVMPrivateKey`
+
+**参数**: `privateKeyBase64: string` - Base64编码的私钥
+
+**返回值**: `string` - 原始私钥 (Hex)
+
+### 导出 Solana 私钥
+
+**接口**: `wallet:exportSolanaPrivateKey`
+
+**参数**: `privateKeyBase64: string` - Base64编码的私钥
+
+**返回值**: `string` - 原始私钥 (Base58)
+
 ---
 
 ## ⛓️ 链管理 (Chain) API
@@ -634,6 +650,24 @@ Array<{
 ```
 
 **返回值**: 代币信息数组
+
+---
+
+## ⚙️ 设置 (Settings) API
+
+### 获取设置
+
+**接口**: `settings:get`
+
+**返回值**: 设置对象 (包含 RPC 节点配置、默认 Gas 设置等)
+
+### 更新设置
+
+**接口**: `settings:update`
+
+**参数**: 设置对象 (支持部分更新)
+
+**返回值**: `void`
 
 ---
 

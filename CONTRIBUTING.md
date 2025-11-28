@@ -71,8 +71,7 @@ src/
 │       └── types/          # TypeScript types
 └── __tests__/              # Test files
     ├── services/           # Unit tests
-    ├── integration/        # Integration tests
-    └── e2e/               # End-to-end tests
+    └── integration/        # Integration tests
 ```
 
 ## Code Style
@@ -128,7 +127,6 @@ async function getWalletBalance(
 
 1. **Unit Tests**: Test individual functions and classes
 2. **Integration Tests**: Test interaction between components
-3. **E2E Tests**: Test complete user workflows
 
 ### Writing Tests
 
@@ -165,9 +163,6 @@ npm run test:unit
 
 # Integration tests only
 npm run test:integration
-
-# E2E tests only
-npm run test:e2e
 
 # Coverage report
 npm run test:coverage

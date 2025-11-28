@@ -11,8 +11,7 @@
 1.  **单元测试 (Unit Tests)**: 专注于测试单个服务、函数或模块的逻辑。
 2.  **组件测试 (Component Tests)**: 专注于测试 React 组件的渲染和交互。
 3.  **集成测试 (Integration Tests)**: 验证多个模块（例如服务与数据库）协同工作的正确性。
-4.  **端到端测试 (E2E Tests)**: 使用 Playwright 模拟真实用户操作，测试完整的业务流程。
-5.  **Testnet 测试**: 在真实的区块链测试网络（如 Sepolia）上验证交易和合约交互。
+4.  **Testnet 测试**: 在真实的区块链测试网络（如 Sepolia）上验证交易和合约交互。
 
 ## 2. 测试命令
 
@@ -36,9 +35,6 @@ npm run test:component
 
 # 仅运行集成测试
 npm run test:integration
-
-# 运行 E2E 测试 (需要先设置)
-npm run test:e2e
 
 # 在 Testnet 上运行测试 (需要配置)
 npm run test:testnet
@@ -67,26 +63,7 @@ npm run test:testnet
 -   **位置**: `src/__tests__/integration/`
 -   **命令**: `npm run test:integration`
 
-### 3.4. E2E 测试 (`src/__tests__/e2e/`)
-
--   **目标**: 使用 Playwright 模拟用户从头到尾的操作，例如完整地创建并执行一个空投活动。
--   **位置**: `src/__tests__/e2e/`
--   **设置与运行**:
-    ```bash
-    # 首次运行时需要安装 Playwright 依赖的浏览器
-    npm run test:e2e:install
-
-    # 运行所有 E2E 测试
-    npm run test:e2e
-
-    # 打开 Playwright UI 模式以进行交互式调试
-    npm run test:e2e:ui
-
-    # 启动代码生成器来录制新的测试用例
-    npm run test:e2e:codegen
-    ```
-
-### 3.5. Testnet 测试 (`src/__tests__/testnet/`)
+### 3.4. Testnet 测试 (`src/__tests__/testnet/`)
 
 -   **目标**: 在真实的测试网络上执行交易，以验证与区块链的交互是否正确。
 -   **位置**: `src/__tests__/testnet/`
@@ -133,5 +110,4 @@ npm run test:coverage
 ## 7. 相关资源
 
 -   [Jest Documentation](https://jestjs.io/docs/)
--   [Playwright Documentation](https://playwright.dev/docs/intro)
 -   [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
