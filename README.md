@@ -99,12 +99,25 @@ CryptoCast Desktop 是一个基于 Electron 的专业级跨平台桌面应用，
 2.  打开“系统设置” (System Settings) > “隐私与安全性” (Privacy & Security)。
 3.  在页面下方找到拦截提示，点击 **“仍要打开”** (Open Anyway)。
 
-> ❓ **如果提示“应用已损坏” (App is damaged)**:
->这是 macOS 对未签名应用的常见拦截机制。请打开终端 (Terminal)，输入以下命令并回车（假设应用已拖入应用程序文件夹）：
-> ```bash
-> sudo xattr -cr /Applications/CryptoCast.app
-> ```
-> 然后输入密码即可正常打开。
+> ❓ **如果提示"应用已损坏" (App is damaged)**:
+>这是 macOS 对未签名应用的常见拦截机制。有两种解决方法：
+>
+>*方法一：无 root 权限的本地安装（推荐）*
+>1.  将 CryptoCast.app 拖拽到用户主目录的应用文件夹 (`~/Applications`)
+>2.  打开终端 (Terminal)，执行以下命令（不需要 sudo）：
+>    ```bash
+>    xattr -cr ~/Applications/CryptoCast.app
+>    ```
+>3.  现在可以从 `~/Applications` 文件夹正常启动应用
+>4.  建议为应用创建 Dock 图标：将应用拖拽到 Dock 栏
+>
+>*方法二：系统级安装（需要管理员权限）*
+>1.  将应用拖拽到 `/Applications` 文件夹
+>2.  打开终端 (Terminal)，执行以下命令：
+>    ```bash
+>    sudo xattr -cr /Applications/CryptoCast.app
+>    ```
+>3.  输入管理员密码即可正常打开
 
 ---
 
