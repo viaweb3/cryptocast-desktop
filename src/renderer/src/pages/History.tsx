@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCampaign } from '../contexts/CampaignContext';
-import { Campaign, CampaignStatus, EVMChain } from '../types';
+import { Campaign, CampaignStatus, EVMChain, ChainInfo } from '../types';
 import { isSolanaChain, getChainType, getChainDisplayName, getChainDisplayBadge } from '../utils/chainTypeUtils';
 
 interface HistoryFilters {
   timeRange: 'all' | 'today' | 'week' | 'month' | 'custom';
   chain: string;
-  status: CampaignStatus;
+  status: CampaignStatus | 'all';
   search: string;
   dateRange?: {
     start: string;
@@ -29,7 +29,7 @@ export default function History() {
     page: 1,
     limit: 10,
   });
-    const [chains, setChains] = useState<EVMChain[]>([]);
+    const [chains, setChains] = useState<ChainInfo[]>([]);
 
   // Load campaigns and chains on mount and set up auto-refresh
   useEffect(() => {
@@ -41,15 +41,11 @@ export default function History() {
   // Load chains from database
   const loadChains = async () => {
     try {
-      console.log('🔍 [History] loadChains: Starting to fetch chains from database');
-      if (window.electronAPI?.chain) {
+          if (window.electronAPI?.chain) {
         const chainsData = await window.electronAPI.chain.getAllChains();
-        console.log(`🔍 [History] loadChains: Received ${chainsData.length} chains from API`);
         setChains(chainsData);
-        console.log('🔍 [History] loadChains: Chains set to state');
       } else {
-        console.log('🔍 [History] loadChains: window.electronAPI.chain is not available');
-      }
+              }
     } catch (error) {
       console.error('🔍 [History] loadChains: Failed to load chains:', error);
     }
@@ -66,17 +62,7 @@ export default function History() {
   // Use real data from state
   const displayCampaigns = state.campaigns;
 
-  // Global debug log to always show campaign data
-  console.log('🔍 [History] Campaign data loaded:', {
-    count: displayCampaigns.length,
-    campaigns: displayCampaigns.map(c => ({
-      id: c.id,
-      name: c.name,
-      chain: c.chain,
-      chainId: (c as any).chainId // Chain ID might not be in interface but could be in data
-    }))
-  });
-
+  
   // Helper function to get chain icon based on chain name (dynamically generated)
   const getChainIcon = (chainName: string): string => {
     // Solana特殊图标
@@ -133,17 +119,7 @@ export default function History() {
   const filteredCampaigns = useMemo(() => {
     let filtered = [...displayCampaigns];
 
-    // Debug: Log all unique chain values from campaigns and full campaign data
-    const uniqueChains = [...new Set(displayCampaigns.map(c => c.chain))];
-    console.log('🔍 [History] All campaign chain values:', uniqueChains);
-    console.log('🔍 [History] Available chains from database:', chains.map(c => c.name));
-    console.log('🔍 [History] Full campaign data for debugging:', displayCampaigns.map(c => ({
-      id: c.id,
-      name: c.name,
-      chain: c.chain,
-      chainId: c.chainId
-    })));
-
+    
     // Time range filter
     if (filters.timeRange !== 'all') {
       const now = new Date();
@@ -180,12 +156,10 @@ export default function History() {
 
     // Chain filter - use simplified matching
     if (filters.chain !== 'all') {
-      console.log('🔍 [History] Chain filter:', filters.chain);
-
+      
       // Get the selected chain from database
       const selectedChain = getChainByName(filters.chain);
-      console.log('🔍 [History] Selected chain:', selectedChain);
-
+      
       filtered = filtered.filter(campaign => {
         // Try to match campaign using our enhanced chain resolution
         const campaignChain = getChainByName(campaign.chain);

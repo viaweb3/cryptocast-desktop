@@ -21,7 +21,7 @@ export const DEFAULTS = {
     token: 50000,          // ERC20转账
     deploy: 500000,        // 合约部署
     campaign: 200000,      // 活动合约调用
-    campaign_deploy: 500000, // 活动合约部署
+    campaign_deploy: 600000, // 活动合约部署（新增原生代币支持后需要更多 gas）
 
     // Solana
     solana_base: 5000,     // Solana基础交易费用

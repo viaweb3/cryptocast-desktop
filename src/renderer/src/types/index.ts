@@ -4,20 +4,30 @@ export interface ElectronAPI {
     create: (data: any) => Promise<Campaign>;
     list: (filters?: any) => Promise<Campaign[]>;
     getById: (id: string) => Promise<Campaign | null>;
+    getDetails: (id: string) => Promise<Campaign | null>;
+    getTransactions: (id: string, options?: { limit?: number; offset?: number; status?: string }) => Promise<Transaction[]>;
+    getRecipients: (id: string) => Promise<Recipient[]>;
+    updateStatus: (id: string, status: CampaignStatus) => Promise<{ success: boolean }>;
     start: (id: string) => Promise<{ success: boolean }>;
     pause: (id: string) => Promise<{ success: boolean }>;
+    resume: (id: string) => Promise<{ success: boolean }>;
     deployContract: (campaignId: string) => Promise<{ success: boolean; contractAddress: string; transactionHash: string; gasUsed: string }>;
     onProgress: (callback: (data: ProgressData) => void) => void;
+    estimate: (data: any) => Promise<CampaignEstimate>;
+    retryFailedTransactions: (campaignId: string) => Promise<{ success: boolean; retried: number }>;
+    withdrawTokens: (campaignId: string, recipientAddress: string) => Promise<{ txHash: string; amount: string }>;
+    withdrawNative: (campaignId: string, recipientAddress: string) => Promise<{ txHash: string; amount: string }>;
   };
   wallet: {
     create: (type?: string) => Promise<{ address: string; privateKeyBase64: string }>;
+    list: (options?: any) => Promise<ActivityWallet[]>;
     getBalance: (address: string, chain: string, tokenAddress?: string, tokenDecimals?: number) => Promise<BalanceData>;
     exportEVMPrivateKey: (privateKeyBase64: string) => Promise<{ success: boolean; privateKey: string }>;
     exportSolanaPrivateKey: (privateKeyBase64: string) => Promise<{ success: boolean; privateKey: string }>;
   };
   chain: {
     getEVMChains: (onlyEnabled?: boolean) => Promise<EVMChain[]>;
-    getAllChains: () => Promise<EVMChain[]>;
+    getAllChains: () => Promise<ChainInfo[]>;
     addEVMChain: (chainData: any) => Promise<number>;
     updateEVMChain: (chainId: number, updates: any) => Promise<void>;
     deleteEVMChain: (chainId: number) => Promise<void>;
@@ -28,6 +38,18 @@ export interface ElectronAPI {
     updateSolanaRPCPriority: (id: number, priority: number) => Promise<void>;
     deleteSolanaRPC: (id: number) => Promise<void>;
       };
+  blockchain: {
+    getBalance: (address: string, chainId: string, tokenAddress?: string, tokenDecimals?: number) => Promise<BalanceData>;
+    estimateGas: (config: any) => Promise<any>;
+    getTransactionStatus: (txHash: string, rpcUrl: string) => Promise<any>;
+    batchTransfer: (config: any) => Promise<any>;
+  };
+  solana: {
+    getBalance: (address: string, rpcUrl: string, tokenAddress?: string) => Promise<{ success: boolean; balance: string }>;
+    batchTransfer: (config: any) => Promise<any>;
+    getTransactionStatus: (signature: string, rpcUrl: string) => Promise<any>;
+    getTokenInfo: (tokenAddress: string, rpcUrl: string) => Promise<TokenInfo | null>;
+  };
   file: {
     readCSV: (filePath: string) => Promise<any[]>;
     exportReport: (campaignId: string, format?: string) => Promise<{ success: boolean; filePath: string }>;
@@ -61,6 +83,42 @@ declare global {
   }
 }
 
+// Type exports
+export type CampaignStatus = 'CREATED' | 'FUNDED' | 'READY' | 'SENDING' | 'PAUSED' | 'COMPLETED' | 'FAILED';
+
+// Settings types
+export interface AppSettings {
+  chains: EVMChain[];
+  solanaChains?: SolanaChain[];
+  gasSettings?: {
+    defaultGasPrice: number;
+    defaultGasLimit: number;
+    autoAdjustGas: boolean;
+    maxGasPrice: number;
+    priorityFee: number;
+  };
+  batchSettings?: {
+    batchSize: number;
+    sendInterval: number;
+    maxConcurrency: number;
+    retryAttempts: number;
+    retryDelay: number;
+  };
+  securitySettings?: {
+    autoBackup: boolean;
+    backupInterval: number;
+    sessionTimeout: number;
+  };
+  notificationSettings?: {
+    emailNotifications: boolean;
+    browserNotifications: boolean;
+    campaignComplete: boolean;
+    campaignFailed: boolean;
+    lowBalance: boolean;
+    securityAlerts: boolean;
+  };
+}
+
 // Campaign types
 // Enhanced Campaign interface with full functionality
 export interface Campaign {
@@ -69,6 +127,7 @@ export interface Campaign {
   description?: string;
   chain: string;
   chain_type?: 'evm' | 'solana'; // Added chain type for better handling
+  chainId?: number; // Chain ID for better identification
   tokenAddress: string;
   tokenSymbol: string;
   tokenDecimals: number;
@@ -101,7 +160,7 @@ export interface Recipient {
   campaignId: string;
   address: string;
   amount: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped';
+  status: 'pending' | 'failed' | 'success' | 'sending';
   transactionHash?: string;
   gasUsed?: string;
   error?: string;
@@ -144,13 +203,18 @@ export interface TokenInfo {
   chainType: 'evm' | 'solana';
 }
 
+export interface CSVRow {
+  address: string;
+  amount: string;
+}
+
 export interface CSVValidationResult {
   isValid: boolean;
   totalRecords: number;
   validRecords: number;
   invalidRecords: number;
   errors: CSVValidationError[];
-  sampleData: Recipient[];
+  sampleData: CSVRow[];
 }
 
 export interface CSVValidationError {
@@ -166,6 +230,14 @@ export interface WalletBalance {
   tokenDecimals: number;
   balance: string;
   usdValue?: string;
+}
+
+export interface Wallet {
+  address: string;
+  privateKeyBase64: string;
+  type: 'evm' | 'solana';
+  chainId?: number;
+  createdAt?: string;
 }
 
 export interface WalletExport {
@@ -187,6 +259,8 @@ export interface BalanceData {
 }
 
 // Chain types
+export type ChainInfo = EVMChain | SolanaChain;
+
 export interface EVMChain {
   id?: number;
   type: 'evm';

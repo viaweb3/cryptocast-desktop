@@ -45,27 +45,7 @@ export class PriceService {
 
   constructor(database: DatabaseManager) {
     this.db = database.getDatabase();
-    this.initializePriceTables();
     this.startPriceUpdates();
-  }
-
-  private initializePriceTables(): void {
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS price_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        symbol TEXT NOT NULL,
-        price REAL NOT NULL,
-        change_24h REAL,
-        change_percent_24h REAL,
-        market_cap REAL,
-        volume_24h REAL,
-        timestamp INTEGER NOT NULL,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_price_symbol ON price_history(symbol);
-      CREATE INDEX IF NOT EXISTS idx_price_timestamp ON price_history(timestamp);
-    `);
   }
 
   private startPriceUpdates(): void {
@@ -113,7 +93,7 @@ export class PriceService {
 
       const timestamp = Math.floor(Date.now() / 1000);
 
-      this.networks.forEach(network => {
+      for (const network of this.networks) {
         const coinData = response.data[network.coingeckoId];
         if (coinData && typeof coinData.usd === 'number' && coinData.usd > 0) {
           const priceData: PriceData = {
@@ -127,9 +107,9 @@ export class PriceService {
           };
 
           this.priceCache.set(network.nativeTokenSymbol, priceData);
-          this.savePriceToDatabase(priceData);
+          await this.savePriceToDatabase(priceData);
         }
-      });
+      }
     } catch (error) {
       logger.error('Failed to fetch prices from CoinGecko', error as Error);
       // Fallback to cached prices
@@ -137,7 +117,7 @@ export class PriceService {
   }
 
   
-  private savePriceToDatabase(priceData: PriceData): void {
+  private async savePriceToDatabase(priceData: PriceData): Promise<void> {
     try {
       // Double-check price validity before database insertion
       if (typeof priceData.price !== 'number' || priceData.price < 0 || !isFinite(priceData.price)) {
@@ -150,7 +130,7 @@ export class PriceService {
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(
+      await stmt.run(
         priceData.symbol,
         priceData.price,
         priceData.change24h,
@@ -188,7 +168,7 @@ export class PriceService {
 
     // Fallback to database
     try {
-      const result = this.db.prepare(`
+      const result = await this.db.prepare(`
         SELECT price FROM price_history
         WHERE symbol = ?
         ORDER BY timestamp DESC
@@ -249,7 +229,7 @@ export class PriceService {
         };
 
         this.priceCache.set(symbol, priceData);
-        this.savePriceToDatabase(priceData);
+        await this.savePriceToDatabase(priceData);
       } else {
         throw new Error(`Invalid price data received: ${JSON.stringify(coinData)}`);
       }
@@ -267,7 +247,7 @@ export class PriceService {
 
     // Fallback to database
     try {
-      const result = this.db.prepare(`
+      const result = await this.db.prepare(`
         SELECT * FROM price_history
         WHERE symbol = ?
         ORDER BY timestamp DESC
@@ -331,7 +311,7 @@ export class PriceService {
     try {
       const since = Math.floor(Date.now() / 1000) - (hours * 3600);
 
-      const results = this.db.prepare(`
+      const results = await this.db.prepare(`
         SELECT timestamp, price FROM price_history
         WHERE symbol = ? AND timestamp >= ?
         ORDER BY timestamp ASC
@@ -405,7 +385,7 @@ export class PriceService {
    */
   async saveHistoricalPrice(symbol: string, price: number, change24h: number): Promise<void> {
     try {
-      this.db.prepare(`
+      await this.db.prepare(`
         INSERT INTO price_history (symbol, price, change_24h, change_percent_24h, market_cap, volume_24h, timestamp)
         VALUES (?, ?, ?, ?, 0, 0, ?)
       `).run(
@@ -426,7 +406,7 @@ export class PriceService {
    */
   async getHistoricalPrices(symbol: string, days: number): Promise<Array<{ symbol: string; price: number; change: number; timestamp: string }>> {
     try {
-      const results = this.db.prepare(`
+      const results = await this.db.prepare(`
         SELECT symbol, price, change_24h as change, timestamp
         FROM price_history
         WHERE symbol = ?
@@ -478,7 +458,7 @@ export class PriceService {
       const exportData: Array<{ symbol: string; price: number; change_24h: number; change_percent_24h: number; timestamp: number }> = [];
 
       for (const symbol of symbols) {
-        const results = this.db.prepare(`
+        const results = await this.db.prepare(`
           SELECT symbol, price, change_24h, change_percent_24h, timestamp
           FROM price_history
           WHERE symbol = ? AND timestamp >= ?

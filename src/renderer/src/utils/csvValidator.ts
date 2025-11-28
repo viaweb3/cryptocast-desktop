@@ -13,9 +13,16 @@ export interface CSVValidationResult {
   totalRecords: number;
   validRecords: number;
   invalidRecords: number;
-  errors: string[];
+  errors: CSVValidationError[];
   sampleData: CSVRow[];  // 前5条样本数据，用于预览
   data: CSVRow[];        // 所有数据
+}
+
+export interface CSVValidationError {
+  row: number;
+  field: 'address' | 'amount';
+  value: string;
+  error: string;
 }
 
 export interface CSVParseOptions {
@@ -84,8 +91,9 @@ export function parseCSV(
         totalRecords: 0,
         validRecords: 0,
         invalidRecords: 0,
-        errors: ['CSV内容为空'],
-        sampleData: []
+        errors: [{ row: 0, field: 'address', value: '', error: 'CSV内容为空' }],
+        sampleData: [],
+        data: []
       };
     }
 
@@ -106,14 +114,15 @@ export function parseCSV(
           totalRecords: lines.length - 1,
           validRecords: 0,
           invalidRecords: lines.length - 1,
-          errors: ['CSV必须包含address和amount列'],
-          sampleData: []
+          errors: [{ row: 1, field: 'address', value: headers.join(','), error: 'CSV必须包含address和amount列' }],
+          sampleData: [],
+          data: []
         };
       }
     }
 
     const data: CSVRow[] = [];
-    const errors: string[] = [];
+    const errors: CSVValidationError[] = [];
 
     // 解析数据行
     for (let i = startIndex; i < lines.length; i++) {
@@ -127,7 +136,7 @@ export function parseCSV(
       const values = line.split(',').map(v => trim ? v.trim() : v);
 
       if (values.length < 2) {
-        errors.push(`第 ${lineNum} 行: 格式错误，需要包含地址和金额`);
+        errors.push({ row: lineNum, field: 'address', value: line, error: '格式错误，需要包含地址和金额' });
         continue;
       }
 
@@ -140,7 +149,7 @@ export function parseCSV(
         const amountIndex = headers.findIndex(h => h.toLowerCase().includes('amount'));
 
         if (addressIndex === -1 || amountIndex === -1) {
-          errors.push(`第 ${lineNum} 行: 无法找到address或amount列`);
+          errors.push({ row: lineNum, field: 'address', value: values.join(','), error: '无法找到address或amount列' });
           continue;
         }
 
@@ -155,14 +164,14 @@ export function parseCSV(
       // 验证地址
       const addressValidation = validateAddress(address);
       if (!addressValidation.isValid) {
-        errors.push(`第 ${lineNum} 行: 地址格式无效 (${address})`);
+        errors.push({ row: lineNum, field: 'address', value: address, error: '地址格式无效' });
         continue;
       }
 
       // 验证金额
       const amountValidation = validateAmount(amount);
       if (!amountValidation.isValid) {
-        errors.push(`第 ${lineNum} 行: 金额必须是大于0的数字 (${amount})`);
+        errors.push({ row: lineNum, field: 'amount', value: amount, error: '金额必须是大于0的数字' });
         continue;
       }
 
@@ -188,7 +197,7 @@ export function parseCSV(
       totalRecords: 0,
       validRecords: 0,
       invalidRecords: 0,
-      errors: [`CSV解析失败: ${error instanceof Error ? error.message : '未知错误'}`],
+      errors: [{ row: 0, field: 'address', value: '', error: `CSV解析失败: ${error instanceof Error ? error.message : '未知错误'}` }],
       sampleData: [],
       data: []
     };

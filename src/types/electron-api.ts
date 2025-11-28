@@ -126,11 +126,4 @@ export interface ElectronAPI {
   };
 }
 
-/**
- * Extend Window interface to include electronAPI
- */
-declare global {
-  interface Window {
-    electronAPI: ElectronAPI;
-  }
-}
+// Note: Window interface is declared in renderer/src/types/index.ts

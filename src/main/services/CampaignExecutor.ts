@@ -7,6 +7,7 @@ import { ChainUtils } from '../utils/chain-utils';
 import { RetryUtils } from '../utils/retry-utils';
 import { TransactionUtils } from '../utils/transaction-utils';
 import { Logger } from '../utils/logger';
+import { isNativeToken } from '../config/constants';
 import type { DatabaseManager } from '../database/sqlite-schema';
 import type { DatabaseAdapter } from '../database/db-adapter';
 import BigNumber from 'bignumber.js';
@@ -106,7 +107,8 @@ export class CampaignExecutor {
       await this.updateCampaignStatus(campaignId, 'SENDING');
 
       // Ensure unlimited approval for EVM chains before starting batches
-      if (!ChainUtils.isSolanaChain(campaign.chain)) {
+      // Skip approval for native tokens (ETH/BNB/MATIC/etc)
+      if (!ChainUtils.isSolanaChain(campaign.chain) && !isNativeToken(campaign.tokenAddress)) {
         await this.ensureUnlimitedApproval(campaign, wallet);
       }
 

@@ -51,7 +51,7 @@ export class Logger {
       level: LogLevel.INFO,
       enableConsole: true,
       enableFile: process.env.NODE_ENV !== 'development', // 生产环境默认启用文件日志
-      logDirectory: config.logDirectory || path.join(os.homedir(), 'cryptocast', 'logs'),
+      logDirectory: config.logDirectory || path.join(os.homedir(), '.cryptocast', 'logs'),
       maxFileSize: 10 * 1024 * 1024, // 10MB
       maxFiles: 5,
       enableStructuredOutput: true,

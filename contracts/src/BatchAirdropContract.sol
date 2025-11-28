@@ -11,7 +11,7 @@ interface IERC20 {
 
 /**
  * @title BatchAirdropContract - Gas Optimized
- * @dev Ultra-lightweight batch transfer contract for ERC20 tokens
+ * @dev Ultra-lightweight batch transfer contract for ERC20 tokens and native tokens
  *
  * Gas Optimizations:
  * - No external dependencies (OpenZeppelin removed)
@@ -32,6 +32,12 @@ contract BatchAirdropContract {
 
     /// @notice Thrown when a token transfer fails
     error TransferFailed();
+
+    /// @notice Thrown when native token transfer fails
+    error NativeTransferFailed();
+
+    /// @notice Thrown when insufficient native token sent
+    error InsufficientValue();
 
     /**
      * @notice Executes batch transfers of ERC20 tokens to multiple recipients
@@ -64,6 +70,52 @@ contract BatchAirdropContract {
                 revert TransferFailed();
             }
             unchecked { ++i; }
+        }
+    }
+
+    /**
+     * @notice Executes batch transfers of native tokens (ETH/BNB/MATIC/etc) to multiple recipients
+     * @dev Accepts native tokens via msg.value and distributes to recipients
+     * @param recipients Array of recipient addresses
+     * @param amounts Array of native token amounts (in wei)
+     *
+     * Requirements:
+     * - recipients.length must equal amounts.length
+     * - msg.value must equal the sum of all amounts
+     *
+     * Effects:
+     * - Transfers native tokens to each recipient
+     * - Reverts entirely if any single transfer fails (atomic operation)
+     */
+    function batchTransferNative(
+        address[] calldata recipients,
+        uint256[] calldata amounts
+    ) external payable {
+        uint256 length = recipients.length;
+        if (length != amounts.length) revert LengthMismatch();
+
+        // Calculate total amount needed
+        uint256 totalAmount = 0;
+        for (uint256 i = 0; i < length; ) {
+            totalAmount += amounts[i];
+            unchecked { ++i; }
+        }
+
+        // Verify sufficient value sent
+        if (msg.value < totalAmount) revert InsufficientValue();
+
+        // Transfer native tokens to each recipient
+        for (uint256 i = 0; i < length; ) {
+            (bool success, ) = recipients[i].call{value: amounts[i]}("");
+            if (!success) revert NativeTransferFailed();
+            unchecked { ++i; }
+        }
+
+        // Refund excess if any
+        uint256 excess = msg.value - totalAmount;
+        if (excess > 0) {
+            (bool success, ) = msg.sender.call{value: excess}("");
+            if (!success) revert NativeTransferFailed();
         }
     }
 }

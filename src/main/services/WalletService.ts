@@ -3,6 +3,7 @@ import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { ChainUtils } from '../utils/chain-utils';
 import { KeyUtils } from '../utils/keyUtils';
+import { isNativeToken } from '../config/constants';
 
 interface WalletData {
   address: string;
@@ -142,7 +143,7 @@ export class WalletService {
     try {
       const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-      if (!tokenAddress || tokenAddress === '0x0000000000000000000000000000000000000000') {
+      if (isNativeToken(tokenAddress)) {
         // Native token balance
         const balance = await provider.getBalance(address);
         return {
@@ -153,7 +154,7 @@ export class WalletService {
       } else {
         // ERC20 token balance
         const tokenContract = new ethers.Contract(
-          tokenAddress,
+          tokenAddress!,
           ['function balanceOf(address) view returns (uint256)', 'function symbol() view returns (string)', 'function decimals() view returns (uint8)'],
           provider
         );

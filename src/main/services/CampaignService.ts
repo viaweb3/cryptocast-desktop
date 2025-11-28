@@ -749,7 +749,7 @@ export class CampaignService {
   /**
    * 重试失败的交易
    */
-  async retryFailedTransactions(campaignId: string): Promise<void> {
+  async retryFailedTransactions(campaignId: string): Promise<number> {
     try {
       // 验证活动存在
       const campaign = await this.getCampaignById(campaignId);
@@ -757,19 +757,30 @@ export class CampaignService {
         throw new Error('活动不存在');
       }
 
-      // 验证活动状态
-      if (campaign.status !== 'PAUSED') {
-        throw new Error('只能重试暂停状态的活动');
+      // 验证活动状态 - Allow retry for paused, completed or failed campaigns
+      // completed/failed campaigns might have some failed recipients that user wants to retry
+      const allowedStatuses = ['PAUSED', 'COMPLETED', 'FAILED'];
+      if (!allowedStatuses.includes(campaign.status)) {
+        throw new Error('只能重试暂停、完成或失败状态的活动');
       }
 
-      // 重置所有失败和待处理的接收者为待发送状态
+      const now = new Date().toISOString();
+
+      // 重置所有失败的接收者为待发送状态
+      // Only reset FAILED ones as PENDING ones are already pending
       const result = await this.db.prepare(`
         UPDATE recipients
         SET status = 'PENDING', tx_hash = NULL, gas_used = NULL, error_message = NULL, updated_at = ?
-        WHERE campaign_id = ? AND status IN ('FAILED', 'PENDING')
-      `).run(new Date().toISOString(), campaignId);
+        WHERE campaign_id = ? AND status = 'FAILED'
+      `).run(now, campaignId);
 
-          } catch (error) {
+      // 将活动状态更新为 PAUSED，以便用户可以手动恢复执行
+      // This is critical: if campaign was COMPLETED/FAILED, we must reset it to PAUSED
+      // so that the resume/start logic can pick it up.
+      await this.updateCampaignStatus(campaignId, 'PAUSED');
+
+      return result.changes || 0;
+    } catch (error) {
       logger.error('[CampaignService] Failed to retry failed transactions', error as Error, { campaignId });
       throw error;
     }

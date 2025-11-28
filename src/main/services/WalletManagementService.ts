@@ -1,6 +1,7 @@
 import { WalletService } from './WalletService';
 import { ChainService } from './ChainService';
 import type { DatabaseManager } from '../database/sqlite-schema';
+import { NATIVE_TOKEN_ADDRESSES } from '../config/constants';
 
 export interface ActivityWallet {
   id: string;
@@ -104,7 +105,7 @@ export class WalletManagementService {
             status: row.status,
             balances: [
               {
-                tokenAddress: row.token_address || '0x0000000000000000000000000000000000000000',
+                tokenAddress: row.token_address || NATIVE_TOKEN_ADDRESSES.EVM,
                 tokenSymbol: row.token_symbol || 'ETH',
                 tokenDecimals: 18,
                 balance: '0', // 需要链上查询
@@ -185,13 +186,13 @@ export class WalletManagementService {
         chain: chain,
         balances: [
           {
-            tokenAddress: campaign.token_address || '0x0000000000000000000000000000000000000000',
+            tokenAddress: campaign.token_address || NATIVE_TOKEN_ADDRESSES.EVM,
             tokenSymbol: tokenBalance.symbol,
             tokenDecimals: tokenBalance.decimals,
             balance: tokenBalance.balance,
           },
           {
-            tokenAddress: '0x0000000000000000000000000000000000000000',
+            tokenAddress: NATIVE_TOKEN_ADDRESSES.EVM,
             tokenSymbol: chainConfig.symbol,
             tokenDecimals: 18,
             balance: nativeBalance.balance,

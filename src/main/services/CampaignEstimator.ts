@@ -3,6 +3,7 @@ import { ChainService } from './ChainService';
 import { ChainUtils } from '../utils/chain-utils';
 import type { DatabaseManager } from '../database/sqlite-schema';
 import { Logger } from '../utils/logger';
+import { isNativeToken } from '../config/constants';
 
 const logger = Logger.getInstance().child('CampaignEstimator');
 
@@ -120,14 +121,13 @@ export class CampaignEstimator {
               }
 
       // Determine if it's ERC20 or native token
-      const isNativeToken = !request.tokenAddress ||
-        request.tokenAddress === '0x0000000000000000000000000000000000000000';
+      const isNative = isNativeToken(request.tokenAddress);
 
       // Get chain-specific gas multiplier
       const chainMultiplier = this.CHAIN_GAS_MULTIPLIERS[request.chain] || 1.0;
 
       // Calculate gas estimates with chain-specific adjustments
-      const gasPerTransfer = isNativeToken
+      const gasPerTransfer = isNative
         ? this.GAS_PER_TRANSFER
         : this.GAS_PER_ERC20_TRANSFER;
 

@@ -172,7 +172,7 @@ export class TokenService {
         throw new Error('Unable to parse mint account data');
       }
 
-      if (!accountData.parsed || accountData.program !== 'spl-token') {
+      if (!accountData.parsed || (accountData.program !== 'spl-token' && accountData.program !== 'spl-token-2022')) {
         throw new Error('Not a valid SPL token mint account');
       }
 

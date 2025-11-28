@@ -29,9 +29,7 @@ export default function Layout({ children }: LayoutProps) {
   useEffect(() => {
     const fetchCachedPrices = async () => {
       try {
-        console.log('[Layout] Fetching cached prices...');
         const prices = await electronAPI.price.getCachedPrices(['ETH', 'BNB', 'POL', 'AVAX', 'SOL']);
-        console.log('[Layout] Received cached prices:', prices);
         setPriceInfo({
           eth: prices.ETH || 0,
           bnb: prices.BNB || 0,
@@ -39,14 +37,11 @@ export default function Layout({ children }: LayoutProps) {
           avax: prices.AVAX || 0,
           sol: prices.SOL || 0
         });
-        console.log('[Layout] Updated priceInfo state with cached data');
       } catch (error) {
         console.error('[Layout] Failed to fetch cached prices:', error);
         // Fallback to regular price fetch if cache is empty
         try {
-          console.log('[Layout] Fallback: fetching fresh prices...');
           const freshPrices = await electronAPI.price.getPrices(['ETH', 'BNB', 'POL', 'AVAX', 'SOL']);
-          console.log('[Layout] Received fresh prices:', freshPrices);
           setPriceInfo({
             eth: freshPrices.ETH || 0,
             bnb: freshPrices.BNB || 0,

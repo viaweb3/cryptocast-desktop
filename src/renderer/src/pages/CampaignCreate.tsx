@@ -5,7 +5,7 @@ import { Campaign, CSVValidationResult, TokenInfo } from '../types';
 import { parseCSV } from '../utils/csvValidator';
 import BigNumber from 'bignumber.js';
 import { DEFAULTS } from '../config/defaults';
-import { isSolanaChain, validateAddressForChain } from '../utils/chainTypeUtils';
+import { isSolanaChain, validateAddressForChain, NATIVE_TOKEN_ADDRESSES } from '../utils/chainTypeUtils';
 
 interface CampaignFormData {
   name: string;
@@ -134,8 +134,7 @@ export default function CampaignCreate() {
           });
         }
 
-        console.log('Loaded chains:', chains);
-      }
+        }
 
       // 按类型和名称排序：EVM链在前，然后是Solana，同类按名称排序
       chains.sort((a, b) => {
@@ -170,7 +169,7 @@ export default function CampaignCreate() {
     // 如果链发生变化，调整批量参数
     if (name === 'chain') {
       const selectedChain = availableChains.find(c => c.id === value);
-      const isSolana = isSolanaChain(selectedChain || {});
+      const isSolana = selectedChain?.type === 'solana';
 
       setFormData(prev => ({
         ...prev,
@@ -201,7 +200,7 @@ export default function CampaignCreate() {
       if (value.trim()) {
         // 使用统一的地址验证函数
         const selectedChain = availableChains.find(c => c.id === formData.chain);
-        const isValidAddress = validateAddressForChain(value, selectedChain || {});
+        const isValidAddress = validateAddressForChain(value, (selectedChain || {}) as any);
 
         if (!isValidAddress) {
           setTokenAddressError('请输入有效的代币合约地址');
@@ -238,9 +237,8 @@ export default function CampaignCreate() {
           totalRecords: 0,
           validRecords: 0,
           invalidRecords: 0,
-          errors: ['CSV内容解析失败'],
-          sampleData: [],
-          data: []
+          errors: [{ row: 0, field: 'address', value: '', error: 'CSV内容解析失败' }],
+          sampleData: []
         });
       }
     } else {
@@ -426,8 +424,32 @@ export default function CampaignCreate() {
               </div>
 
               <div className="md:col-span-2">
-                <div className="mb-2">
+                <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-medium">代币合约地址 *</span>
+                  {!isSolanaChain(formData.chain) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const selectedChain = availableChains.find(c => c.id === formData.chain);
+                        const nativeAddress = NATIVE_TOKEN_ADDRESSES.EVM;
+                        setFormData({ ...formData, tokenAddress: nativeAddress });
+                        setTokenAddressError('');
+                        setTokenInfo({
+                          name: selectedChain?.name || 'Native Token',
+                          symbol: selectedChain?.symbol || 'ETH',
+                          decimals: 18,
+                          address: nativeAddress,
+                          chainType: 'evm'
+                        });
+                      }}
+                      className="btn btn-xs btn-outline gap-1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      使用原生代币
+                    </button>
+                  )}
                 </div>
                 <input
                   type="text"
@@ -532,7 +554,7 @@ export default function CampaignCreate() {
                   {(() => {
                     // 根据链类型调整推荐设置
                     const selectedChain = availableChains.find(c => c.id === formData.chain);
-                    const isSolana = isSolanaChain(selectedChain || {});
+                    const isSolana = selectedChain?.type === 'solana';
                     if (isSolana) {
                       // Solana网络 - 简化配置
       // 统一批量大小：ATA创建和转账使用相同的批量设置
@@ -571,7 +593,7 @@ export default function CampaignCreate() {
                   {(() => {
                     // 根据链类型调整推荐设置
                     const selectedChain = availableChains.find(c => c.id === formData.chain);
-                    const isSolana = isSolanaChain(selectedChain || {});
+                    const isSolana = selectedChain?.type === 'solana';
                     if (isSolana) {
                       // Solana网络 - 考虑到批量变小，总体需要更快频率来补偿
                       return [
@@ -612,7 +634,7 @@ export default function CampaignCreate() {
                   })()}
                 </div>
                 {/* Solana优化提示 */}
-                {isSolanaChain(availableChains.find(c => c.id === formData.chain) || {}) && (
+                {availableChains.find(c => c.id === formData.chain)?.type === 'solana' && (
                   <div className="mt-2">
                     <span className="text-xs text-warning">
                       <strong>⚡ Solana限制：</strong>每批支持5-10个地址（ATA创建和转账使用相同配置）
@@ -720,7 +742,7 @@ export default function CampaignCreate() {
                           <div className="space-y-1 max-h-32 overflow-auto">
                             {csvValidation.errors.slice(0, 10).map((error, index) => (
                               <div key={index} className="text-xs bg-error/10 text-error p-2 rounded">
-                                {error}
+                                第{error.row}行 {error.field}: {error.error}
                               </div>
                             ))}
                             {csvValidation.errors.length > 10 && (

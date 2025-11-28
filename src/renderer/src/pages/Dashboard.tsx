@@ -66,25 +66,15 @@ export default function Dashboard() {
           // Load Solana chains
           try {
             const solanaChains = await electronAPI.chain.getSolanaRPCs();
-            console.log(`🔍 [Dashboard] fetchChains: Received ${solanaChains.length} Solana chains from API`);
-            allChains.push(...solanaChains);
+              allChains.push(...solanaChains);
           } catch (error) {
             console.warn('🔍 [Dashboard] fetchChains: Failed to load Solana chains:', error);
           }
 
   
-          console.log('🔍 [Dashboard] fetchChains: Total chains loaded:', allChains.length);
-          console.log('🔍 [Dashboard] fetchChains: Chain data:', allChains.map(chain => ({
-            name: chain.name,
-            color: chain.color,
-            badgeColor: chain.badgeColor,
-            chainId: chain.chainId
-          })));
           setChains(allChains);
-          console.log('🔍 [Dashboard] fetchChains: Chains set to state');
         } else {
-          console.log('🔍 [Dashboard] fetchChains: electronAPI.chain is not available');
-        }
+                  }
       } catch (error) {
         console.error('🔍 [Dashboard] fetchChains: Failed to load chains:', error);
       }

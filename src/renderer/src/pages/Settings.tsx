@@ -427,10 +427,10 @@ function SolanaEditModal({ isOpen, onClose, chain, onSave }: SolanaEditModalProp
     try {
       if (window.electronAPI?.chain) {
         const result = await window.electronAPI.chain.testSolanaRPC(formData.rpcUrl);
-        if (result.success && result.latency !== undefined && result.blockNumber !== undefined) {
-          setTestResult({ latency: result.latency, blockNumber: result.blockNumber });
+        if (result.success && result.latency !== undefined) {
+          setTestResult({ latency: result.latency, blockNumber: 0 });
         } else {
-          setTestError(result.error || '连接失败');
+          setTestError('连接失败');
         }
       }
     } catch (error) {
@@ -638,33 +638,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<AppSettings>({
     chains: [],
-    gasSettings: {
-      defaultGasPrice: 30,
-      defaultGasLimit: 210000,
-      autoAdjustGas: true,
-      maxGasPrice: 100,
-      priorityFee: 2,
-    },
-    batchSettings: {
-      batchSize: 100,
-      sendInterval: 2000,
-      maxConcurrency: 5,
-      retryAttempts: 3,
-      retryDelay: 1000,
-    },
-    securitySettings: {
-      autoBackup: true,
-      backupInterval: 24,
-      sessionTimeout: 30,
-    },
-    notificationSettings: {
-      emailNotifications: false,
-      browserNotifications: true,
-      campaignComplete: true,
-      campaignFailed: true,
-      lowBalance: true,
-      securityAlerts: true,
-    },
+    solanaChains: [],
   });
 
   const [activeTab] = useState<'chains'>('chains');
@@ -689,32 +663,26 @@ export default function Settings() {
 
   const loadChains = async () => {
     try {
-      console.log('🔍 [Settings] loadChains: Starting to load chains from electron API');
-      if (window.electronAPI?.chain) {
+            if (window.electronAPI?.chain) {
         // Load EVM chains
         const chains = await window.electronAPI.chain.getEVMChains();
-        console.log(`🔍 [Settings] loadChains: Received ${chains.length} EVM chains from API`);
-        console.log('🔍 [Settings] loadChains: Chain data received:', chains.map(chain => ({
-          name: chain.name,
-          color: chain.color,
-          badgeColor: chain.badgeColor,
-          chainId: chain.chainId
-        })));
-        setSettings(prev => ({ ...prev, chains }));
-        console.log('🔍 [Settings] loadChains: Chains set to state');
-
+                        setSettings((prev: AppSettings) => ({ ...prev, chains }));
+        
         // Load Solana chains
         try {
           const solanaChainData = await window.electronAPI.chain.getSolanaRPCs();
-          console.log(`🔍 [Settings] loadChains: Received ${solanaChainData.length} Solana chains from API`);
-          setSolanaChains(solanaChainData);
-          console.log('🔍 [Settings] loadChains: Solana chains set to state');
-        } catch (error) {
+                    setSolanaChains(solanaChainData.map(rpc => ({
+      ...rpc,
+      type: 'solana' as const,
+      symbol: 'SOL',
+      decimals: 9,
+      isCustom: true
+    })));
+                  } catch (error) {
           console.warn('🔍 [Settings] loadChains: Failed to load Solana chains:', error);
         }
       } else {
-        console.log('🔍 [Settings] loadChains: window.electronAPI.chain is not available');
-      }
+              }
     } catch (error) {
       console.error('🔍 [Settings] loadChains: Failed to load chains:', error);
       // Set empty chains array when database connection fails
@@ -756,7 +724,7 @@ export default function Settings() {
         }
       }
 
-      setSettings(prev => {
+      setSettings((prev: AppSettings) => {
         const chains = prev.chains || [];
         if (chainData.id && chainData.id > 0 && chains.some(c => c.id === chainData.id)) {
           // 更新现有链

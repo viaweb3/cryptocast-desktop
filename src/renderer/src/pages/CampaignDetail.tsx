@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { EVMChain } from '../types';
+import { EVMChain, ChainInfo } from '../types';
 import BigNumber from 'bignumber.js';
-import { isSolanaChain, exportPrivateKey } from '../utils/chainTypeUtils';
+import { isSolanaChain, exportPrivateKey, isNativeToken, NATIVE_TOKEN_ADDRESSES } from '../utils/chainTypeUtils';
 
 
 interface Campaign {
@@ -17,6 +17,7 @@ interface Campaign {
   totalRecipients: number;
   completedRecipients: number;
   failedRecipients: number;
+  totalAmount?: string;
   walletAddress?: string;
   contractAddress?: string;
   createdAt: string;
@@ -52,7 +53,7 @@ export default function CampaignDetail() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
-  const [chains, setChains] = useState<EVMChain[]>([]);
+  const [chains, setChains] = useState<ChainInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -175,8 +176,7 @@ export default function CampaignDetail() {
       });
       console.warn('接收者统计:', recipientCounts);
     } else {
-      console.log('✅ 数据一致性检查通过');
-    }
+          }
 
     return warnings;
   };
@@ -197,15 +197,15 @@ export default function CampaignDetail() {
       // Load all data in parallel for better performance
       const [detailsResult, txResult, recipientsResult] = await Promise.allSettled([
         window.electronAPI.campaign.getDetails(id),
-        window.electronAPI.campaign.getTransactions(id, { limit: 100 }),
+        window.electronAPI.campaign.getTransactions(id),
         window.electronAPI.campaign.getRecipients(id)
       ]);
 
       // Process campaign details (critical - must succeed)
       if (detailsResult.status === 'fulfilled' && detailsResult.value) {
         setCampaign({
-          ...detailsResult.value.campaign,
-          chainId: parseInt(detailsResult.value.campaign.chain),
+          ...detailsResult.value,
+          chainId: parseInt(detailsResult.value.chain),
         });
       } else {
         const error = detailsResult.status === 'rejected' ? detailsResult.reason : 'Campaign not found';
@@ -238,10 +238,13 @@ export default function CampaignDetail() {
       // Process recipients (non-critical)
       if (recipientsResult.status === 'fulfilled' && recipientsResult.value && Array.isArray(recipientsResult.value)) {
         const mappedRecipients = recipientsResult.value.map((r: any) => ({
+          id: r.id,
+          campaignId: r.campaignId,
           address: r.address,
           amount: r.amount,
-          status: r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending',
-          txHash: r.txHash,
+          status: (r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending') as 'pending' | 'failed' | 'success' | 'sending',
+          transactionHash: r.txHash,
+          gasUsed: r.gasUsed,
           error: r.errorMessage,
           createdAt: r.createdAt,
           updatedAt: r.updatedAt,
@@ -263,8 +266,7 @@ export default function CampaignDetail() {
       // Refresh wallet balances after loading campaign data
       try {
         await refreshBalances();
-        console.log('Campaign loaded and balances refreshed successfully');
-      } catch (balanceError) {
+              } catch (balanceError) {
         console.warn('Failed to refresh balances after loading campaign:', balanceError);
         // Don't block page load, just log the warning
       }
@@ -272,14 +274,17 @@ export default function CampaignDetail() {
       // Validate data consistency after all data is loaded
       if (detailsResult.status === 'fulfilled' && recipientsResult.status === 'fulfilled') {
         const campaignData = {
-          ...detailsResult.value.campaign,
-          chainId: parseInt(detailsResult.value.campaign.chain),
+          ...detailsResult.value,
+          chainId: parseInt(detailsResult.value.chain),
         };
         const recipientsData = recipientsResult.value.map((r: any) => ({
+          id: r.id,
+          campaignId: r.campaignId,
           address: r.address,
           amount: r.amount,
-          status: r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending',
-          txHash: r.txHash,
+          status: (r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending') as 'pending' | 'failed' | 'success' | 'sending',
+          transactionHash: r.txHash,
+          gasUsed: r.gasUsed,
           error: r.errorMessage,
           createdAt: r.createdAt,
           updatedAt: r.updatedAt,
@@ -306,11 +311,16 @@ export default function CampaignDetail() {
       const recipientsData = await window.electronAPI.campaign.getRecipients(id);
       if (recipientsData && Array.isArray(recipientsData)) {
         const mappedRecipients = recipientsData.map((r: any) => ({
+          id: r.id,
+          campaignId: r.campaignId,
           address: r.address,
           amount: r.amount,
-          status: r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending',
-          txHash: r.txHash,
+          status: (r.status === 'SENT' ? 'success' : r.status === 'PENDING' ? 'pending' : r.status === 'FAILED' ? 'failed' : 'sending') as 'pending' | 'failed' | 'success' | 'sending',
+          transactionHash: r.txHash,
+          gasUsed: r.gasUsed,
           error: r.errorMessage,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
         }));
         setRecipients(mappedRecipients);
 
@@ -379,6 +389,21 @@ export default function CampaignDetail() {
     }
   };
 
+  const handleRetryFailedTransactions = async () => {
+    if (!campaign || !id) return;
+
+    try {
+      if (window.electronAPI?.campaign) {
+        await window.electronAPI.campaign.retryFailedTransactions(id);
+        alert('已开始重试失败的交易');
+        await loadCampaign(true);
+      }
+    } catch (error) {
+      console.error('Failed to retry transactions:', error);
+      alert('重试失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
+  };
+
   const handleStartCampaign = async () => {
     if (!campaign || !id) return;
 
@@ -391,10 +416,8 @@ export default function CampaignDetail() {
 
     try {
       if (window.electronAPI?.campaign) {
-        console.log('Starting campaign:', id);
-        await window.electronAPI.campaign.start(id);
-        console.log('Campaign started successfully');
-
+                await window.electronAPI.campaign.start(id);
+        
         // 成功启动后重新加载活动状态
         await loadCampaign(true); // Silent refresh after start
         alert('活动已开始发送！页面将自动刷新状态。');
@@ -427,31 +450,6 @@ export default function CampaignDetail() {
       return;
     }
 
-    // 获取gas估算信息来动态计算最低余额要求
-    try {
-      // 获取当前链的gas价格估算
-      if (window.electronAPI?.blockchain && campaign.chain) {
-        const gasEstimate = await window.electronAPI.blockchain.estimateGas(
-          campaign.chain,
-          campaign.walletAddress,
-          "0x0000000000000000000000000000000000000000", // 合约地址估算
-          campaign.tokenAddress,
-          0 // 收件人数量为0，只估算部署
-        );
-
-        // 将估算的gas费用转换为原生代币 (使用ContractService中的500K gas限制)
-        const gasLimit = 500000; // 合约部署的实际gas限制
-        const gasPriceGwei = parseFloat(gasEstimate.gasPrice) || 30; // 默认30 Gwei
-        const gasCostWei = gasLimit * gasPriceGwei * 1e9; // 转换为wei
-        estimatedDeploymentCost = (gasCostWei / 1e18).toFixed(6); // 转换为原生代币单位
-
-        // 设置最低余额要求为估算成本的1.5倍（包含安全缓冲）
-        minGasRequired = parseFloat(estimatedDeploymentCost) * 1.5;
-
-              }
-    } catch (gasError) {
-      console.warn('Failed to estimate deployment gas cost, using default:', gasError);
-    }
 
     const nativeTokenSymbol = getNativeTokenSymbol(campaign.chain);
 
@@ -505,26 +503,6 @@ export default function CampaignDetail() {
     }
   };
 
-  const handleRetryFailedTransactions = async () => {
-    if (!campaign || !id) return;
-
-    const confirmed = confirm('确定要重试所有失败的交易吗？这将重置失败交易的错误状态，然后可以恢复发送。');
-    if (!confirmed) return;
-
-    try {
-      if (window.electronAPI?.campaign) {
-        const result = await window.electronAPI.campaign.retryFailedTransactions(id);
-        alert(result.message || '重试设置成功');
-        await loadCampaign(true); // Silent refresh after retry
-        await loadRecipients(); // Reload recipients to reflect the changes
-      }
-    } catch (error) {
-      console.error('Failed to retry failed transactions:', error);
-      const errorMessage = getSolanaSpecificErrorMessage(error);
-      alert('重试失败: ' + errorMessage);
-    }
-  };
-
   
   const getSolanaSpecificErrorMessage = (error: any): string => {
     const errorMessage = error?.message || error?.toString() || '';
@@ -558,7 +536,7 @@ export default function CampaignDetail() {
     return items.slice(startIndex, endIndex);
   };
 
-  const getTotalPages = (items: T[]) => {
+  const getTotalPages = <T,>(items: T[]) => {
     return Math.ceil(items.length / itemsPerPage);
   };
 
@@ -568,7 +546,7 @@ export default function CampaignDetail() {
   const txTotalPages = getTotalPages(filteredTransactions);
   const recipientsTotalPages = getTotalPages(recipients);
 
-  const formatPaginationInfo = (currentPage: number, items: T[]) => {
+  const formatPaginationInfo = <T,>(currentPage: number, items: T[]) => {
     const startIndex = (currentPage - 1) * itemsPerPage + 1;
     const endIndex = Math.min(currentPage * itemsPerPage, items.length);
     return `显示 ${startIndex} 到 ${endIndex} 条，共 ${items.length} 条记录`;
@@ -961,8 +939,8 @@ export default function CampaignDetail() {
             campaign.chain
           );
 
-          // Get token balance if token address is provided
-          if (campaign.tokenAddress && campaign.tokenAddress !== '0x0000000000000000000000000000000000000000') {
+          // Get token balance if token address is provided (and not native token)
+          if (!isNativeToken(campaign.tokenAddress)) {
             try {
               tokenBalance = await window.electronAPI.wallet.getBalance(
                 campaign.walletAddress,
@@ -988,12 +966,7 @@ export default function CampaignDetail() {
           }
         });
 
-        // Log successful refresh
-        console.log('Balances refreshed successfully:', {
-          native: nativeBalance.native,
-          token: tokenBalance?.token
-        });
-      }
+              }
     } catch (error) {
       console.error('Failed to refresh balances:', error);
       // Set fallback values on error
@@ -1079,6 +1052,7 @@ export default function CampaignDetail() {
         <div>
           <h1 className="text-3xl font-bold">{campaign.name}</h1>
         </div>
+      </div>
         <div className="flex gap-2">
           {campaign && (campaign.status === 'CREATED' || campaign.status === 'FUNDED') && !isSolanaChain(campaign) && (
             <button
@@ -1139,7 +1113,6 @@ export default function CampaignDetail() {
             ← 返回仪表盘
           </button>
         </div>
-      </div>
 
       {/* Progress Section */}
       <div className="card bg-base-100 shadow-sm mb-8">
@@ -1337,16 +1310,18 @@ export default function CampaignDetail() {
                     </div>
                   </div>
 
-                  {/* Token Balance */}
-                  <div className="p-3 bg-base-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                      <span className="text-sm font-medium">{campaign.tokenSymbol}</span>
+                  {/* Token Balance - 只在非原生代币时显示 */}
+                  {!isNativeToken(campaign.tokenAddress) && (
+                    <div className="p-3 bg-base-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-primary"></div>
+                        <span className="text-sm font-medium">{campaign.tokenSymbol}</span>
+                      </div>
+                      <div className="text-lg font-bold">
+                        {parseFloat(walletBalances.token.current).toFixed(4)} {campaign.tokenSymbol}
+                      </div>
                     </div>
-                    <div className="text-lg font-bold">
-                      {parseFloat(walletBalances.token.current).toFixed(4)} {campaign.tokenSymbol}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -1375,20 +1350,32 @@ export default function CampaignDetail() {
                     {/* Withdrawal buttons */}
                     <div className="divider my-3"></div>
                     <div className="text-sm text-base-content/60 mb-2">资金回收</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => handleOpenWithdrawModal('tokens')}
-                        className="btn btn-warning btn-sm"
-                      >
-                        💰 回收代币
-                      </button>
+                    {/* 判断是否是原生代币 */}
+                    {!isNativeToken(campaign.tokenAddress) ? (
+                      // 非原生代币：显示两个按钮
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => handleOpenWithdrawModal('tokens')}
+                          className="btn btn-warning btn-sm"
+                        >
+                          💰 回收代币
+                        </button>
+                        <button
+                          onClick={() => handleOpenWithdrawModal('native')}
+                          className="btn btn-warning btn-sm"
+                        >
+                          💎 回收原生币
+                        </button>
+                      </div>
+                    ) : (
+                      // 原生代币：只显示回收原生币按钮
                       <button
                         onClick={() => handleOpenWithdrawModal('native')}
-                        className="btn btn-warning btn-sm"
+                        className="btn btn-warning btn-sm w-full"
                       >
                         💎 回收原生币
                       </button>
-                    </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -1890,3 +1877,4 @@ export default function CampaignDetail() {
     </div>
   );
 }
+// End

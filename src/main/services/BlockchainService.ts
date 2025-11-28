@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { Connection, PublicKey, LAMPORTS_PER_SOL, Keypair, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js';
 import { DEFAULTS } from '../config/defaults';
+import { isNativeToken } from '../config/constants';
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createTransferInstruction, getAccount } from '@solana/spl-token';
 import { PriceService } from './PriceService';
 import { ChainUtils } from '../utils/chain-utils';
@@ -80,7 +81,7 @@ export class BlockchainService {
     const nativeBalance = await provider.getBalance(address);
 
     let tokenBalance: string | undefined;
-    if (tokenAddress && tokenAddress !== '0x0000000000000000000000000000000000000000') {
+    if (!isNativeToken(tokenAddress)) {
       try {
 
         // If tokenDecimals is not provided, fetch it dynamically
@@ -90,7 +91,7 @@ export class BlockchainService {
             'function decimals() view returns (uint8)'
           ];
 
-          const contract = new ethers.Contract(tokenAddress, erc20Abi, provider);
+          const contract = new ethers.Contract(tokenAddress!, erc20Abi, provider);
 
           // Fetch both balance and decimals in parallel
           const [balance, decimals] = await Promise.all([
@@ -105,7 +106,7 @@ export class BlockchainService {
             'function balanceOf(address owner) view returns (uint256)'
           ];
 
-          const contract = new ethers.Contract(tokenAddress, erc20Abi, provider);
+          const contract = new ethers.Contract(tokenAddress!, erc20Abi, provider);
           const balance = await contract.balanceOf(address);
           tokenBalance = ethers.formatUnits(balance, tokenDecimals);
         }

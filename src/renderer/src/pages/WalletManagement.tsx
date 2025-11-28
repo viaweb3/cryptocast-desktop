@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import {
   ActivityWallet,
   WalletBalance,
-  EVMChain
+  EVMChain,
+  ChainInfo
 } from '../types';
 import { isSolanaChain, exportPrivateKey, getChainDisplayName, getChainDisplayBadge } from '../utils/chainTypeUtils';
 
 export default function WalletManagement() {
   const navigate = useNavigate();
   const [wallets, setWallets] = useState<ActivityWallet[]>([]);
-  const [chains, setChains] = useState<EVMChain[]>([]);
+  const [chains, setChains] = useState<ChainInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
@@ -75,7 +76,7 @@ export default function WalletManagement() {
 
     try {
       // 使用统一的私钥导出函数
-      const privateKeyDisplay = await exportPrivateKey(wallet.privateKeyBase64 || '', wallet);
+      const privateKeyDisplay = await exportPrivateKey(wallet.privateKeyBase64 || '', wallet as any);
 
       // 显示自定义私钥弹窗
       setExportedWallet({

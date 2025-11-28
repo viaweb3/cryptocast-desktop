@@ -540,8 +540,8 @@ export async function setupIPCHandlers() {
   ipcMain.handle('campaign:retryFailedTransactions', async (_event, campaignId) => {
     try {
       console.log('重试失败的交易:', campaignId);
-      await campaignService.retryFailedTransactions(campaignId);
-      return { success: true, message: '已重置失败的交易，可以重新开始发送' };
+      const retriedCount = await campaignService.retryFailedTransactions(campaignId);
+      return { success: true, retried: retriedCount, message: `已重置 ${retriedCount} 笔失败的交易，请点击"恢复发送"继续` };
     } catch (error) {
       console.error('重试失败交易失败:', error);
       throw new Error(`重试失败交易失败: ${error instanceof Error ? error.message : '未知错误'}`);
