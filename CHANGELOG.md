@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2025-12-01
+
+### Added
+- **Dynamic Version Display**: Added real-time app version tracking in sidebar
+- **Electron API Integration**: Implemented `app.getVersion()` API for version management
+- **Version Information Section**: New UI component in sidebar showing current app version
+
+### Fixed
+- **Data Consistency Issues**: Fixed NaN value handling in CampaignDetail component progress calculations
+- **Campaign Data Processing**: Resolved undefined values in campaign statistics
+- **Progress Validation**: Enhanced data validation between campaign and recipients tables
+- **UI Safety**: Added fallback handling for undefined/NaN values in progress displays
+
+### Improved
+- **Error Handling**: Better error handling for version API failures
+- **Type Safety**: Enhanced TypeScript types for version management
+- **User Experience**: Dynamic version updates without manual intervention
+
+---
+
 ## [1.4.1] - 2025-11-28
 
 ### Fixed

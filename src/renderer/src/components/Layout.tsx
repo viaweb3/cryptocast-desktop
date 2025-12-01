@@ -25,7 +25,7 @@ export default function Layout({ children }: LayoutProps) {
     sol: 0
   });
 
-  const [appVersion, setAppVersion] = useState<string>('1.4.1'); // Fallback version
+  const [appVersion, setAppVersion] = useState<string>('1.4.2'); // Fallback version
 
   // Fetch app version on component mount
   useEffect(() => {
