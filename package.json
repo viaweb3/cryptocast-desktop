@@ -1,7 +1,7 @@
 {
   "name": "cryptocast-desktop",
-  "version": "1.4.2",
-  "description": "CryptoCast - Secure Batch Reward Distribution Platform",
+  "version": "1.5.0",
+  "description": "CryptoCast Desktop - Multi-chain Batch Airdrop & Reward Distribution Platform with Support for Ethereum, Solana, and 10+ Blockchains. Secure wallet management, real-time campaign tracking, and scalable token distribution for DeFi projects, NFT communities, and Web3 platforms.",
   "main": "dist/main/index.js",
   "author": "Viaweb3",
   "license": "MIT",

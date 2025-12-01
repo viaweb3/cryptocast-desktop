@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-12-01
+
+### Added
+- **Chinese Localization**: Complete Chinese (zh) documentation including README, CONTRIBUTING, QUICKSTART, and SECURITY guides
+- **Multilingual Documentation Support**: Enhanced documentation structure supporting 12 languages (ar, de, en, es, fr, ja, ko, pt, ru, tr, vi, zh)
+
+### Changed
+- **Documentation Maintenance**: Removed hard-coded version numbers and badges from all multilingual README files
+- **Version Consistency**: Eliminated version synchronization issues by maintaining version-agnostic documentation
+- **Documentation Structure**: Streamlined multilingual documentation across all supported languages
+
+### Improved
+- **Accessibility**: Chinese-speaking users now have comprehensive native language documentation
+- **Documentation Quality**: Consistent formatting and structure across all language variants
+- **Maintenance Workflow**: Simplified documentation updates without version number management overhead
+
+---
+
 ## [1.4.2] - 2025-12-01
 
 ### Added
