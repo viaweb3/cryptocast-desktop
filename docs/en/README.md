@@ -56,8 +56,6 @@ CryptoCast Desktop is a professional cross-platform desktop application built on
 
 ## 💾 Download and Installation
 
-**Latest Version: v1.4.2**
-
 | Platform | Download Link | Description |
 |---------|---------------|-------------|
 | **Windows (x64)** | [📥 Download Installer](https://github.com/viaweb3/cryptocast-desktop/releases/latest) | Supports Windows 10 and above |
