@@ -26,12 +26,12 @@ function createWindow() {
     },
   });
 
-  // 开发环境加载Vite服务器
+  // Load Vite server in development environment
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    // 生产环境加载打包后的文件
+    // Load packaged files in production environment
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
@@ -40,7 +40,7 @@ function createWindow() {
   });
 }
 
-// 应用准备就绪
+// Application ready
 app.whenReady().then(async () => {
   try {
     await setupIPCHandlers();
@@ -59,7 +59,7 @@ app.whenReady().then(async () => {
   });
 });
 
-// 所有窗口关闭时退出（macOS除外）
+// Quit when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();

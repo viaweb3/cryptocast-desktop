@@ -67,7 +67,7 @@ export class CampaignEstimator {
    */
   async estimate(request: EstimateRequest): Promise<EstimateResult> {
     try {
-      // 使用统一的链类型判断工具
+      // Use unified chain type detection utility
       const chainType = request.chainType || ChainUtils.getChainType(request.chain);
 
       if (chainType === 'solana') {

@@ -1,20 +1,20 @@
 /**
- * 全局常量配置
- * 统一管理魔法值，避免硬编码
+ * Global constant configuration
+ * Centrally manage magic values, avoid hardcoding
  */
 
 /**
- * 原生代币地址常量
+ * Native token address constants
  */
 export const NATIVE_TOKEN_ADDRESSES = {
-  /** EVM 链的原生代币地址（零地址） */
+  /** Native token address for EVM chains (zero address) */
   EVM: '0x0000000000000000000000000000000000000000',
-  /** Solana 链的原生代币地址（SOL） */
+  /** Native token address for Solana chains (SOL) */
   SOLANA: 'So11111111111111111111111111111111111111112'
 } as const;
 
 /**
- * 检测是否为原生代币
+ * Check if token is native token
  */
 export function isNativeToken(tokenAddress: string | undefined): boolean {
   if (!tokenAddress) return true;

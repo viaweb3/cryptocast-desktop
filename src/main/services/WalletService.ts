@@ -88,12 +88,12 @@ export class WalletService {
     try {
       const privateKeyBytes = KeyUtils.decodeToSolanaBytes(privateKeyBase64);
 
-      // 验证私钥长度
+      // Validate private key length
       if (privateKeyBytes.length !== 64) {
         throw new Error(`Invalid Solana private key length: ${privateKeyBytes.length}. Expected 64 bytes.`);
       }
 
-      // 转换为数组格式 [1,2,3,...]
+      // Convert to array format [1,2,3,...]
       const keypairArray = Array.from(privateKeyBytes);
       return '[' + keypairArray.join(',') + ']';
     } catch (error) {

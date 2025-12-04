@@ -1,13 +1,13 @@
 /**
- * 前端链类型检测和通用工具函数
- * 与后端保持一致的逻辑
+ * Frontend chain type detection and common utility functions
+ * Maintains consistent logic with the backend
  */
 
 export type ChainType = 'evm' | 'solana';
 
 export class ChainUtils {
   /**
-   * 判断是否为 Solana 链
+   * Determine if it's a Solana chain
    */
   static isSolanaChain(chain: string | number | undefined): boolean {
     if (!chain) return false;
@@ -27,21 +27,21 @@ export class ChainUtils {
   }
 
   /**
-   * 获取链类型
+   * Get chain type
    */
   static getChainType(chain: string | number | undefined): ChainType {
     return this.isSolanaChain(chain) ? 'solana' : 'evm';
   }
 
   /**
-   * 获取链的显示名称
+   * Get chain display name
    */
   static getChainDisplayName(chain: string | number | undefined): string {
     if (!chain) return 'Unknown';
 
     const chainStr = chain.toString();
 
-    // Solana 网络显示名称
+    // Solana network display names
     if (this.isSolanaChain(chain)) {
       const lowerChain = chainStr.toLowerCase();
       if (lowerChain.includes('mainnet') || lowerChain === 'mainnet-beta') {
@@ -56,7 +56,7 @@ export class ChainUtils {
       return `Solana ${chainStr}`;
     }
 
-    // EVM 链显示名称映射
+    // EVM chain display name mapping
     const evmChainNames: Record<string, string> = {
       '1': 'Ethereum',
       '11155111': 'Sepolia',
@@ -78,14 +78,14 @@ export class ChainUtils {
   }
 
   /**
-   * 获取链的简称/首字母
+   * Get chain abbreviation/initial
    */
   static getChainInitial(chain: string | number | undefined): string {
     if (!chain) return '?';
 
     const chainStr = chain.toString().toLowerCase();
 
-    // 特殊链的显示字母
+    // Display letters for specific chains
     if (chainStr.includes('sepolia') || chainStr === '11155111') return 'S';
     if (chainStr.includes('ethereum') && chainStr !== '1') return 'E';
     if (chainStr === '1') return 'E';
@@ -97,12 +97,12 @@ export class ChainUtils {
     if (chainStr.includes('avalanche')) return 'A';
     if (chainStr.includes('solana')) return 'S';
 
-    // 默认使用名称的第一个字母
+    // Default to the first letter of the name
     return chainStr.charAt(0)?.toUpperCase() || '?';
   }
 
   /**
-   * 获取链徽章样式
+   * Get chain badge style
    */
   static getChainBadge(chain: string | number | undefined): { badge: string; name: string } {
     if (!chain) return { badge: 'badge-neutral', name: 'Unknown' };
@@ -138,7 +138,7 @@ export class ChainUtils {
   }
 
   /**
-   * 规范化链标识符
+   * Normalize chain identifier
    */
   static normalizeChainIdentifier(chain: string | number | undefined): string {
     if (!chain) return '';
@@ -147,10 +147,10 @@ export class ChainUtils {
       return chain.toString();
     }
 
-    // 处理字符串类型的链标识符
+    // Handle string type chain identifiers
     const lowerChain = chain.toLowerCase();
 
-    // Solana 网络映射
+    // Solana network mapping
     if (lowerChain.includes('mainnet') || lowerChain === 'mainnet-beta') {
       return 'mainnet-beta';
     }

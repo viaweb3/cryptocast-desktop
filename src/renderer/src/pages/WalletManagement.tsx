@@ -68,7 +68,7 @@ export default function WalletManagement() {
   };
 
 
-  // 计算分页数据
+  // Calculate pagination data
   const totalPages = Math.ceil(totalWallets / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalWallets);
@@ -77,7 +77,7 @@ export default function WalletManagement() {
 
   
   const handleViewDetails = (wallet: ActivityWallet) => {
-    // 直接跳转到对应的活动详情页面
+    // Navigate directly to the corresponding campaign details page
     navigate(`/campaign/${wallet.campaignId}`);
   };
 
@@ -88,10 +88,10 @@ export default function WalletManagement() {
     }
 
     try {
-      // 使用统一的私钥导出函数
+      // Use unified private key export function
       const privateKeyDisplay = await exportPrivateKey(wallet.privateKeyBase64 || '', wallet as any);
 
-      // 显示自定义私钥弹窗
+      // Show custom private key popup
       setExportedWallet({
         address: wallet.address,
         privateKey: privateKeyDisplay
@@ -162,7 +162,7 @@ export default function WalletManagement() {
   };
 
   const getChainName = (chainValue: string) => {
-    // 使用统一的链显示工具，直接传递 chainValue
+    // Use unified chain display utility, directly pass chainValue
     return getChainDisplayName(chainValue, chains);
   };
 
@@ -252,7 +252,7 @@ export default function WalletManagement() {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(wallet.address);
-                          // 使用 toast 替代 alert
+                          // Use toast instead of alert
                         }}
                         className="btn btn-ghost btn-xs"
                         title={t('wallet.copyAddress')}

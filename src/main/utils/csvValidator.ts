@@ -1,6 +1,6 @@
 /**
- * 统一的CSV验证和处理工具
- * 支持无头部格式和有头部格式的CSV文件
+ * Unified CSV validation and processing utility
+ * Supports both headerless and header-based CSV file formats
  */
 
 import { ChainUtils } from './chain-utils';
@@ -16,30 +16,30 @@ export interface CSVValidationResult {
   validRecords: number;
   invalidRecords: number;
   errors: string[];
-  sampleData: CSVRow[];  // 前5条样本数据，用于预览
-  data: CSVRow[];        // 所有数据
+  sampleData: CSVRow[];  // First 5 sample records for preview
+  data: CSVRow[];        // All data
 }
 
 export interface CSVParseOptions {
-  hasHeaders?: boolean; // 是否包含头部行
-  skipEmptyLines?: boolean; // 是否跳过空行
-  trim?: boolean; // 是否去除空白字符
+  hasHeaders?: boolean; // Whether to include header row
+  skipEmptyLines?: boolean; // Whether to skip empty lines
+  trim?: boolean; // Whether to trim whitespace
 }
 
 /**
- * 验证地址格式（支持EVM和Solana）
- * 使用统一的地址验证工具
+ * Validate address format (supports EVM and Solana)
+ * Uses unified address validation utility
  */
 export function validateAddress(address: string): { isValid: boolean; type?: 'evm' | 'solana' } {
   const trimmedAddress = address.trim();
 
-  // 先尝试EVM地址验证
+  // Try EVM address validation first
   if (ChainUtils.isValidAddress(trimmedAddress, 'evm')) {
     return { isValid: true, type: 'evm' };
   }
 
-  // 再尝试Solana地址验证
-  if (ChainUtils.isValidAddress(trimmedAddress, '501')) { // 使用Solana链ID
+  // Then try Solana address validation
+  if (ChainUtils.isValidAddress(trimmedAddress, '501')) { // Use Solana chain ID
     return { isValid: true, type: 'solana' };
   }
 
@@ -47,7 +47,7 @@ export function validateAddress(address: string): { isValid: boolean; type?: 'ev
 }
 
 /**
- * 验证金额格式
+ * Validate amount format
  */
 export function validateAmount(amount: string): { isValid: boolean; value?: number } {
   const trimmedAmount = amount.trim();
@@ -61,7 +61,7 @@ export function validateAmount(amount: string): { isValid: boolean; value?: numb
 }
 
 /**
- * 解析CSV内容
+ * Parse CSV content
  */
 export function parseCSV(
   content: string,
@@ -85,7 +85,7 @@ export function parseCSV(
         totalRecords: 0,
         validRecords: 0,
         invalidRecords: 0,
-        errors: ['CSV内容为空'],
+        errors: ['CSV content is empty'],
         sampleData: [],
         data: []
       };
@@ -94,13 +94,13 @@ export function parseCSV(
     let startIndex = 0;
     const headers: string[] = [];
 
-    // 处理头部行
+    // Handle header row
     if (hasHeaders) {
       const headerLine = lines[0];
       headers.push(...headerLine.split(',').map(h => trim ? h.trim() : h));
       startIndex = 1;
 
-      // 验证必需的列
+      // Validate required columns
       if (!headers.some(h => h.toLowerCase().includes('address')) ||
           !headers.some(h => h.toLowerCase().includes('amount'))) {
         return {
@@ -108,7 +108,7 @@ export function parseCSV(
           totalRecords: lines.length - 1,
           validRecords: 0,
           invalidRecords: lines.length - 1,
-          errors: ['CSV必须包含address和amount列'],
+          errors: ['CSV must contain address and amount columns'],
           sampleData: [],
           data: []
         };
@@ -118,9 +118,9 @@ export function parseCSV(
     const data: CSVRow[] = [];
     const errors: string[] = [];
 
-    // 解析数据行
+    // Parse data rows
     for (let i = startIndex; i < lines.length; i++) {
-      const lineNum = i + 1; // 保持1-based行号
+      const lineNum = i + 1; // Keep 1-based line numbering
       const line = lines[i];
 
       if (!line.trim() && skipEmptyLines) {
@@ -130,7 +130,7 @@ export function parseCSV(
       const values = line.split(',').map(v => trim ? v.trim() : v);
 
       if (values.length < 2) {
-        errors.push(`第 ${lineNum} 行: 格式错误，需要包含地址和金额`);
+        errors.push(`Line ${lineNum}: Format error, must contain address and amount`);
         continue;
       }
 
@@ -138,34 +138,34 @@ export function parseCSV(
       let amount: string;
 
       if (hasHeaders) {
-        // 根据头部找到对应的列
+        // Find corresponding columns based on headers
         const addressIndex = headers.findIndex(h => h.toLowerCase().includes('address'));
         const amountIndex = headers.findIndex(h => h.toLowerCase().includes('amount'));
 
         if (addressIndex === -1 || amountIndex === -1) {
-          errors.push(`第 ${lineNum} 行: 无法找到address或amount列`);
+          errors.push(`Line ${lineNum}: Cannot find address or amount column`);
           continue;
         }
 
         address = values[addressIndex];
         amount = values[amountIndex];
       } else {
-        // 无头部格式，第一列是地址，第二列是金额
+        // Headerless format, first column is address, second column is amount
         address = values[0];
         amount = values[1];
       }
 
-      // 验证地址
+      // Validate address
       const addressValidation = validateAddress(address);
       if (!addressValidation.isValid) {
-        errors.push(`第 ${lineNum} 行: 地址格式无效 (${address})`);
+        errors.push(`Line ${lineNum}: Invalid address format (${address})`);
         continue;
       }
 
-      // 验证金额
+      // Validate amount
       const amountValidation = validateAmount(amount);
       if (!amountValidation.isValid) {
-        errors.push(`第 ${lineNum} 行: 金额必须是大于0的数字 (${amount})`);
+        errors.push(`Line ${lineNum}: Amount must be a number greater than 0 (${amount})`);
         continue;
       }
 
@@ -181,8 +181,8 @@ export function parseCSV(
       validRecords: data.length,
       invalidRecords: lines.length - startIndex - data.length,
       errors,
-      sampleData: data.slice(0, 5),  // 前5条用于预览
-      data: data                      // 所有数据
+      sampleData: data.slice(0, 5),  // First 5 records for preview
+      data: data                      // All data
     };
 
   } catch (error) {
@@ -191,7 +191,7 @@ export function parseCSV(
       totalRecords: 0,
       validRecords: 0,
       invalidRecords: 0,
-      errors: [`CSV解析失败: ${error instanceof Error ? error.message : '未知错误'}`],
+      errors: [`CSV parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
       sampleData: [],
       data: []
     };
@@ -199,7 +199,7 @@ export function parseCSV(
 }
 
 /**
- * 从文件读取并解析CSV（用于文件上传场景）
+ * Read and parse CSV from file (for file upload scenarios)
  */
 export async function readCSVFile(filePath: string): Promise<CSVRow[]> {
   const fs = require('fs').promises;
@@ -209,13 +209,13 @@ export async function readCSVFile(filePath: string): Promise<CSVRow[]> {
     const result = parseCSV(fileContent, { hasHeaders: true });
 
     if (!result.isValid || result.validRecords === 0) {
-      throw new Error(result.errors.join(', ') || 'CSV文件无效或无有效记录');
+      throw new Error(result.errors.join(', ') || 'CSV file is invalid or has no valid records');
     }
 
-    // 返回所有数据，而不是只有前5个
+    // Return all data, not just the first 5
     return result.data;
 
   } catch (error) {
-    throw new Error(`CSV文件读取失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    throw new Error(`CSV file reading failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

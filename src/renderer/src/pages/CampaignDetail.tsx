@@ -141,14 +141,14 @@ export default function CampaignDetail() {
     // Validate completed recipients count
     if (recipientCounts.sent !== campaignCompleted) {
       warnings.push(
-        `[数据不一致] 完成数量: 接收者表=${recipientCounts.sent}, 活动表=${campaignCompleted}, 差异=${Math.abs(recipientCounts.sent - campaignCompleted)}`
+        `[Data inconsistency] Completed count: Recipients table=${recipientCounts.sent}, Campaign table=${campaignCompleted}, Difference=${Math.abs(recipientCounts.sent - campaignCompleted)}`
       );
     }
 
     // Validate failed recipients count
     if (recipientCounts.failed !== campaignFailed) {
       warnings.push(
-        `[数据不一致] 失败数量: 接收者表=${recipientCounts.failed}, 活动表=${campaignFailed}, 差异=${Math.abs(recipientCounts.failed - campaignFailed)}`
+        `[Data inconsistency] Failed count: Recipients table=${recipientCounts.failed}, Campaign table=${campaignFailed}, Difference=${Math.abs(recipientCounts.failed - campaignFailed)}`
       );
     }
 
@@ -156,7 +156,7 @@ export default function CampaignDetail() {
     const totalInRecipients = recipientsData.length;
     if (totalInRecipients !== campaignTotal) {
       warnings.push(
-        `[数据不一致] 总数: 接收者表=${totalInRecipients}, 活动表=${campaignTotal}, 差异=${Math.abs(totalInRecipients - campaignTotal)}`
+        `[Data inconsistency] Total count: Recipients table=${totalInRecipients}, Campaign table=${campaignTotal}, Difference=${Math.abs(totalInRecipients - campaignTotal)}`
       );
     }
 
@@ -170,18 +170,18 @@ export default function CampaignDetail() {
 
     if (Math.abs(calculatedProgress - actualProgress) > 1) { // Allow 1% tolerance for rounding
       warnings.push(
-        `[进度不一致] 计算进度=${calculatedProgress}%, 实际进度=${actualProgress}%, 差异=${Math.abs(calculatedProgress - actualProgress)}%`
+        `[Progress inconsistency] Calculated progress=${calculatedProgress}%, Actual progress=${actualProgress}%, Difference=${Math.abs(calculatedProgress - actualProgress)}%`
       );
     }
 
     if (warnings.length > 0) {
-      console.warn('⚠️ 数据一致性检查发现问题:', warnings);
-      console.warn('活动数据:', {
+      console.warn('⚠️ Data consistency check found issues:', warnings);
+      console.warn('Campaign data:', {
         totalRecipients: campaignData.totalRecipients,
         completedRecipients: campaignData.completedRecipients,
         failedRecipients: campaignData.failedRecipients,
       });
-      console.warn('接收者统计:', recipientCounts);
+      console.warn('Recipients statistics:', recipientCounts);
     }
 
     return warnings;
@@ -416,18 +416,18 @@ export default function CampaignDetail() {
   const handleStartCampaign = async () => {
     if (!campaign || !id) return;
 
-    // 确认对话框
+    // Confirmation dialog
     const confirmed = confirm(`${t('campaign.confirmStart')}\n\n${t('campaign.campaignName')}: ${campaign.name}\n${t('campaign.sendCount')}: ${campaign.totalRecipients - campaign.completedRecipients - campaign.failedRecipients} ${t('campaign.recipients')}\n\n${t('campaign.clickOkToStart')}`);
 
     if (!confirmed) {
-      return; // 用户取消了
+      return; // User cancelled
     }
 
     try {
       if (window.electronAPI?.campaign) {
                 await window.electronAPI.campaign.start(id);
 
-        // 成功启动后重新加载活动状态
+        // Reload campaign status after successful start
         await loadCampaign(true); // Silent refresh after start
         alert(t('campaign.campaignStarted'));
       }
@@ -441,10 +441,10 @@ export default function CampaignDetail() {
     if (!campaign || !id || !campaign.walletAddress || !campaign.chain) return;
 
     let nativeBalance = 0;
-    let estimatedDeploymentCost = "0.0015"; // 默认估算值
-    let minGasRequired = 0.0015; // 默认最低要求
+    let estimatedDeploymentCost = "0.0015"; // Default estimate value
+    let minGasRequired = 0.0015; // Default minimum requirement
 
-    // 先获取最新余额
+    // Get latest balance first
     try {
       const freshBalance = await window.electronAPI.wallet.getBalance(
         campaign.walletAddress,
@@ -462,14 +462,14 @@ export default function CampaignDetail() {
 
     const nativeTokenSymbol = getNativeTokenSymbol(campaign.chain);
 
-    // 检查余额是否足够（使用动态计算的最低要求）
+    // Check if balance is sufficient (using dynamically calculated minimum requirement)
     if (nativeBalance < minGasRequired) {
       setDeploymentError(`${t('campaign.insufficientGas')} ${minGasRequired.toFixed(6)} ${nativeTokenSymbol} ${t('campaign.toPayDeployment')} ${nativeBalance.toFixed(6)} ${nativeTokenSymbol}`);
       setShowDeploymentModal(true);
       return;
     }
 
-    // 显示部署确认对话框
+    // Show deployment confirmation dialog
     const confirmed = confirm(`${t('campaign.confirmDeploy')}
 
 ${t('campaign.deploymentGasDetails')}
@@ -480,7 +480,7 @@ ${t('campaign.deploymentGasDetails')}
 ${t('campaign.deploymentWarning')}`);
     if (!confirmed) return;
 
-    // 开始部署流程
+    // Start deployment process
     setShowDeploymentModal(true);
     setDeploymentProgress(t('campaign.preparingDeployment'));
     setDeploymentError(null);
@@ -495,7 +495,7 @@ ${t('campaign.deploymentWarning')}`);
         setDeploymentProgress(t('campaign.deploymentSuccess'));
         setDeploymentResult(result);
 
-        // 刷新活动状态
+        // Refresh campaign status
         setTimeout(async () => {
           await loadCampaign(true); // Silent refresh after deployment
           await refreshBalances();
@@ -663,10 +663,10 @@ ${t('campaign.deploymentWarning')}`);
     }
 
     try {
-      // 使用统一的私钥导出函数
+      // Use unified private key export function
       const privateKeyDisplay = await exportPrivateKey(campaign.walletPrivateKeyBase64 || '', campaign);
 
-      // 显示自定义私钥弹窗
+      // Show custom private key popup
       setExportedWallet({
         address: campaign.walletAddress || '',
         privateKey: privateKeyDisplay
@@ -877,10 +877,10 @@ ${t('campaign.deploymentWarning')}`);
         let nativeBalance, tokenBalance = null;
 
         if (isSolanaChain(campaign)) {
-          // Solana逻辑
+          // Solana logic
           if (window.electronAPI?.solana) {
             try {
-              // 获取SOL余额
+              // Get SOL balance
               const chainRpcUrl = getChainByName(campaign.chain)?.rpcUrl;
               if (!chainRpcUrl) {
                 console.error('No RPC URL found for Solana chain');
@@ -893,7 +893,7 @@ ${t('campaign.deploymentWarning')}`);
 
               nativeBalance = { native: solBalance.balance || '0' };
 
-              // 如果是SPL代币，获取代币余额
+              // If it's an SPL token, get token balance
               if (campaign.tokenAddress &&
                   campaign.tokenAddress !== 'So11111111111111111111111111111111111111112') {
                 try {
@@ -915,7 +915,7 @@ ${t('campaign.deploymentWarning')}`);
               }
             } catch (error) {
               console.error('Failed to get Solana balances:', error);
-              // 如果Solana API失败，尝试使用通用API作为fallback
+              // If Solana API fails, try using generic API as fallback
               try {
                 nativeBalance = await window.electronAPI.wallet.getBalance(
                   campaign.walletAddress,
@@ -942,7 +942,7 @@ ${t('campaign.deploymentWarning')}`);
             tokenBalance = null;
           }
         } else {
-          // EVM逻辑
+          // EVM logic
           nativeBalance = await window.electronAPI.wallet.getBalance(
             campaign.walletAddress,
             campaign.chain
@@ -1200,7 +1200,7 @@ ${t('campaign.deploymentWarning')}`);
               {t('campaign.campaignInfo')}
             </h2>
             <div className="space-y-4">
-              {/* 主要信息 */}
+              {/* Main information */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-base-content/70">{t('campaign.campaignStatus')}:</span>
@@ -1242,7 +1242,7 @@ ${t('campaign.deploymentWarning')}`);
                 </div>
               </div>
 
-              {/* 次要信息 */}
+              {/* Secondary information */}
               <div className="divider"></div>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -1324,7 +1324,7 @@ ${t('campaign.deploymentWarning')}`);
                     </div>
                   </div>
 
-                  {/* Token Balance - 只在非原生代币时显示 */}
+                  {/* Token Balance - Only show for non-native tokens */}
                   {!isNativeToken(campaign.tokenAddress) && (
                     <div className="p-3 bg-base-200 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
@@ -1364,9 +1364,9 @@ ${t('campaign.deploymentWarning')}`);
                     {/* Withdrawal buttons */}
                     <div className="divider my-3"></div>
                     <div className="text-sm text-base-content/60 mb-2">{t('campaign.fundsWithdrawal')}</div>
-                    {/* 判断是否是原生代币 */}
+                    {/* Check if it's native token */}
                     {!isNativeToken(campaign.tokenAddress) ? (
-                      // 非原生代币：显示两个按钮
+                      // Non-native token: Show two buttons
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={() => handleOpenWithdrawModal('tokens')}
@@ -1382,7 +1382,7 @@ ${t('campaign.deploymentWarning')}`);
                         </button>
                       </div>
                     ) : (
-                      // 原生代币：只显示回收原生币按钮
+                      // Native token: Only show withdraw native token button
                       <button
                         onClick={() => handleOpenWithdrawModal('native')}
                         className="btn btn-warning btn-sm w-full"

@@ -1,6 +1,6 @@
 /**
- * 统一的私钥处理工具函数
- * 用于消除私钥编码/解码的重复逻辑
+ * Unified private key handling utility functions
+ * Used to eliminate duplicate logic for private key encoding/decoding
  */
 
 import { Buffer } from 'buffer';
@@ -14,24 +14,24 @@ export interface PrivateKeyData {
 }
 
 /**
- * 统一的私钥Base64编码工具
+ * Unified private key Base64 encoding utility
  */
 export class KeyUtils {
   /**
-   * 将EVM私钥转换为Base64格式
-   * @param privateKeyHex EVM格式的私钥 (0x...)
-   * @returns Base64编码的私钥
+   * Convert EVM private key to Base64 format
+   * @param privateKeyHex EVM format private key (0x...)
+   * @returns Base64 encoded private key
    */
   static encodeEVMPrivateKey(privateKeyHex: string): string {
-    // 移除0x前缀并转换为Buffer
+    // Remove 0x prefix and convert to Buffer
     const privateKeyBuffer = Buffer.from(privateKeyHex.slice(2), 'hex');
     return privateKeyBuffer.toString('base64');
   }
 
   /**
-   * 将Solana私钥转换为Base64格式
-   * @param secretKey 64字节的Solana secret key
-   * @returns Base64编码的私钥
+   * Convert Solana private key to Base64 format
+   * @param secretKey 64-byte Solana secret key
+   * @returns Base64 encoded private key
    */
   static encodeSolanaPrivateKey(secretKey: Uint8Array): string {
     const privateKeyBuffer = Buffer.from(secretKey);
@@ -39,9 +39,9 @@ export class KeyUtils {
   }
 
   /**
-   * 从Base64私钥解码为Buffer
-   * @param privateKeyBase64 Base64编码的私钥
-   * @returns Buffer格式的私钥
+   * Decode Base64 private key to Buffer
+   * @param privateKeyBase64 Base64 encoded private key
+   * @returns Buffer format private key
    */
   static decodePrivateKey(privateKeyBase64: string): Buffer {
     try {
@@ -53,9 +53,9 @@ export class KeyUtils {
   }
 
   /**
-   * 将Base64私钥转换为EVM hex格式
-   * @param privateKeyBase64 Base64编码的私钥
-   * @returns EVM格式的私钥 (0x...)
+   * Convert Base64 private key to EVM hex format
+   * @param privateKeyBase64 Base64 encoded private key
+   * @returns EVM format private key (0x...)
    */
   static decodeToEVMHex(privateKeyBase64: string): string {
     const privateKeyBuffer = this.decodePrivateKey(privateKeyBase64);
@@ -63,9 +63,9 @@ export class KeyUtils {
   }
 
   /**
-   * 将Base64私钥转换为Solana Uint8Array格式
-   * @param privateKeyBase64 Base64编码的私钥
-   * @returns Solana格式的私钥 (64字节Uint8Array)
+   * Convert Base64 private key to Solana Uint8Array format
+   * @param privateKeyBase64 Base64 encoded private key
+   * @returns Solana format private key (64-byte Uint8Array)
    */
   static decodeToSolanaBytes(privateKeyBase64: string): Uint8Array {
     const privateKeyBuffer = this.decodePrivateKey(privateKeyBase64);
@@ -73,19 +73,19 @@ export class KeyUtils {
   }
 
   /**
-   * 验证私钥格式并获取详细信息
-   * @param privateKeyBase64 Base64编码的私钥
-   * @param type 可选的私钥类型，如果不提供则自动检测
-   * @returns 私钥验证结果
+   * Validate private key format and get detailed information
+   * @param privateKeyBase64 Base64 encoded private key
+   * @param type Optional private key type, auto-detected if not provided
+   * @returns Private key validation result
    */
   static validatePrivateKey(privateKeyBase64: string, type?: 'evm' | 'solana'): PrivateKeyData {
     try {
       const privateKeyBytes = this.decodePrivateKey(privateKeyBase64);
 
-      // 如果指定了类型，直接验证
+      // If type is specified, validate directly
       if (type) {
         if (type === 'evm') {
-          // EVM私钥应该是32字节
+          // EVM private key should be 32 bytes
           if (privateKeyBytes.length !== 32) {
             return {
               privateKeyBase64,
@@ -93,7 +93,7 @@ export class KeyUtils {
             };
           }
         } else if (type === 'solana') {
-          // Solana私钥应该是64字节
+          // Solana private key should be 64 bytes
           if (privateKeyBytes.length !== 64) {
             return {
               privateKeyBase64,
@@ -110,18 +110,18 @@ export class KeyUtils {
         };
       }
 
-      // 自动检测类型
+      // Auto-detect type
       if (privateKeyBytes.length === 32) {
-        // 32字节，可能是EVM私钥或32字节Solana私钥
+        // 32 bytes, could be EVM private key or 32-byte Solana private key
         return {
           privateKeyBase64,
           privateKeyBytes,
           privateKeyHex: '0x' + privateKeyBytes.toString('hex'),
           isValid: true,
-          type: 'evm' // 默认认为是EVM
+          type: 'evm' // Default to EVM
         };
       } else if (privateKeyBytes.length === 64) {
-        // 64字节，应该是完整的Solana keypair
+        // 64 bytes, should be a complete Solana keypair
         return {
           privateKeyBase64,
           privateKeyBytes,
@@ -129,7 +129,7 @@ export class KeyUtils {
           type: 'solana'
         };
       } else {
-        // 无效长度
+        // Invalid length
         return {
           privateKeyBase64,
           isValid: false
@@ -145,35 +145,35 @@ export class KeyUtils {
   }
 
   /**
-   * 安全地清零Buffer内容
-   * @param buffer 要清零的Buffer
+   * Securely clear Buffer content
+   * @param buffer Buffer to clear
    */
   static clearBuffer(buffer: Buffer): void {
     buffer.fill(0);
   }
 
   /**
-   * 安全地生成随机私钥字节
-   * @param length 字节长度 (EVM: 32, Solana: 64)
-   * @returns 随机私钥Buffer
+   * Securely generate random private key bytes
+   * @param length Byte length (EVM: 32, Solana: 64)
+   * @returns Random private key Buffer
    */
   static generateRandomPrivateKey(length: 32 | 64): Buffer {
     if (length === 32) {
-      // EVM私钥 (32字节)
+      // EVM private key (32 bytes)
       const privateKeyBytes = Buffer.alloc(32);
       crypto.getRandomValues(privateKeyBytes);
       return privateKeyBytes;
     } else {
-      // Solana私钥 (64字节) - 这里应该使用真正的keypair生成
-      // 这里只是简单生成64字节，实际应该使用 @solana/web3.js 的 Keypair.generate()
+      // Solana private key (64 bytes) - should use proper keypair generation here
+      // This just generates 64 bytes simply, should use @solana/web3.js Keypair.generate() in practice
       throw new Error('Solana keypair generation should use @solana/web3.js Keypair.generate()');
     }
   }
 
   /**
-   * 获取私钥长度信息
-   * @param privateKeyBase64 Base64编码的私钥
-   * @returns 私钥长度信息
+   * Get private key length information
+   * @param privateKeyBase64 Base64 encoded private key
+   * @returns Private key length information
    */
   static getKeyLengthInfo(privateKeyBase64: string): {
     bytes: number;

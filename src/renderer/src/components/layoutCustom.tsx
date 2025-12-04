@@ -17,11 +17,11 @@ export default function Layout({ children }: LayoutProps) {
   const [gasPrices, setGasPrices] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
-    // 初始化价格数据
+    // Initialize price data
     updatePrices();
 
-    // 设置定时更新
-    const interval = setInterval(updatePrices, 30000); // 30秒更新一次
+    // Set up periodic updates
+    const interval = setInterval(updatePrices, 30000); // Update every 30 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -29,7 +29,7 @@ export default function Layout({ children }: LayoutProps) {
   const updatePrices = async () => {
     try {
       if (window.electronAPI?.price) {
-        // 获取主要代币价格
+        // Get main token prices
         const prices = await window.electronAPI.price.getPrices(['ETH', 'MATIC', 'SOL']);
         setPriceInfo({
           eth: prices.ETH || 0,
@@ -37,7 +37,7 @@ export default function Layout({ children }: LayoutProps) {
           sol: prices.SOL || 0
         });
 
-        // 获取Gas价格 - 使用新的gas服务
+        // Get Gas prices - Use new gas service
         try {
           const chains = await window.electronAPI.chain.getEVMChains(true);
           const ethChain = chains.find(c => c.name.toLowerCase().includes('ethereum'));
@@ -72,10 +72,10 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navItems = [
-    { path: '/', label: '📊 仪表盘', icon: '📊' },
-    { path: '/campaign/create', label: '➕ 新建活动', icon: '➕' },
-    { path: '/history', label: '📜 历史', icon: '📜' },
-    { path: '/settings', label: '⚙️ 设置', icon: '⚙️' },
+    { path: '/', label: '📊 Dashboard', icon: '📊' },
+    { path: '/campaign/create', label: '➕ New Campaign', icon: '➕' },
+    { path: '/history', label: '📜 History', icon: '📜' },
+    { path: '/settings', label: '⚙️ Settings', icon: '⚙️' },
   ];
 
   const formatPrice = (price: number) => {
@@ -93,20 +93,20 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex h-screen bg-cryptocast-dark text-white">
-      {/* 侧边栏 */}
+      {/* Sidebar */}
       <aside className="w-72 bg-cryptocast-secondary p-6 border-r border-gray-800">
         <div className="mb-10">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cryptocast-purple via-cryptocast-cyan to-cryptocast-green bg-clip-text text-transparent">
             CryptoCast
           </h1>
-          <p className="text-xs text-gray-500 mt-1">仪表盘 v1.0.0</p>
+          <p className="text-xs text-gray-500 mt-1">Dashboard v1.0.0</p>
         </div>
 
-        {/* 价格显示 */}
+        {/* Price display */}
         <div className="mb-6 card-cryptocast p-4 rounded-xl">
           <h3 className="text-xs font-semibold mb-4 text-cryptocast-purple flex items-center">
             <span className="mr-2">💰</span>
-            实时价格
+            Live Prices
           </h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between items-center p-2 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
@@ -124,11 +124,11 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </div>
 
-        {/* Gas价格显示 */}
+        {/* Gas price display */}
         <div className="mb-8 card-cryptocast p-4 rounded-xl">
           <h3 className="text-xs font-semibold mb-4 text-cryptocast-cyan flex items-center">
             <span className="mr-2">⚡</span>
-            Gas价格
+            Gas Prices
           </h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between items-center p-2 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
@@ -164,7 +164,7 @@ export default function Layout({ children }: LayoutProps) {
         </nav>
       </aside>
 
-      {/* 主内容区 */}
+      {/* Main content area */}
       <main className="flex-1 overflow-auto p-10 bg-gradient-to-br from-cryptocast-dark via-cryptocast-dark to-cryptocast-dark-light">
         {children}
       </main>

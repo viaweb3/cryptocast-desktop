@@ -87,7 +87,7 @@ export class ContractService {
 
       // Deploy contract
       // Our contract has no constructor arguments, so we pass tx options directly
-      // 使用配置化的Gas limit
+      // Use configured gas limit
       const deployOptions = {
         ...txOptions,
         gasLimit: BigInt(DEFAULTS.GAS_LIMITS.campaign_deploy)
@@ -146,7 +146,7 @@ export class ContractService {
   }
 
   /**
-   * 直接执行批量转账 - 支持原生代币和 ERC20 代币
+   * Execute batch transfer directly - supports native tokens and ERC20 tokens
    */
   async batchTransfer(
     contractAddress: string,
@@ -163,11 +163,11 @@ export class ContractService {
 
       // Validate inputs
       if (recipients.length !== amounts.length) {
-        throw new Error('收币地址和金额数组长度必须相同');
+        throw new Error('Recipient addresses and amounts array lengths must match');
       }
 
       if (recipients.length === 0) {
-        throw new Error('收币地址不能为空');
+        throw new Error('Recipient addresses cannot be empty');
       }
 
       const isNative = isNativeToken(tokenAddress);
@@ -203,7 +203,7 @@ export class ContractService {
       const balance = await provider.getBalance(wallet.address);
       logger.debug('Wallet balance', { balance: ethers.formatEther(balance) });
 
-      // 执行批量转账
+      // Execute batch transfer
       logger.info('Executing batch transfer', {
         recipientCount: recipients.length,
         isNative,
@@ -238,7 +238,7 @@ export class ContractService {
         actualCost: receipt ? ethers.formatEther(receipt.gasUsed * receipt.gasPrice) : undefined
       });
 
-      // 计算总金额
+      // Calculate total amount
       const totalAmount = bigintAmounts.reduce((sum, amount) => sum + amount, 0n);
 
       return {
@@ -248,8 +248,8 @@ export class ContractService {
         gasUsed: receipt?.gasUsed?.toString() || '0'
       };
     } catch (error) {
-      logger.error('批量转账失败', error as Error, { recipientCount: recipients.length });
-      throw new Error(`批量转账失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      logger.error('Batch transfer failed', error as Error, { recipientCount: recipients.length });
+      throw new Error(`Batch transfer failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

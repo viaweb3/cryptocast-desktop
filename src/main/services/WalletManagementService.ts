@@ -39,7 +39,7 @@ export class WalletManagementService {
   }
 
   /**
-   * 获取所有活动钱包列表
+   * Get all active wallet lists
    */
   async listActivityWallets(options?: {
     status?: string;
@@ -100,10 +100,10 @@ export class WalletManagementService {
 
       const wallets: ActivityWallet[] = await Promise.all(
         rows.map(async (row) => {
-          // 统一使用 chain_id
+          // Use chain_id uniformly
           const chain = row.chain_id?.toString() || '';
 
-          // 为每个钱包获取余额信息（这里返回基本结构，实际余额需要链上查询）
+          // Get balance information for each wallet (here returns basic structure, actual balance needs on-chain query)
           return {
             id: row.id,
             campaignId: row.campaign_id,
@@ -116,7 +116,7 @@ export class WalletManagementService {
                 tokenAddress: row.token_address || NATIVE_TOKEN_ADDRESSES.EVM,
                 tokenSymbol: row.token_symbol || 'ETH',
                 tokenDecimals: 18,
-                balance: '0', // 需要链上查询
+                balance: '0', // Requires on-chain query
                 usdValue: '0',
               },
             ],
@@ -138,7 +138,7 @@ export class WalletManagementService {
   }
 
   /**
-   * 获取单个钱包的详细余额信息
+   * Get detailed balance information for a single wallet
    */
   async getWalletBalances(
     campaignId: string
@@ -166,7 +166,7 @@ export class WalletManagementService {
         return null;
       }
 
-      // 获取链的RPC URL
+      // Get chain RPC URL
       const chains = await this.chainService.getEVMChains();
       const chainConfig = chains.find((c) => c.chainId === campaign.chain_id);
 
@@ -174,20 +174,20 @@ export class WalletManagementService {
         throw new Error(`Chain configuration not found for chain ID ${campaign.chain_id}`);
       }
 
-      // 查询代币余额
+      // Query token balance
       const tokenBalance = await this.walletService.getEVMBalance(
         campaign.wallet_address,
         chainConfig.rpcUrl,
         campaign.token_address
       );
 
-      // 查询原生代币余额（用于Gas）
+      // Query native token balance (for Gas)
       const nativeBalance = await this.walletService.getEVMBalance(
         campaign.wallet_address,
         chainConfig.rpcUrl
       );
 
-      // 统一使用 chain_id
+      // Use chain_id uniformly
       const chain = campaign.chain_id?.toString() || '';
 
       return {
@@ -215,7 +215,7 @@ export class WalletManagementService {
   }
 
   /**
-   * 批量刷新钱包余额
+   * Batch refresh wallet balances
    */
   async refreshWalletBalances(campaignIds: string[]): Promise<Map<string, any>> {
     this.logger.debug('Refreshing wallet balances', { count: campaignIds.length });

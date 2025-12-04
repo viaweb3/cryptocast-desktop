@@ -1,6 +1,6 @@
 /**
- * 统一日志记录系统
- * 提供结构化、分级别的日志记录功能
+ * Unified logging system
+ * Provides structured, hierarchical logging functionality
  * Refactored to use Winston for robust logging
  */
 
@@ -112,7 +112,7 @@ export class Logger {
   }
 
   /**
-   * 获取日志实例（单例模式）
+   * Get logger instance (singleton pattern)
    */
   static getInstance(config?: Partial<LoggerConfig>): Logger {
     if (!Logger.instance) {
@@ -122,42 +122,42 @@ export class Logger {
   }
 
   /**
-   * 记录调试日志
+   * Record debug log
    */
   debug(message: string, data?: Record<string, unknown>, category: string = 'GENERAL'): void {
     this.log(LogLevel.DEBUG, message, data, category);
   }
 
   /**
-   * 记录信息日志
+   * Record info log
    */
   info(message: string, data?: Record<string, unknown>, category: string = 'GENERAL'): void {
     this.log(LogLevel.INFO, message, data, category);
   }
 
   /**
-   * 记录警告日志
+   * Record warning log
    */
   warn(message: string, data?: Record<string, unknown>, category: string = 'GENERAL'): void {
     this.log(LogLevel.WARN, message, data, category);
   }
 
   /**
-   * 记录错误日志
+   * Record error log
    */
   error(message: string, error?: Error, data?: Record<string, unknown>, category: string = 'ERROR'): void {
     this.log(LogLevel.ERROR, message, data, category, error);
   }
 
   /**
-   * 记录致命错误日志
+   * Record fatal error log
    */
   fatal(message: string, error?: Error, data?: Record<string, unknown>, category: string = 'FATAL'): void {
     this.log(LogLevel.FATAL, message, data, category, error);
   }
 
   /**
-   * 专用日志方法
+   * Specialized logging methods
    */
   blockchain(message: string, data?: Record<string, unknown>): void {
     this.info(message, data, 'BLOCKCHAIN');
@@ -192,7 +192,7 @@ export class Logger {
   }
 
   /**
-   * 核心日志记录方法
+   * Core logging method
    */
   private log(
     level: LogLevel,
@@ -281,7 +281,7 @@ export class Logger {
   }
 
   /**
-   * 创建子日志器（带模块前缀）
+   * Create child logger (with module prefix)
    */
   child(moduleName: string): {
     debug: (message: string, data?: Record<string, unknown>) => void;
@@ -313,5 +313,5 @@ export class Logger {
   }
 }
 
-// 导出全局日志实例
+// Export global logger instance
 export const logger = Logger.getInstance();

@@ -77,7 +77,7 @@ export class BlockchainService {
     const effectiveRpcUrl = rpcUrl || await this.getDefaultRPC(chain);
     const provider = new ethers.JsonRpcProvider(effectiveRpcUrl);
 
-    // 获取原生代币余额
+    // Get native token balance
     const nativeBalance = await provider.getBalance(address);
 
     let tokenBalance: string | undefined;
@@ -135,41 +135,41 @@ export class BlockchainService {
     tokenAddress?: string,
     rpcUrl?: string
   ): Promise<BalanceData> {
-    // 移除硬编码RPC URL，应该从链配置中获取
+    // Remove hardcoded RPC URL, should get from chain configuration
     if (!rpcUrl) {
       throw new Error('Solana RPC URL is required');
     }
     const connection = new Connection(rpcUrl);
     const publicKey = new PublicKey(address);
 
-    // 获取SOL余额
+    // Get SOL balance
     const solBalance = await connection.getBalance(publicKey);
     const nativeBalance = (solBalance / LAMPORTS_PER_SOL).toString();
 
     let tokenBalance: string | undefined;
     if (tokenAddress) {
       try {
-        // 获取 token mint 地址
+        // Get token mint address
         const mintPublicKey = new PublicKey(tokenAddress);
 
-        // 获取关联的 token 账户地址
+        // Get associated token account address
         const tokenAccounts = await connection.getTokenAccountsByOwner(publicKey, {
           mint: mintPublicKey,
         });
 
         if (tokenAccounts.value.length > 0) {
-          // 解析 token 账户数据
+          // Parse token account data
           const accountInfo = tokenAccounts.value[0].account;
           const data = Buffer.from(accountInfo.data);
 
-          // Token账户数据结构: amount在偏移量64的位置，占8字节
+          // Token account data structure: amount is at offset 64, occupying 8 bytes
           const amount = data.readBigUInt64LE(64);
 
-          // 获取 token decimals
+          // Get token decimals
           const mintInfo = await connection.getParsedAccountInfo(mintPublicKey);
           const decimals = (mintInfo.value?.data as any)?.parsed?.info?.decimals || 9;
 
-          // 转换为可读格式
+          // Convert to readable format
           tokenBalance = (Number(amount) / Math.pow(10, decimals)).toString();
         } else {
           tokenBalance = '0';
@@ -216,24 +216,24 @@ export class BlockchainService {
   ): Promise<GasEstimate> {
     const provider = new ethers.JsonRpcProvider(rpcUrl || await this.getDefaultRPC(chain));
 
-    // 获取当前gas价格
+    // Get current gas price
     const feeData = await provider.getFeeData();
     const gasPrice = feeData.gasPrice || ethers.parseUnits('20', 'gwei');
 
     let gasLimit: bigint;
 
     if (tokenAddress && recipientCount) {
-      // 估算批量转账的gas
+      // Estimate batch transfer gas
       gasLimit = await this.estimateBatchTransferGas(recipientCount);
     } else {
-      // 使用配置化的默认gas限制
-      gasLimit = BigInt(DEFAULTS.GAS_LIMITS.standard); // 标准转账
+      // Use configured default gas limit
+      gasLimit = BigInt(DEFAULTS.GAS_LIMITS.standard); // Standard transfer
     }
 
     const gasCost = gasLimit * gasPrice;
     const gasCostEth = ethers.formatEther(gasCost);
 
-    // 获取ETH价格（简化处理，实际应该调用价格API）
+    // Get ETH price (simplified, should call price API in practice)
     const ethPriceUsd = await this.getETHPriceUSD();
     const gasCostUsd = (parseFloat(gasCostEth) * ethPriceUsd).toFixed(6);
 
@@ -246,9 +246,9 @@ export class BlockchainService {
   }
 
   private async estimateBatchTransferGas(recipientCount: number): Promise<bigint> {
-    // 使用配置化的gas估算
+    // Use configured gas estimation
     const gasPerTransfer = BigInt(DEFAULTS.GAS_LIMITS.token);
-    const baseGas = BigInt(DEFAULTS.GAS_LIMITS.campaign); // 合约调用基础gas
+    const baseGas = BigInt(DEFAULTS.GAS_LIMITS.campaign); // Base gas for contract calls
     return baseGas + (gasPerTransfer * BigInt(recipientCount));
   }
 
@@ -262,36 +262,36 @@ export class BlockchainService {
         ? new Connection(rpcUrl, 'confirmed')
         : new Connection('https://solana-rpc.publicnode.com', 'confirmed');
 
-      // 获取最新的区块哈希
+      // Get latest block hash
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
-      // 使用配置化的Solana费用
+      // Use configured Solana fees
       const baseFeePerSignature = BigInt(DEFAULTS.SOLANA_FEES.base_fee_per_signature);
 
-      // Solana交易的典型组件费用估算
+      // Typical component fee estimation for Solana transactions
       const computeUnitsPerInstruction = DEFAULTS.SOLANA_FEES.compute_unit_limit;
-      const computeUnitPrice = BigInt(0); // 默认为0
+      const computeUnitPrice = BigInt(0); // Default to 0
 
-      // 对于批量转账，每个交易包含多个指令
-      const instructionsPerTransfer = 5; // 转账 + 可能的账户创建 + 其他指令
+      // For batch transfers, each transaction contains multiple instructions
+      const instructionsPerTransfer = 5; // Transfer + possible account creation + other instructions
       const totalInstructions = transactionCount * instructionsPerTransfer;
       const totalComputeUnits = computeUnitsPerInstruction * totalInstructions;
 
-      // 计算总费用
+      // Calculate total fees
       const computeFee = BigInt(totalComputeUnits) * computeUnitPrice;
       const signatureFees = baseFeePerSignature * BigInt(transactionCount + 1); // +1 for payer signature
 
-      // SPL转账的额外费用（创建关联账户等）
-      const splAccountCreationFee = BigInt(DEFAULTS.SOLANA_FEES.spl_account_creation_fee) * BigInt(Math.min(transactionCount, Math.floor(transactionCount * 0.3))); // 假设30%需要创建账户
+      // Additional fees for SPL transfers (creating associated accounts, etc.)
+      const splAccountCreationFee = BigInt(DEFAULTS.SOLANA_FEES.spl_account_creation_fee) * BigInt(Math.min(transactionCount, Math.floor(transactionCount * 0.3))); // Assume 30% need account creation
 
       const totalLamports = computeFee + signatureFees + splAccountCreationFee;
       const solCost = totalLamports / BigInt(LAMPORTS_PER_SOL);
 
-      // 获取SOL价格
+      // Get SOL price
       const solPriceUsd = await this.getSOLPriceUSD();
       const solCostUsd = (Number(solCost) * solPriceUsd).toFixed(6);
 
-      // 添加网络拥堵缓冲 (20%)
+      // Add network congestion buffer (20%)
       const bufferedLamports = totalLamports * BigInt(12) / BigInt(10);
       const bufferedSolCost = bufferedLamports / BigInt(LAMPORTS_PER_SOL);
       const bufferedSolCostUsd = (Number(bufferedSolCost) * solPriceUsd).toFixed(6);
@@ -312,7 +312,7 @@ export class BlockchainService {
       logger.error('Failed to get dynamic Solana gas estimation', error as Error);
       // Fallback to static estimation
       const baseFeePerSignature = BigInt(DEFAULTS.SOLANA_FEES.base_fee_per_signature);
-      const totalLamports = baseFeePerSignature * BigInt(transactionCount * 3); // 更保守的估算
+      const totalLamports = baseFeePerSignature * BigInt(transactionCount * 3); // More conservative estimation
       const solCost = totalLamports / BigInt(LAMPORTS_PER_SOL);
 
       const solPriceUsd = await this.getSOLPriceUSD();
@@ -332,17 +332,17 @@ export class BlockchainService {
   }
 
   private async getDefaultRPC(chain: string): Promise<string> {
-    // 尝试从数据库获取 RPC URL
+    // Try to get RPC URL from database
     try {
       if (this.databaseManager) {
         const db = this.databaseManager.getDatabase();
 
-        // 首先尝试按名称或类型查询
+        // First try to query by name or type
         let chainData = await db.prepare(
           'SELECT rpc_url FROM chains WHERE name = ? OR type = ? LIMIT 1'
         ).get(chain, chain.toLowerCase()) as { rpc_url?: string } | undefined;
 
-        // 如果没有找到，尝试按 chain_id 查询（适用于传入的是数字字符串的情况）
+        // If not found, try to query by chain_id (for cases where input is a numeric string)
         if (!chainData || !chainData.rpc_url) {
           chainData = await db.prepare(
             'SELECT rpc_url FROM chains WHERE chain_id = ? LIMIT 1'
@@ -359,7 +359,7 @@ export class BlockchainService {
 
     // Fallback RPC URLs
     const rpcMap: { [key: string]: string } = {
-      // 主网
+      // Mainnet
       '1': 'https://eth.llamarpc.com',
       'ethereum': 'https://eth.llamarpc.com',
       '137': 'https://polygon.llamarpc.com',
@@ -374,7 +374,7 @@ export class BlockchainService {
       'bsc': 'https://bsc.llamarpc.com',
       '43114': 'https://avalanche.llamarpc.com',
       'avalanche': 'https://avalanche.llamarpc.com',
-      // 测试网
+      // Testnet
       '11155111': 'https://ethereum-sepolia-rpc.publicnode.com',
       'ethereum sepolia testnet': 'https://ethereum-sepolia-rpc.publicnode.com',
       'sepolia': 'https://ethereum-sepolia-rpc.publicnode.com',
@@ -402,9 +402,9 @@ export class BlockchainService {
     }
     try {
       // Fallback to hardcoded price
-      return 60; // 假设SOL价格为$60
+      return 60; // Assume SOL price is $60
     } catch (error) {
-      return 60; // 默认价格
+      return 60; // Default price
     }
   }
 
@@ -454,7 +454,7 @@ export class BlockchainService {
     txHash: string,
     rpcUrl?: string
   ): Promise<TransactionData> {
-    // 移除硬编码RPC URL，应该从链配置中获取
+    // Remove hardcoded RPC URL, should get from chain configuration
     if (!rpcUrl) {
       throw new Error('Solana RPC URL is required');
     }
@@ -500,8 +500,8 @@ export class BlockchainService {
   async waitForTransactionConfirmation(
     txHash: string,
     chain: string,
-    maxWaitTime = 300000, // 5分钟
-    checkInterval = 5000 // 5秒
+    maxWaitTime = 300000, // 5 minutes
+    checkInterval = 5000 // 5 seconds
   ): Promise<TransactionData> {
     const startTime = Date.now();
 
@@ -517,7 +517,7 @@ export class BlockchainService {
           return status;
         }
 
-        // 等待下次检查
+        // Wait for next check
         await new Promise(resolve => setTimeout(resolve, checkInterval));
       } catch (error) {
         logger.error('Error checking transaction status', error as Error, { txHash });

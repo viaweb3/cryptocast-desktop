@@ -7,7 +7,7 @@ const logger = Logger.getInstance().child('ChainService');
 export interface Chain {
   id?: number;
   type: 'evm' | 'solana';
-  chainId?: number;  // EVM链ID或Solana链ID (501主网, 502测试网)
+  chainId?: number;  // EVM chain ID or Solana chain ID (501 mainnet, 502 testnet)
   name: string;
   rpcUrl: string;
   rpcBackup?: string;
@@ -44,7 +44,7 @@ export class ChainService {
     this.db = databaseManager.getDatabase();
   }
 
-  // 统一获取所有链的方法
+  // Unified method to get all chains
   async getAllChains(): Promise<Chain[]> {
     try {
       logger.debug('[ChainService] getAllChains: Starting to fetch chains from database');
@@ -63,7 +63,7 @@ export class ChainService {
     }
   }
 
-  // 获取EVM链（向后兼容）
+  // Get EVM chains (backward compatible)
   async getEVMChains(): Promise<EVMChain[]> {
     try {
       logger.debug('[ChainService] getEVMChains: Starting to fetch EVM chains from database');
@@ -95,13 +95,13 @@ export class ChainService {
 
   async addEVMChain(chainData: Omit<EVMChain, 'id' | 'type'>): Promise<number> {
     try {
-      // 验证Chain ID是否重复
+      // Validate Chain ID is not duplicate
       const existing = await this.db.prepare('SELECT id FROM chains WHERE chain_id = ? AND type = ?').get(chainData.chainId, 'evm');
       if (existing) {
         throw new Error(`Chain ID ${chainData.chainId} already exists`);
       }
 
-      // 测试RPC连接
+      // Test RPC connection
       const testResult = await this.testEVMLatencyByUrl(chainData.rpcUrl);
       if (!testResult.success) {
         throw new Error(`RPC connection failed: ${testResult.error}`);
@@ -145,7 +145,7 @@ export class ChainService {
         params.push(updates.name);
       }
       if (updates.rpcUrl !== undefined) {
-        // 测试新的RPC连接
+        // Test new RPC connection
         const testResult = await this.testEVMLatencyByUrl(updates.rpcUrl);
         if (!testResult.success) {
           throw new Error(`RPC connection failed: ${testResult.error}`);
@@ -198,7 +198,7 @@ export class ChainService {
 
   async deleteEVMChain(chainId: number): Promise<void> {
     try {
-      // 检查是否是内置链
+      // Check if it's a built-in chain
       const chain = await this.db.prepare('SELECT is_custom FROM chains WHERE id = ?').get(chainId) as any;
       if (!chain || !chain.is_custom) {
         throw new Error('Cannot delete built-in chain');
@@ -232,15 +232,15 @@ export class ChainService {
       logger.debug('[ChainService] Starting RPC test', { rpcUrl });
       const startTime = Date.now();
 
-      // 创建带超时的Promise
+      // Create promise with timeout
       const provider = new ethers.JsonRpcProvider(rpcUrl, undefined, {
-        batchMaxCount: 1, // 禁用批处理
-        polling: false,   // 禁用轮询
+        batchMaxCount: 1, // Disable batching
+        polling: false,   // Disable polling
       });
 
-      // 设置10秒超时
+      // Set 10 second timeout
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('RPC请求超时')), 10000);
+        setTimeout(() => reject(new Error('RPC request timeout')), 10000);
       });
 
       const blockNumberPromise = provider.getBlockNumber();
@@ -264,7 +264,7 @@ export class ChainService {
     }
   }
 
-  // 获取Solana链（新的统一方法）
+  // Get Solana chains (new unified method)
   async getSolanaChains(): Promise<SolanaChain[]> {
     try {
       logger.debug('[ChainService] getSolanaChains: Starting to fetch Solana chains from database');
@@ -284,7 +284,7 @@ export class ChainService {
     }
   }
 
-  // 向后兼容的Solana RPC获取方法
+  // Backward compatible Solana RPC retrieval method
   async getSolanaRPCs(): Promise<SolanaChain[]> {
     return this.getSolanaChains();
   }
@@ -318,7 +318,7 @@ export class ChainService {
       const startTime = Date.now();
       const connection = new Connection(rpcUrl, 'confirmed');
 
-      // 测试连接
+      // Test connection
       const slot = await connection.getSlot();
       const latency = Date.now() - startTime;
 
@@ -338,7 +338,7 @@ export class ChainService {
   // Health check functionality removed as part of database cleanup
   // Latency, uptime_24h, and last_checked fields no longer exist in unified chains table
 
-  // 新的统一映射方法
+  // New unified mapping method
   private mapRowToChain(row: any): Chain {
     // Debug: Log the complete raw row data from database
     logger.debug('[ChainService] mapRowToChain: Raw database row data', {
@@ -370,7 +370,7 @@ export class ChainService {
       createdAt: row.created_at,
     };
 
-    // 为不同类型添加特定字段
+    // Add type-specific fields for different chain types
     if (row.type === 'evm') {
       const evmChain: EVMChain = {
         ...baseChain,
@@ -389,7 +389,7 @@ export class ChainService {
     return baseChain as Chain;
   }
 
-  // 向后兼容的映射方法
+  // Backward compatible mapping method
   private mapRowToEVMChain(row: any): EVMChain {
     return this.mapRowToChain(row) as EVMChain;
   }
@@ -398,7 +398,7 @@ export class ChainService {
     return this.mapRowToChain(row) as SolanaChain;
   }
 
-  // 统一的链查找方法
+  // Unified chain lookup method
   async getChainById(chainId: number): Promise<Chain | null> {
     try {
       const row = await this.db.prepare('SELECT * FROM chains WHERE chain_id = ?').get(chainId) as any;

@@ -165,7 +165,7 @@ export class CampaignExecutor {
             totalBatches
           );
 
-          // 批量更新接收者状态为 SENT，并设置交易哈希
+          // Batch update recipient status to SENT and set transaction hash
           await this.updateRecipientStatusesTransaction(
             campaignId,
             batch.map(r => ({ address: r.address, status: 'SENT', txHash: result.txHash }))
@@ -203,7 +203,7 @@ export class CampaignExecutor {
             chain: campaign.chain
           });
 
-          // 批量更新接收者状态为 FAILED
+          // Batch update recipient status to FAILED
           await this.updateRecipientStatusesTransaction(
             campaignId,
             batch.map(r => ({ address: r.address, status: 'FAILED', txHash: undefined }))
@@ -234,7 +234,7 @@ export class CampaignExecutor {
             suggestedAction = 'CHECK_CONTRACT'; // Might need contract investigation
           }
 
-          // 批量更新接收者状态已在上面的事务中完成
+          // Batch update of recipient status has been completed in the transaction above
 
           // Increment batch number even on error
           batchNumber++;
@@ -340,14 +340,14 @@ export class CampaignExecutor {
       let result;
 
       if (isSolana) {
-        // Solana批量转账 - 直接转账，不需要授权和合约
+        // Solana batch transfer - direct transfer, no approval and contract needed
         result = await this.solanaService.batchTransfer(
           rpcUrl,
           wallet.privateKey,
           addresses,
           amounts,
           campaign.tokenAddress,
-          campaign.batchSize  // 传递用户设置的批次大小
+          campaign.batchSize  // Pass user-set batch size
         );
       } else {
         // EVM batch transfer process
@@ -419,10 +419,10 @@ export class CampaignExecutor {
 
       // Update campaign gas costs
       if (ChainUtils.isSolanaChain(campaign.chain)) {
-        // Solana gas费用以lamports为单位，需要转换为SOL
+        // Solana gas fees are in lamports, convert to SOL
         this.updateCampaignGasCost(campaignId, result.gasUsed.toString());
       } else {
-        // EVM gas费用
+        // EVM gas fees
         this.updateCampaignGasCost(campaignId, result.gasUsed.toString());
       }
 
@@ -569,8 +569,8 @@ export class CampaignExecutor {
   }
 
   private async getPendingRecipients(campaignId: string): Promise<Recipient[]> {
-    // 只查询PENDING记录，不锁定它们
-    // 锁定操作应该在getNextBatchRecipients中进行
+    // Only query PENDING records, do not lock them
+    // Locking operations should be done in getNextBatchRecipients
     const pendingRecipients = await this.db.prepare(`
       SELECT id, address, amount, created_at
       FROM recipients
@@ -582,14 +582,14 @@ export class CampaignExecutor {
   }
 
   /**
-   * 获取下一个批次的接收者
+   * Get next batch of recipients
    */
   private async getNextBatchRecipients(campaignId: string): Promise<{
     batchNumber: number;
     recipients: Recipient[];
   } | null> {
     return await this.db.transaction(async (tx) => {
-      // 恢复可能卡住的PROCESSING记录（超过5分钟）
+      // Recover stuck PROCESSING records (older than 5 minutes)
       await tx.prepare(`
         UPDATE recipients
         SET status = 'PENDING', updated_at = datetime('now')
@@ -597,7 +597,7 @@ export class CampaignExecutor {
         AND datetime(updated_at) < datetime('now', '-5 minutes')
       `).run(campaignId);
 
-      // 获取最小的批次号
+      // Get the minimum batch number
       const batchInfo = await tx.prepare(`
         SELECT MIN(batch_number) as next_batch_number
         FROM recipients
@@ -610,7 +610,7 @@ export class CampaignExecutor {
 
       const nextBatchNumber = batchInfo.next_batch_number;
 
-      // 原子性地获取并锁定该批次的所有PENDING记录
+      // Atomically retrieve and lock all PENDING records for this batch
       const lockedRecipients = await tx.prepare(`
         UPDATE recipients
         SET status = 'PROCESSING', updated_at = datetime('now')
@@ -699,7 +699,7 @@ export class CampaignExecutor {
   }
 
   private async recoverStuckProcessingRecords(campaignId: string): Promise<void> {
-    // 恢复卡住的PROCESSING记录
+    // Recover stuck PROCESSING records
     await this.db.prepare(`
       UPDATE recipients
       SET status = 'PENDING', updated_at = datetime('now')
@@ -766,8 +766,8 @@ export class CampaignExecutor {
     txHash: string,
     rpcUrl: string
   ): Promise<void> {
-    const maxWaitTime = 30000; // 30秒超时
-    const checkInterval = 1000; // 1秒检查一次
+    const maxWaitTime = 30000; // 30 second timeout
+    const checkInterval = 1000; // Check every 1 second
     const startTime = Date.now();
 
     while (Date.now() - startTime < maxWaitTime) {
@@ -783,23 +783,23 @@ export class CampaignExecutor {
           }
         }
 
-        // 动态调整检查间隔 - 开始时更频繁，之后减少
+        // Dynamically adjust check interval - more frequent at start, then reduce
         const elapsed = Date.now() - startTime;
         let nextWaitTime = checkInterval;
 
         if (elapsed < 5000) {
-          nextWaitTime = 500; // 前5秒每0.5秒检查一次
+          nextWaitTime = 500; // Check every 0.5 seconds for first 5 seconds
         } else if (elapsed < 15000) {
-          nextWaitTime = 1000; // 5-15秒每1秒检查一次
+          nextWaitTime = 1000; // Check every 1 second for 5-15 seconds
         } else {
-          nextWaitTime = 2000; // 15秒后每2秒检查一次
+          nextWaitTime = 2000; // Check every 2 seconds after 15 seconds
         }
 
         await new Promise(resolve => setTimeout(resolve, nextWaitTime));
       } catch (error) {
         console.error(`Failed to check Solana transaction status:`, error);
 
-        // 网络错误时短暂等待后重试
+        // Wait briefly before retrying on network errors
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
@@ -820,7 +820,7 @@ export class CampaignExecutor {
           return;
         }
 
-        // EVM交易确认较慢，使用更长的间隔
+        // EVM transaction confirmation is slower, use longer intervals
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (error) {
         console.error(`Failed to check EVM transaction status (attempt ${attempt + 1}):`, error);
@@ -835,7 +835,7 @@ export class CampaignExecutor {
   }
 
   /**
-   * 记录交易
+   * Record transaction
    */
   private async recordTransaction(campaignId: string, transactionData: {
     txHash: string;
@@ -872,7 +872,7 @@ export class CampaignExecutor {
   }
 
   /**
-   * 更新交易状态
+   * Update transaction status
    */
   private async updateTransactionStatus(
     txHash: string,

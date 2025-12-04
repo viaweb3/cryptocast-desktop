@@ -25,12 +25,12 @@ interface CampaignInfo {
 }
 
 /**
- * 链类型检测工具
- * 简化版本 - 移除硬编码和重复代码
+ * Chain type detection utilities
+ * Simplified version - removed hardcoded values and duplicate code
  */
 
 /**
- * 原生代币地址常量
+ * Native token address constants
  */
 export const NATIVE_TOKEN_ADDRESSES = {
   EVM: '0x0000000000000000000000000000000000000000',
@@ -38,22 +38,22 @@ export const NATIVE_TOKEN_ADDRESSES = {
 } as const;
 
 /**
- * 检测是否为原生代币（ETH/BNB/SOL 等）
+ * Detect if the token is a native token (ETH/BNB/SOL, etc.)
  */
 export function isNativeToken(tokenAddress: string | undefined, chainType?: 'evm' | 'solana'): boolean {
-  if (!tokenAddress) return true; // 空地址视为原生代币
+  if (!tokenAddress) return true; // Empty address is treated as native token
 
-  // 检查是否是零地址
+  // Check if it's the zero address
   if (tokenAddress === NATIVE_TOKEN_ADDRESSES.EVM) return true;
 
-  // 检查是否是 Solana 的 SOL
+  // Check if it's Solana's SOL
   if (tokenAddress === NATIVE_TOKEN_ADDRESSES.SOLANA) return true;
 
   return false;
 }
 
 /**
- * 检测是否为Solana链（根据链ID）
+ * Detect if it's a Solana chain (by chain ID)
  */
 export function isSolanaChainById(chainId: string | number | undefined): boolean {
   if (!chainId) return false;
@@ -62,26 +62,26 @@ export function isSolanaChainById(chainId: string | number | undefined): boolean
 }
 
 /**
- * 检测是否为Solana链
- * 支持对象或链ID
+ * Detect if it's a Solana chain
+ * Supports objects or chain IDs
  */
 export function isSolanaChain(info: ChainInfo | WalletInfo | CampaignInfo | string | number | any): boolean {
-  // 如果是字符串或数字，直接按链ID检查
+  // If it's a string or number, check directly by chain ID
   if (typeof info === 'string' || typeof info === 'number') {
     return isSolanaChainById(info);
   }
 
-  // 检查明确的链类型字段
+  // Check for explicit chain type fields
   if ('chainType' in info && info.chainType === 'solana') return true;
   if ('type' in info && info.type === 'solana') return true;
 
-  // 检查各种可能的链ID字段名
+  // Check various possible chain ID field names
   const chainId = info.chainId || info.chain || info.id;
   if (chainId !== undefined) {
     return isSolanaChainById(chainId);
   }
 
-  // 检查链名称是否包含solana
+  // Check if chain name contains solana
   if ('name' in info && info.name && typeof info.name === 'string') {
     return info.name.toLowerCase().includes('solana');
   }
@@ -90,21 +90,21 @@ export function isSolanaChain(info: ChainInfo | WalletInfo | CampaignInfo | stri
 }
 
 /**
- * 检测是否为EVM链
+ * Detect if it's an EVM chain
  */
 export function isEVMChain(info: ChainInfo | WalletInfo | CampaignInfo | string | number): boolean {
   return !isSolanaChain(info);
 }
 
 /**
- * 获取链类型
+ * Get chain type
  */
 export function getChainType(info: ChainInfo | WalletInfo | CampaignInfo | string | number): 'evm' | 'solana' {
   return isSolanaChain(info) ? 'solana' : 'evm';
 }
 
 /**
- * 验证链地址格式
+ * Validate address format for chain
  */
 export function validateAddressForChain(address: string, info: ChainInfo | WalletInfo | CampaignInfo | string | number): boolean {
   if (!address) return false;
@@ -112,16 +112,16 @@ export function validateAddressForChain(address: string, info: ChainInfo | Walle
   const isSolana = isSolanaChain(info);
 
   if (isSolana) {
-    // Solana地址验证 (Base58编码，32-44字符)
+    // Solana address validation (Base58 encoded, 32-44 characters)
     return /^[1-9A-HJ-NP-Za-km-z]+$/.test(address) && address.length >= 32 && address.length <= 44;
   } else {
-    // EVM地址验证 (0x前缀，40字符)
+    // EVM address validation (0x prefix, 40 characters)
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   }
 }
 
 /**
- * Base64解码为字节数组
+ * Decode Base64 to byte array
  */
 function base64ToBytes(base64: string): Uint8Array {
   const binaryString = atob(base64);
@@ -133,7 +133,7 @@ function base64ToBytes(base64: string): Uint8Array {
 }
 
 /**
- * 字节数组转十六进制字符串
+ * Convert byte array to hexadecimal string
  */
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
@@ -142,7 +142,7 @@ function bytesToHex(bytes: Uint8Array): string {
 }
 
 /**
- * 导出私钥 - 根据链类型转换格式
+ * Export private key - convert format based on chain type
  */
 export function exportPrivateKey(privateKeyBase64: string, info: ChainInfo | WalletInfo | CampaignInfo | string | number): string {
   if (!privateKeyBase64) return '';
@@ -151,10 +151,10 @@ export function exportPrivateKey(privateKeyBase64: string, info: ChainInfo | Wal
     const privateKeyBytes = base64ToBytes(privateKeyBase64);
 
     if (isSolanaChain(info)) {
-      // Solana私钥导出（JSON数组格式）
+      // Solana private key export (JSON array format)
       return JSON.stringify(Array.from(privateKeyBytes));
     } else {
-      // EVM私钥导出（32字节hex，带0x前缀）
+      // EVM private key export (32-byte hex with 0x prefix)
       const privateKeyHex = bytesToHex(privateKeyBytes);
       return `0x${privateKeyHex}`;
     }
@@ -165,8 +165,8 @@ export function exportPrivateKey(privateKeyBase64: string, info: ChainInfo | Wal
 }
 
 /**
- * 获取链显示名称
- * 优先使用提供的链信息，避免硬编码
+ * Get chain display name
+ * Prioritizes provided chain information to avoid hardcoding
  */
 export function getChainDisplayName(
   chain: string | number | undefined,
@@ -176,7 +176,7 @@ export function getChainDisplayName(
 
   const chainStr = chain.toString();
 
-  // 优先使用提供的链信息
+  // Prioritize provided chain information
   if (chains) {
     const chainInfo = chains.find(c =>
       (c.chainId && c.chainId.toString() === chainStr) ||
@@ -187,13 +187,13 @@ export function getChainDisplayName(
     }
   }
 
-  // 如果没有提供链信息，返回链ID
+  // If no chain information is provided, return the chain ID
   return `Chain ${chainStr}`;
 }
 
 /**
- * 获取链的显示徽章
- * 使用数据库中的颜色配置，避免硬编码
+ * Get chain display badge
+ * Uses color configuration from database to avoid hardcoding
  */
 export function getChainDisplayBadge(
   info: ChainInfo,
@@ -206,11 +206,11 @@ export function getChainDisplayBadge(
 } {
   const displayName = getChainDisplayName(info.chainId || info.name, chains);
 
-  // 默认值
+  // Default values
   let color = '#6B7280';
   let bgColor = 'rgba(107, 114, 128, 0.1)';
 
-  // 使用数据库中的颜色配置
+  // Use color configuration from database
   if (chains) {
     const chainInfo = chains.find(chain =>
       chain.name.toLowerCase() === displayName.toLowerCase() ||
@@ -219,7 +219,7 @@ export function getChainDisplayBadge(
 
     if (chainInfo?.color && chainInfo?.badge_color) {
       color = chainInfo.color;
-      // 简单的badge背景色映射
+      // Simple badge background color mapping
       const badgeBackgrounds: Record<string, string> = {
         'badge-primary': 'rgba(107, 114, 128, 0.1)',
         'badge-info': 'rgba(59, 130, 246, 0.1)',
@@ -232,7 +232,7 @@ export function getChainDisplayBadge(
     }
   }
 
-  // 简单的图标选择
+  // Simple icon selection
   const icon = displayName.toLowerCase().includes('solana') ? '🔥' : '🔷';
 
   return {

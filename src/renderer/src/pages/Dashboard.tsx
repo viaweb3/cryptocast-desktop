@@ -5,11 +5,11 @@ import { useCampaign } from '../contexts/CampaignContext';
 
 const { electronAPI } = window as any;
 
-// 获取链的显示字母
+// Get chain display initial letter
 function getChainInitial(name: string): string {
   const lowerName = name.toLowerCase();
 
-  // 特殊链的显示字母
+  // Display letters for special chains
   if (lowerName.includes('ethereum') && lowerName.includes('sepolia')) return 'S'; // Sepolia
   if (lowerName.includes('ethereum')) return 'E'; // Ethereum Mainnet
   if (lowerName.includes('polygon')) return 'P'; // Polygon
@@ -20,7 +20,7 @@ function getChainInitial(name: string): string {
   if (lowerName.includes('avalanche')) return 'A'; // Avalanche
   if (lowerName.includes('solana')) return 'S'; // Solana
 
-  // 默认使用名称的第一个字母
+  // Default to first letter of the name
   return name.charAt(0)?.toUpperCase() || '⚡';
 }
 

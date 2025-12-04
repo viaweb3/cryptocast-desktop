@@ -60,24 +60,24 @@ export class FileService {
   }
 
   private async generateReportData(campaignId: string): Promise<ReportData> {
-    // 获取活动信息
+    // Get campaign information
     const campaign = this.db.prepare('SELECT * FROM campaigns WHERE id = ?').get(campaignId);
 
     if (!campaign) {
       throw new Error('Campaign not found');
     }
 
-    // 获取接收者信息
+    // Get recipient information
     const recipients = this.db.prepare(`
       SELECT * FROM recipients WHERE campaign_id = ? ORDER BY created_at
     `).all(campaignId);
 
-    // 获取交易记录
+    // Get transaction records
     const transactions = this.db.prepare(`
       SELECT * FROM transactions WHERE campaign_id = ? ORDER BY created_at
     `).all(campaignId);
 
-    // 计算汇总信息
+    // Calculate summary information
     const totalRecipients = recipients.length;
     const sentRecipients = recipients.filter((r: any) => r.status === 'SENT').length;
     const failedRecipients = recipients.filter((r: any) => r.status === 'FAILED').length;
@@ -127,18 +127,18 @@ export class FileService {
         const csvStringifier = stringify({
           header: true,
           columns: [
-            '活动ID',
-            '活动名称',
-            '区块链',
-            '代币地址',
-            '接收地址',
-            '金额',
-            '状态',
-            '交易哈希',
-            'Gas消耗',
-            '错误信息',
-            '创建时间',
-            '更新时间'
+            'Campaign ID',
+            'Campaign Name',
+            'Blockchain',
+            'Token Address',
+            'Recipient Address',
+            'Amount',
+            'Status',
+            'Transaction Hash',
+            'Gas Used',
+            'Error Message',
+            'Created Time',
+            'Updated Time'
           ]
         });
 
@@ -152,7 +152,7 @@ export class FileService {
 
         csvStringifier.pipe(writableStream);
 
-        // 写入数据行
+        // Write data rows
         reportData.recipients.forEach(recipient => {
           csvStringifier.write([
             reportData.campaign.id,
@@ -196,7 +196,7 @@ export class FileService {
         break;
     }
 
-    // 确保下载目录存在
+    // Ensure download directory exists
     if (!fs.existsSync(downloadsDir)) {
       fs.mkdirSync(downloadsDir, { recursive: true });
     }
@@ -230,7 +230,7 @@ export class FileService {
         errors.push('File contains more than 10,000 records');
       }
 
-      // 检查表头
+      // Check table headers
       const header = lines[0].toLowerCase();
       if (!header.includes('address') || !header.includes('amount')) {
         errors.push('CSV file must contain "address" and "amount" columns');
@@ -258,7 +258,7 @@ export class FileService {
       const fileContent = fs.readFileSync(filePath, 'utf-8');
       const lines = fileContent.split('\n').filter(line => line.trim());
 
-      // 尝试解析CSV以获取有效行数
+      // Try to parse CSV to get valid row count
       try {
         const result = parseCSV(fileContent, { hasHeaders: true });
         return {

@@ -82,12 +82,12 @@ export class CampaignService {
     });
 
     try {
-      // 使用统一的链类型判断工具
+      // Use unified chain type detection utility
       const chainType = ChainUtils.getChainType(data.chain);
-      // 统一使用 chain_id，不再使用 network 字段
+      // Unified use of chain_id, no longer using network field
       const chainId = parseInt(data.chain);
 
-      // 根据链类型创建钱包
+      // Create wallet based on chain type
       const wallet = this.createWalletForChain(chainType);
 
       logger.debug('[CampaignService] Campaign wallet created', {
@@ -137,9 +137,9 @@ export class CampaignService {
 
       logger.debug('[CampaignService] Campaign data inserted successfully', { campaignId: id });
 
-      // 在事务中插入接收者并分配批次号
+      // Insert recipients and assign batch numbers in transaction
       await this.db.transaction(async (tx) => {
-        // 插入接收者并设置批次号
+        // Insert recipients and set batch numbers
         const insertRecipient = tx.prepare(`
           INSERT INTO recipients (
             campaign_id, address, amount, status, batch_number, created_at
@@ -236,7 +236,7 @@ export class CampaignService {
       id: row.id,
       name: row.name,
       description: row.description,
-      // 统一使用 chain_id
+      // Unified use of chain_id
       chain: row.chain_id?.toString() || '',
       chainId: row.chain_id,
       chainType: row.chain_type,
@@ -284,7 +284,7 @@ export class CampaignService {
         throw new Error('Campaign not found');
       }
 
-      // 统一要求 READY 或 PAUSED 状态
+      // Unified requirement for READY or PAUSED status
       if (campaign.status !== 'READY' && campaign.status !== 'PAUSED') {
         if (!ChainUtils.isSolanaChain(campaign.chain)) {
           throw new Error('Campaign is not ready to start. Please deploy the contract first.');
@@ -367,7 +367,7 @@ export class CampaignService {
         throw new Error('Campaign not found');
       }
 
-      // 验证状态转换合法性
+      // Validate status transition legitimacy
       const validTransitions = ['CREATED', 'FUNDED'];
       if (!validTransitions.includes(campaign.status)) {
         throw new Error(
@@ -376,7 +376,7 @@ export class CampaignService {
         );
       }
 
-      // 检查是否已经部署过
+      // Check if contract has already been deployed
       if (campaign.contractAddress) {
         throw new Error(
           `Contract already deployed at ${campaign.contractAddress}. ` +
@@ -391,7 +391,7 @@ export class CampaignService {
         WHERE id = ? AND status IN ('CREATED', 'FUNDED') AND contract_address IS NULL
       `).run(contractAddress, now, now, id);
 
-      // 验证更新成功（防止并发部署）
+      // Verify update succeeded (prevents concurrent deployment)
       if (result.changes === 0) {
         throw new Error('Campaign status changed during deployment or already deployed, please retry');
       }
@@ -402,15 +402,15 @@ export class CampaignService {
   }
 
   /**
-   * 部署合约（带幂等性保护）
+   * Deploy contract (with idempotency protection)
    */
   async deployContractWithLock(campaignId: string, deployFn: () => Promise<any>): Promise<any> {
-    // 检查是否正在部署
+    // Check if deployment is in progress
     if (this.deploymentLocks.has(campaignId)) {
       throw new Error('Contract deployment already in progress for this campaign');
     }
 
-    // 创建部署Promise
+    // Create deployment Promise
     const deployPromise = deployFn();
     this.deploymentLocks.set(campaignId, deployPromise);
 
@@ -418,7 +418,7 @@ export class CampaignService {
       const result = await deployPromise;
       return result;
     } finally {
-      // 清理锁
+      // Clean up lock
       this.deploymentLocks.delete(campaignId);
     }
   }
@@ -493,13 +493,13 @@ export class CampaignService {
 
   async deleteCampaign(id: string): Promise<void> {
     try {
-      // 删除相关的接收者记录
+      // Delete related recipient records
       await this.db.prepare('DELETE FROM recipients WHERE campaign_id = ?').run(id);
 
-      // 删除相关的交易记录
+      // Delete related transaction records
       await this.db.prepare('DELETE FROM transactions WHERE campaign_id = ?').run(id);
 
-      // 删除活动
+      // Delete campaign
       await this.db.prepare('DELETE FROM campaigns WHERE id = ?').run(id);
     } catch (error) {
       logger.error('[CampaignService] Failed to delete campaign', error as Error, { id });
@@ -508,7 +508,7 @@ export class CampaignService {
   }
 
   /**
-   * 获取活动交易记录
+   * Get campaign transaction records
    */
   async getCampaignTransactions(
     campaignId: string,
@@ -592,7 +592,7 @@ export class CampaignService {
   }
 
   /**
-   * 记录交易
+   * Record transaction
    */
   async recordTransaction(campaignId: string, transactionData: {
     txHash: string;
@@ -636,7 +636,7 @@ export class CampaignService {
   }
 
   /**
-   * 更新交易状态
+   * Update transaction status
    */
   async updateTransactionStatus(txHash: string, status: 'PENDING' | 'CONFIRMED' | 'FAILED', blockNumber?: number, blockHash?: string): Promise<void> {
     try {
@@ -665,7 +665,7 @@ export class CampaignService {
   }
 
   /**
-   * 恢复活动
+   * Resume campaign
    */
   async resumeCampaign(id: string): Promise<{ success: boolean }> {
     try {
@@ -678,10 +678,10 @@ export class CampaignService {
         throw new Error('Only paused campaigns can be resumed');
       }
 
-      // 更新状态为SENDING
+      // Update status to SENDING
       await this.updateCampaignStatus(id, 'SENDING');
 
-      // 请求执行器恢复执行
+      // Request executor to resume execution
       await this.executor.resumeExecution(id);
 
       return { success: true };
@@ -693,7 +693,7 @@ export class CampaignService {
 
   
   /**
-   * 获取活动详细信息（包含统计数据）
+   * Get campaign details (including statistics)
    */
   async getCampaignDetails(id: string): Promise<{
     campaign: Campaign;
@@ -713,7 +713,7 @@ export class CampaignService {
         return null;
       }
 
-      // 获取接收者统计
+      // Get recipient statistics
       const recipientStats = await this.db.prepare(`
         SELECT
           COUNT(*) as total,
@@ -747,26 +747,26 @@ export class CampaignService {
   }
 
   /**
-   * 重试失败的交易
+   * Retry failed transactions
    */
   async retryFailedTransactions(campaignId: string): Promise<number> {
     try {
-      // 验证活动存在
+      // Verify campaign exists
       const campaign = await this.getCampaignById(campaignId);
       if (!campaign) {
-        throw new Error('活动不存在');
+        throw new Error('Campaign does not exist');
       }
 
-      // 验证活动状态 - Allow retry for paused, completed or failed campaigns
+      // Verify campaign status - Allow retry for paused, completed or failed campaigns
       // completed/failed campaigns might have some failed recipients that user wants to retry
       const allowedStatuses = ['PAUSED', 'COMPLETED', 'FAILED'];
       if (!allowedStatuses.includes(campaign.status)) {
-        throw new Error('只能重试暂停、完成或失败状态的活动');
+        throw new Error('Only paused, completed or failed campaigns can be retried');
       }
 
       const now = new Date().toISOString();
 
-      // 重置所有失败的接收者为待发送状态
+      // Reset all failed recipients to pending status
       // Only reset FAILED ones as PENDING ones are already pending
       const result = await this.db.prepare(`
         UPDATE recipients
@@ -774,7 +774,7 @@ export class CampaignService {
         WHERE campaign_id = ? AND status = 'FAILED'
       `).run(now, campaignId);
 
-      // 将活动状态更新为 PAUSED，以便用户可以手动恢复执行
+      // Update campaign status to PAUSED so user can manually resume execution
       // This is critical: if campaign was COMPLETED/FAILED, we must reset it to PAUSED
       // so that the resume/start logic can pick it up.
       await this.updateCampaignStatus(campaignId, 'PAUSED');

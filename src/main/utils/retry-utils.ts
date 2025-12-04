@@ -1,6 +1,6 @@
 /**
- * 智能重试工具类
- * 实现指数退避重试策略和错误分类
+ * Smart retry utility class
+ * Implements exponential backoff retry strategy and error classification
  */
 
 export interface RetryOptions {
@@ -63,7 +63,7 @@ export class RetryUtils {
   };
 
   /**
-   * 执行带重试的异步操作
+   * Execute async operation with retry
    */
   static async executeWithRetry<T>(
     operation: () => Promise<T>,
@@ -85,36 +85,36 @@ export class RetryUtils {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
-        // 检查是否为不可重试的错误
+        // Check if it's a non-retryable error
         if (this.isNonRetryableError(lastError, config)) {
           break;
         }
 
-        // 如果是最后一次尝试，不再重试
+        // If it's the last attempt, don't retry anymore
         if (attempt === config.maxAttempts) {
           break;
         }
 
-        // 计算延迟时间
+        // Calculate delay time
         const delay = Math.min(
           config.baseDelay * Math.pow(config.backoffMultiplier, attempt - 1),
           config.maxDelay
         );
 
-        // 添加随机抖动以避免雷群效应
+        // Add random jitter to avoid thundering herd
         const jitter = delay * 0.1 * Math.random();
         const finalDelay = delay + jitter;
 
         totalDelay += finalDelay;
 
-        // 调用回调函数
+        // Call callback function
         try {
           config.onRetry(attempt, lastError, Math.round(finalDelay));
         } catch (callbackError) {
           console.warn('Retry callback failed:', callbackError);
         }
 
-        // 等待后重试
+        // Wait and retry
         await this.sleep(finalDelay);
       }
     }
@@ -128,7 +128,7 @@ export class RetryUtils {
   }
 
   /**
-   * 批量操作重试
+   * Batch operation retry
    */
   static async executeBatchWithRetry<T, R>(
     items: T[],
@@ -146,38 +146,38 @@ export class RetryUtils {
   }
 
   /**
-   * 判断错误是否为可重试错误
+   * Check if error is retryable
    */
   private static isRetryableError(error: Error, config: Required<RetryOptions>): boolean {
     const errorMessage = error.message.toLowerCase();
 
-    // 检查是否匹配可重试错误
+    // Check if it matches retryable errors
     return config.retryableErrors.some(retryableError =>
       errorMessage.includes(retryableError.toLowerCase())
     );
   }
 
   /**
-   * 判断错误是否为不可重试错误
+   * Check if error is non-retryable
    */
   private static isNonRetryableError(error: Error, config: Required<RetryOptions>): boolean {
     const errorMessage = error.message.toLowerCase();
 
-    // 检查是否匹配不可重试错误
+    // Check if it matches non-retryable errors
     return config.nonRetryableErrors.some(nonRetryableError =>
       errorMessage.includes(nonRetryableError.toLowerCase())
     );
   }
 
   /**
-   * 异步睡眠
+   * Async sleep
    */
   private static sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
-   * 针对区块链操作的重试配置
+   * Retry configuration for blockchain operations
    */
   static readonly BLOCKCHAIN_RETRY_OPTIONS: RetryOptions = {
     maxAttempts: 5,
@@ -219,7 +219,7 @@ export class RetryUtils {
   };
 
   /**
-   * 针对网络请求的重试配置
+   * Retry configuration for network requests
    */
   static readonly NETWORK_RETRY_OPTIONS: RetryOptions = {
     maxAttempts: 3,
@@ -255,7 +255,7 @@ export class RetryUtils {
   };
 
   /**
-   * 针对数据库操作的重试配置
+   * Retry configuration for database operations
    */
   static readonly DATABASE_RETRY_OPTIONS: RetryOptions = {
     maxAttempts: 2,

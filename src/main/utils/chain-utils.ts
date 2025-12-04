@@ -1,6 +1,6 @@
 /**
- * 区块链类型检测和通用工具函数
- * 用于消除代码重复，统一链类型判断逻辑
+ * Blockchain type detection and common utility functions
+ * Used to eliminate code duplication and unify chain type judgment logic
  */
 
 export type ChainType = 'evm' | 'solana';
@@ -13,7 +13,7 @@ export interface ChainInfo {
 
 export class ChainUtils {
   /**
-   * 判断是否为 Solana 链
+   * Check if it's a Solana chain
    */
   static isSolanaChain(chain: string | number | undefined): boolean {
     if (!chain) return false;
@@ -33,7 +33,7 @@ export class ChainUtils {
   }
 
   /**
-   * 判断是否为 EVM 链
+   * Check if it's an EVM chain
    */
   static isEVMChain(chain: string | number | undefined): boolean {
     if (!chain) return false;
@@ -41,16 +41,16 @@ export class ChainUtils {
   }
 
   /**
-   * 获取链类型
+   * Get chain type
    */
   static getChainType(chain: string | number | undefined): ChainType {
     return this.isSolanaChain(chain) ? 'solana' : 'evm';
   }
 
   /**
-   * 规范化链标识符
-   * @param chain 链ID或名称
-   * @param chains 可选的链信息数组，用于避免硬编码
+   * Normalize chain identifier
+   * @param chain Chain ID or name
+   * @param chains Optional chain info array to avoid hardcoding
    */
   static normalizeChainIdentifier(
     chain: string | number | undefined,
@@ -65,7 +65,7 @@ export class ChainUtils {
     const chainStr = chain.toString();
     const lowerChain = chainStr.toLowerCase();
 
-    // 如果提供了链信息数组，优先使用数据库中的信息
+    // If chain info array is provided, prioritize using database information
     if (chains) {
       const chainInfo = chains.find(c =>
         (c.chain_id && c.chain_id.toString() === chainStr) ||
@@ -98,9 +98,9 @@ export class ChainUtils {
   }
 
   /**
-   * 获取链的显示名称
-   * @param chain 链ID或名称
-   * @param chains 可选的链信息数组，用于避免硬编码
+   * Get chain display name
+   * @param chain Chain ID or name
+   * @param chains Optional chain info array to avoid hardcoding
    */
   static getChainDisplayName(
     chain: string | number | undefined,
@@ -110,7 +110,7 @@ export class ChainUtils {
 
     const chainStr = chain.toString();
 
-    // 如果提供了链信息数组，优先使用
+    // If chain info array is provided, prioritize using it
     if (chains) {
       const chainInfo = chains.find(c =>
         (c.chain_id && c.chain_id.toString() === chainStr) ||
@@ -156,14 +156,14 @@ export class ChainUtils {
   }
 
   /**
-   * 获取链的简称/首字母
+   * Get chain abbreviation/initial
    */
   static getChainInitial(chain: string | number | undefined): string {
     if (!chain) return '?';
 
     const chainStr = chain.toString().toLowerCase();
 
-    // 特殊链的显示字母
+    // Special chain display letters
     if (chainStr.includes('sepolia') || chainStr === '11155111') return 'S';
     if (chainStr.includes('ethereum') && chainStr !== '1') return 'E';
     if (chainStr === '1') return 'E';
@@ -175,32 +175,32 @@ export class ChainUtils {
     if (chainStr.includes('avalanche')) return 'A';
     if (chainStr.includes('solana')) return 'S';
 
-    // 默认使用名称的第一个字母
+    // Default to first letter of name
     return chainStr.charAt(0)?.toUpperCase() || '?';
   }
 
   /**
-   * 验证地址格式是否正确
+   * Validate address format
    */
   static isValidAddress(address: string, chain: string | number | undefined): boolean {
     if (!address) return false;
 
     if (this.isSolanaChain(chain)) {
-      // Solana 地址验证
+      // Solana address validation
       try {
-        // Solana 地址是 Base58 编码，通常是 32-44 个字符
+        // Solana addresses are Base58 encoded, typically 32-44 characters
         return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
       } catch {
         return false;
       }
     } else {
-      // EVM 地址验证
+      // EVM address validation
       return /^0x[a-fA-F0-9]{40}$/.test(address);
     }
   }
 
   /**
-   * 获取链的默认配置
+   * Get chain default configuration
    */
   static getChainConfig(chain: string | number | undefined): Partial<ChainInfo> {
     const type = this.getChainType(chain);

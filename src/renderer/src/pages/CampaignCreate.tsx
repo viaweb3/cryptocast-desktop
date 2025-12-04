@@ -55,11 +55,11 @@ export default function CampaignCreate() {
     loadChains();
   }, []);
 
-  // 获取代币信息的函数
+  // Function to get token information
   const fetchTokenInfo = async (tokenAddress: string, chainId?: string) => {
     const targetChainId = chainId || formData.chain;
     if (!targetChainId) {
-      return; // 需要先选择链
+      return; // Need to select chain first
     }
 
     setIsFetchingToken(true);
@@ -80,7 +80,7 @@ export default function CampaignCreate() {
         setTokenInfo(null);
       }
     } catch (error) {
-      console.error('获取代币信息失败:', error);
+      console.error('Failed to get token information:', error);
       setTokenInfoError(`${t('campaign.getTokenInfoFailed')}: ${error instanceof Error ? error.message : t('campaign.unknownError')}`);
       setTokenInfo(null);
     } finally {
@@ -138,7 +138,7 @@ export default function CampaignCreate() {
 
         }
 
-      // 按类型和名称排序：EVM链在前，然后是Solana，同类按名称排序
+      // Sort by type and name: EVM chains first, then Solana, same type sorted by name
       chains.sort((a, b) => {
         if (a.type !== b.type) {
           return a.type === 'evm' ? -1 : 1;
@@ -149,7 +149,7 @@ export default function CampaignCreate() {
       setAvailableChains(chains);
     } catch (error) {
       console.error('Failed to load chains:', error);
-      // 如果加载失败，使用默认链列表作为备选
+      // If loading fails, use default chain list as fallback
       setAvailableChains([
         { id: '1', name: 'Ethereum', symbol: 'ETH', type: 'evm' },
         { id: '137', name: 'Polygon', symbol: 'POL', type: 'evm' },
@@ -168,7 +168,7 @@ export default function CampaignCreate() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
-    // 如果链发生变化，调整批量参数
+    // If chain changes, adjust batch parameters
     if (name === 'chain') {
       const selectedChain = availableChains.find(c => c.id === value);
       const isSolana = selectedChain?.type === 'solana';
@@ -176,17 +176,17 @@ export default function CampaignCreate() {
       setFormData(prev => ({
         ...prev,
         chain: value,
-        // 根据链类型自动调整批量参数
+        // Automatically adjust batch parameters based on chain type
         batchSize: isSolana ? DEFAULTS.CAMPAIGN_FORM.batchSize.solana : DEFAULTS.CAMPAIGN_FORM.batchSize.evm,
         sendInterval: isSolana ? DEFAULTS.CAMPAIGN_FORM.sendInterval.solana : DEFAULTS.CAMPAIGN_FORM.sendInterval.evm
       }));
 
-      // 重新获取代币信息
+      // Refetch token information
       if (formData.tokenAddress && !tokenAddressError) {
         setTokenInfo(null);
         setTokenInfoError('');
         if (value) {
-          // 传递新的 chainId，避免使用旧的 formData.chain
+          // Pass new chainId to avoid using old formData.chain
           setTimeout(() => fetchTokenInfo(formData.tokenAddress, value), 100);
         }
       }
@@ -197,10 +197,10 @@ export default function CampaignCreate() {
       }));
     }
 
-    // 实时校验代币合约地址
+    // Real-time validation of token contract address
     if (name === 'tokenAddress') {
       if (value.trim()) {
-        // 使用统一的地址验证函数
+        // Use unified address validation function
         const selectedChain = availableChains.find(c => c.id === formData.chain);
         const isValidAddress = validateAddressForChain(value, (selectedChain || {}) as any);
 
@@ -210,7 +210,7 @@ export default function CampaignCreate() {
           setTokenInfoError('');
         } else {
           setTokenAddressError('');
-          // 地址格式正确，获取代币信息
+          // Address format is correct, get token information
           fetchTokenInfo(value);
         }
       } else {
@@ -230,7 +230,7 @@ export default function CampaignCreate() {
         // Use unified CSV validator (no headers expected for textarea input)
         const validation = parseCSV(content, { hasHeaders: false });
 
-        setCsvData(validation.data);  // 使用所有数据而不是 sampleData
+        setCsvData(validation.data);  // Use all data instead of sampleData
         setCsvValidation(validation);
       } catch (error) {
         console.error('Failed to parse CSV:', error);
@@ -295,7 +295,7 @@ export default function CampaignCreate() {
         tokenDecimals: tokenInfo?.decimals,
         batchSize: formData.batchSize,
         sendInterval: Number(formData.sendInterval),
-        recipients: csvData  // 使用解析后的数据数组
+        recipients: csvData  // Use parsed data array
       };
 
       if (window.electronAPI?.campaign) {
@@ -469,7 +469,7 @@ export default function CampaignCreate() {
                   </div>
                 )}
 
-                {/* 代币信息显示 */}
+                {/* Token information display */}
                 {isFetchingToken && (
                   <div className="mt-2">
                     <div className="flex items-center gap-2">
@@ -554,12 +554,12 @@ export default function CampaignCreate() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(() => {
-                    // 根据链类型调整推荐设置
+                    // Adjust recommended settings based on chain type
                     const selectedChain = availableChains.find(c => c.id === formData.chain);
                     const isSolana = selectedChain?.type === 'solana';
                     if (isSolana) {
-                      // Solana网络 - 简化配置
-      // 统一批量大小：ATA创建和转账使用相同的批量设置
+                      // Solana network - simplified configuration
+      // Unified batch size: ATA creation and transfers use the same batch settings
                       return [5, 10].map(size => (
                         <button
                           key={size}
@@ -571,7 +571,7 @@ export default function CampaignCreate() {
                         </button>
                       ));
                     } else {
-                      // EVM网络 - 智能合约可以支持更大的批量
+                      // EVM network - smart contracts can support larger batches
                       return [50, 100, 200, 500].map(size => (
                         <button
                           key={size}
@@ -593,11 +593,11 @@ export default function CampaignCreate() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(() => {
-                    // 根据链类型调整推荐设置
+                    // Adjust recommended settings based on chain type
                     const selectedChain = availableChains.find(c => c.id === formData.chain);
                     const isSolana = selectedChain?.type === 'solana';
                     if (isSolana) {
-                      // Solana网络 - 考虑到批量变小，总体需要更快频率来补偿
+                      // Solana network - considering smaller batches, overall needs faster frequency to compensate
                       return [
                         { value: '3000', label: `3${t('campaign.seconds')}` },
                         { value: '5000', label: `5${t('campaign.seconds')}` },
@@ -615,7 +615,7 @@ export default function CampaignCreate() {
                         </button>
                       ));
                     } else {
-                      // EVM网络 - 保持原有设置
+                      // EVM network - maintain original settings
                       return [
                         { value: '15000', label: `15${t('campaign.seconds')}` },
                         { value: '20000', label: `20${t('campaign.seconds')}` },
@@ -635,7 +635,7 @@ export default function CampaignCreate() {
                     }
                   })()}
                 </div>
-                {/* Solana优化提示 */}
+                {/* Solana optimization tips */}
                 {availableChains.find(c => c.id === formData.chain)?.type === 'solana' && (
                   <div className="mt-2">
                     <span className="text-xs text-warning">
@@ -677,7 +677,7 @@ export default function CampaignCreate() {
                   </div>
                   {csvValidation && csvValidation.isValid ? (
                     <div className="bg-base-200 rounded-lg p-4 h-96 overflow-auto">
-                      {/* 错误警告（如果有） */}
+                      {/* Error warning (if any) */}
                       {csvValidation.errors.length > 0 && (
                         <div className="alert alert-warning mb-4">
                           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -690,7 +690,7 @@ export default function CampaignCreate() {
                         </div>
                       )}
 
-                      {/* 统计信息 */}
+                      {/* Statistics information */}
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <div className="stat bg-base-200 rounded-lg p-4">
                           <div className="stat-title text-xs">{t('campaign.validAddresses')}</div>
@@ -727,7 +727,7 @@ export default function CampaignCreate() {
                         </div>
                       </div>
 
-                      {/* 状态提示 */}
+                      {/* Status notification */}
                       <div className="alert alert-success mt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -737,7 +737,7 @@ export default function CampaignCreate() {
                         </span>
                       </div>
 
-                      {/* 错误详情（如果有） */}
+                      {/* Error details (if any) */}
                       {csvValidation.errors.length > 0 && (
                         <div className="mt-4">
                           <div className="text-xs font-bold mb-2">{t('campaign.errorDetails')}</div>
@@ -804,15 +804,15 @@ export default function CampaignCreate() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="stat bg-base-200 rounded-lg p-4">
-                    <div className="stat-title text-xs">总接收者</div>
+                    <div className="stat-title text-xs">Total Recipients</div>
                     <div className="stat-value text-2xl">{estimation.totalRecipients}</div>
-                    <div className="stat-desc">{estimation.estimatedBatches} 批次</div>
+                    <div className="stat-desc">{estimation.estimatedBatches} Batches</div>
                   </div>
 
                   <div className="stat bg-base-200 rounded-lg p-4">
-                    <div className="stat-title text-xs">Gas 成本 ({estimation.tokenSymbol})</div>
+                    <div className="stat-title text-xs">Gas Cost ({estimation.tokenSymbol})</div>
                     <div className="stat-value text-2xl">{estimation.estimatedGasCost}</div>
-                    <div className="stat-desc">本位币成本</div>
+                    <div className="stat-desc">Native token cost</div>
                   </div>
 
                   <div className="stat bg-base-200 rounded-lg p-4">
@@ -831,9 +831,9 @@ export default function CampaignCreate() {
                   </div>
 
                   <div className="stat bg-base-200 rounded-lg p-4">
-                    <div className="stat-title text-xs">预计耗时</div>
+                    <div className="stat-title text-xs">Estimated Duration</div>
                     <div className="stat-value text-2xl">{estimation.estimatedDuration}</div>
-                    <div className="stat-desc">分钟</div>
+                    <div className="stat-desc">Minutes</div>
                   </div>
                 </div>
 
@@ -842,14 +842,14 @@ export default function CampaignCreate() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                   <div className="text-sm">
-                    <div className="font-bold">优化建议</div>
-                    <div>✓ 最优批次大小: {estimation.recommendations.optimalBatchSize} 地址/批次</div>
-                    <div>✓ 每批耗时: {estimation.recommendations.estimatedTimePerBatch} 秒</div>
-                    <div>✓ 总预计时间: {estimation.recommendations.totalEstimatedTime} 分钟</div>
+                    <div className="font-bold">Optimization Recommendations</div>
+                    <div>✓ Optimal batch size: {estimation.recommendations.optimalBatchSize} addresses/batch</div>
+                    <div>✓ Time per batch: {estimation.recommendations.estimatedTimePerBatch} seconds</div>
+                    <div>✓ Total estimated time: {estimation.recommendations.totalEstimatedTime} minutes</div>
                     <div className="mt-2 text-xs opacity-70">
                       {estimation.isEIP1559
-                        ? '💡 使用EIP-1559动态GasPrice定价，已包含10%的maxFee和50%的priority安全缓冲'
-                        : '💡 使用传统GasPrice定价，已包含10%安全缓冲'
+                        ? '💡 Using EIP-1559 dynamic GasPrice pricing, includes 10% maxFee and 50% priority safety buffer'
+                        : '💡 Using traditional GasPrice pricing, includes 10% safety buffer'
                       }
                     </div>
                   </div>
@@ -860,9 +860,9 @@ export default function CampaignCreate() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                   <div className="text-sm">
-                    <div className="font-bold">重要提醒</div>
-                    <div>⚠️  GasPrice从RPC实时获取，但网络拥堵时可能会有波动</div>
-                    <div>⚠️  估算已包含安全缓冲，确保交易能够快速确认</div>
+                    <div className="font-bold">Important Reminders</div>
+                    <div>⚠️  GasPrice is fetched in real-time from RPC, but may fluctuate during network congestion</div>
+                    <div>⚠️  Estimation includes safety buffer to ensure fast transaction confirmation</div>
                   </div>
                 </div>
               </div>

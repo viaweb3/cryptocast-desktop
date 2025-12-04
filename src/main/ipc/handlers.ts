@@ -71,7 +71,7 @@ export async function setupIPCHandlers() {
       return campaign;
     } catch (error) {
       logger.error('Failed to create campaign', error as Error, { data });
-      throw new Error(`创建活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to create campaign: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -86,7 +86,7 @@ export async function setupIPCHandlers() {
       return campaigns;
     } catch (error) {
       logger.error('Failed to list campaigns', error as Error, { filters });
-      throw new Error(`获取活动列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get campaign list: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -97,7 +97,7 @@ export async function setupIPCHandlers() {
       return campaign;
     } catch (error) {
       logger.error('Failed to get campaign', error as Error, { campaignId: id });
-      throw new Error(`获取活动详情失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get campaign details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -109,7 +109,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to start campaign', error as Error, { campaignId: id });
-      throw new Error(`开始活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to start campaign: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -120,7 +120,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to pause campaign', error as Error, { campaignId: id });
-      throw new Error(`暂停活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to pause campaign: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -131,7 +131,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to resume campaign', error as Error, { campaignId: id });
-      throw new Error(`恢复活动失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to resume campaign: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -142,7 +142,7 @@ export async function setupIPCHandlers() {
       return { success: true };
     } catch (error) {
       logger.error('Failed to update campaign status', error as Error, { campaignId: id, status });
-      throw new Error(`更新活动状态失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to update campaign status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -154,7 +154,7 @@ export async function setupIPCHandlers() {
       return details;
     } catch (error) {
       logger.error('Failed to get campaign details', error as Error, { campaignId: id });
-      throw new Error(`获取活动详情失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get campaign details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -165,7 +165,7 @@ export async function setupIPCHandlers() {
       return transactions;
     } catch (error) {
       logger.error('Failed to get campaign transactions', error as Error, { campaignId: id });
-      throw new Error(`获取活动交易记录失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get campaign transaction records: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -176,7 +176,7 @@ export async function setupIPCHandlers() {
       return recipients;
     } catch (error) {
       logger.error('Failed to get campaign recipients', error as Error, { campaignId: id });
-      throw new Error(`获取活动接收者列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get campaign recipients list: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -187,11 +187,11 @@ export async function setupIPCHandlers() {
       return estimate;
     } catch (error) {
       logger.error('Failed to estimate campaign cost', error as Error, { request });
-      throw new Error(`估算活动成本失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to estimate campaign cost: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  // Solana相关API
+  // Solana-related API handlers
   ipcMain.handle('solana:getBalance', async (_event, rpcUrl, walletAddress, tokenAddress) => {
     try {
       logger.debug('Getting Solana balance', { walletAddress, tokenAddress });
@@ -199,7 +199,7 @@ export async function setupIPCHandlers() {
       return { success: true, balance };
     } catch (error) {
       logger.error('Failed to get Solana balance', error as Error, { walletAddress });
-      throw new Error(`获取Solana余额失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get Solana balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -210,7 +210,7 @@ export async function setupIPCHandlers() {
       return { success: true, data: result };
     } catch (error) {
       logger.error('Failed to execute Solana batch transfer', error as Error);
-      throw new Error(`Solana批量转账失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to execute Solana batch transfer: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -221,7 +221,7 @@ export async function setupIPCHandlers() {
       return { success: true, data: status };
     } catch (error) {
       logger.error('Failed to get Solana transaction status', error as Error, { transactionHash });
-      throw new Error(`获取Solana交易状态失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get Solana transaction status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -232,11 +232,11 @@ export async function setupIPCHandlers() {
       return { success: true, data: tokenInfo };
     } catch (error) {
       logger.error('Failed to get Solana token info', error as Error, { tokenAddress });
-      throw new Error(`获取Solana代币信息失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get Solana token info: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  // 钱包相关（简化版 - 无密码保护）
+  // Wallet-related handlers (simplified version - no password protection)
   ipcMain.handle('wallet:create', async (_event, type = 'evm') => {
     try {
       logger.info('Creating wallet', { type });
@@ -246,7 +246,7 @@ export async function setupIPCHandlers() {
       return wallet;
     } catch (error) {
       logger.error('Failed to create wallet', error as Error, { type });
-      throw new Error(`创建钱包失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to create wallet: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -258,7 +258,7 @@ export async function setupIPCHandlers() {
       return balance;
     } catch (error) {
       logger.error('Failed to get wallet balance', error as Error, { address, chain });
-      throw new Error(`查询余额失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to query balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -269,7 +269,7 @@ export async function setupIPCHandlers() {
       return wallets;
     } catch (error) {
       logger.error('Failed to list wallets', error as Error, { options });
-      throw new Error(`获取钱包列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get wallet list: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -280,7 +280,7 @@ export async function setupIPCHandlers() {
       return balances;
     } catch (error) {
       logger.error('Failed to get campaign wallet balances', error as Error, { campaignId });
-      throw new Error(`获取钱包余额失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get wallet balances: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -292,11 +292,11 @@ export async function setupIPCHandlers() {
       return Object.fromEntries(results);
     } catch (error) {
       logger.error('Failed to refresh wallet balances', error as Error);
-      throw new Error(`批量刷新钱包余额失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to batch refresh wallet balances: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  // 链管理相关
+  // Chain management-related handlers
   ipcMain.handle('chain:getEVMChains', async (_event) => {
     try {
       logger.debug('Getting EVM chains');
@@ -304,7 +304,7 @@ export async function setupIPCHandlers() {
       return chains;
     } catch (error) {
       logger.error('Failed to get EVM chains', error as Error);
-      throw new Error(`获取EVM链列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get EVM chain list: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -315,7 +315,7 @@ export async function setupIPCHandlers() {
       return chains;
     } catch (error) {
       logger.error('Failed to get all chains', error as Error);
-      throw new Error(`获取所有链列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get all chains list: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -326,7 +326,7 @@ export async function setupIPCHandlers() {
       return chainId;
     } catch (error) {
       logger.error('Failed to add EVM chain', error as Error, { chainData });
-      throw new Error(`添加EVM链失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to add EVM chain: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -336,7 +336,7 @@ export async function setupIPCHandlers() {
       await chainService.updateEVMChain(chainId, updates);
     } catch (error) {
       logger.error('Failed to update EVM chain', error as Error, { chainId });
-      throw new Error(`更新EVM链失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to update EVM chain: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -346,7 +346,7 @@ export async function setupIPCHandlers() {
       await chainService.deleteEVMChain(chainId);
     } catch (error) {
       logger.error('Failed to delete EVM chain', error as Error, { chainId });
-      throw new Error(`删除EVM链失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to delete EVM chain: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -357,7 +357,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to test EVM latency', error as Error, { rpcUrl });
-      throw new Error(`测试EVM链延迟失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to test EVM chain latency: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -368,7 +368,7 @@ export async function setupIPCHandlers() {
       return rpcs;
     } catch (error) {
       logger.error('Failed to get Solana RPCs', error as Error);
-      throw new Error(`获取Solana RPC列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get Solana RPC list: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -380,7 +380,7 @@ export async function setupIPCHandlers() {
       return rpcId;
     } catch (error) {
       logger.error('Failed to add Solana RPC', error as Error, { rpcData });
-      throw new Error(`添加Solana RPC失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to add Solana RPC: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -391,7 +391,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to test Solana RPC', error as Error, { rpcUrl });
-      throw new Error(`测试Solana RPC失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to test Solana RPC: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -401,7 +401,7 @@ export async function setupIPCHandlers() {
       await chainService.updateSolanaRPCPriority(id, priority);
     } catch (error) {
       logger.error('Failed to update Solana RPC priority', error as Error, { id });
-      throw new Error(`更新Solana RPC优先级失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to update Solana RPC priority: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -411,11 +411,11 @@ export async function setupIPCHandlers() {
       await chainService.deleteSolanaRPC(id);
     } catch (error) {
       logger.error('Failed to delete Solana RPC', error as Error, { id });
-      throw new Error(`删除Solana RPC失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to delete Solana RPC: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  // 文件操作
+  // File operations
   ipcMain.handle('file:readCSV', async (_event, filePath) => {
     try {
       logger.debug('Reading CSV file', { filePath });
@@ -423,7 +423,7 @@ export async function setupIPCHandlers() {
       return data;
     } catch (error) {
       logger.error('Failed to read CSV file', error as Error, { filePath });
-      throw new Error(`读取CSV文件失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to read CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -434,7 +434,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to export report', error as Error, { campaignId });
-      throw new Error(`导出报告失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to export report: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -451,7 +451,7 @@ export async function setupIPCHandlers() {
       return estimate;
     } catch (error) {
       logger.error('Failed to estimate gas', error as Error, { chain });
-      throw new Error(`估算Gas费失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to estimate gas fee: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -462,11 +462,11 @@ export async function setupIPCHandlers() {
       return status;
     } catch (error) {
       logger.error('Failed to get transaction status', error as Error, { txHash, chain });
-      throw new Error(`获取交易状态失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get transaction status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  // 价格服务相关
+  // Price service-related handlers
   ipcMain.handle('price:getPrice', async (_event, symbol) => {
     try {
       logger.debug('Getting price', { symbol });
@@ -474,7 +474,7 @@ export async function setupIPCHandlers() {
       return { symbol, price };
     } catch (error) {
       logger.error('Failed to get price', error as Error, { symbol });
-      throw new Error(`获取价格失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get price: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -489,7 +489,7 @@ export async function setupIPCHandlers() {
       return prices;
     } catch (error) {
       logger.error('Failed to get prices', error as Error, { symbols });
-      throw new Error(`批量获取价格失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to batch get prices: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -516,7 +516,7 @@ export async function setupIPCHandlers() {
       return prices;
     } catch (error) {
       logger.error('Failed to get cached prices', error as Error);
-      throw new Error(`获取缓存价格失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get cached prices: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -531,52 +531,52 @@ export async function setupIPCHandlers() {
       return summary;
     } catch (error) {
       logger.error('Failed to get price summary', error as Error);
-      throw new Error(`获取价格汇总失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get price summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  // 重试失败的交易
+  // Retry failed transactions
   ipcMain.handle('campaign:retryFailedTransactions', async (_event, campaignId) => {
     try {
       logger.info('Retrying failed transactions', { campaignId });
       const retriedCount = await campaignService.retryFailedTransactions(campaignId);
-      return { success: true, retried: retriedCount, message: `已重置 ${retriedCount} 笔失败的交易，请点击"恢复发送"继续` };
+      return { success: true, retried: retriedCount, message: `Reset ${retriedCount} failed transactions, please click "Resume" to continue sending` };
     } catch (error) {
       logger.error('Failed to retry transactions', error as Error, { campaignId });
-      throw new Error(`重试失败交易失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to retry failed transactions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  // 为活动部署合约（使用活动专用地址 + 幂等性保护）
+  // Deploy contract for campaign (using campaign-specific address + idempotency protection)
   ipcMain.handle('campaign:deployContract', async (_event, campaignId) => {
-    // 使用幂等性锁保护
+    // Use idempotency lock protection
     return campaignService.deployContractWithLock(campaignId, async () => {
       try {
         logger.info('Deploying contract for campaign', { campaignId });
 
-        // 1. 获取活动信息
+        // 1. Get campaign information
         const campaign = await campaignService.getCampaignById(campaignId);
         if (!campaign) {
-          throw new Error('活动不存在');
+          throw new Error('Campaign not found');
         }
 
         if (!campaign.walletPrivateKeyBase64) {
-          throw new Error('活动钱包信息缺失');
+          throw new Error('Campaign wallet information missing');
         }
 
-        // 2. 解码私钥
+        // 2. Decode private key
         const chainInfo = await chainService.getChainById(parseInt(campaign.chain));
         const privateKey = chainInfo?.type === 'solana'
           ? walletService.exportSolanaPrivateKey(campaign.walletPrivateKeyBase64)
           : walletService.exportEVMPrivateKey(campaign.walletPrivateKeyBase64);
 
-        // 3. 获取链配置
+        // 3. Get chain configuration
         const chain = await chainService.getEVMChainById(parseInt(campaign.chain));
         if (!chain) {
-          throw new Error('链配置不存在');
+          throw new Error('Chain configuration not found');
         }
 
-        // 4. 部署合约
+        // 4. Deploy contract
         const config = {
           tokenAddress: campaign.tokenAddress,
           chainId: parseInt(campaign.chain),
@@ -586,7 +586,7 @@ export async function setupIPCHandlers() {
 
         const contractInfo = await contractService.deployContract(config);
 
-        // 5. 记录部署交易
+        // 5. Record deployment transaction
         await campaignService.recordTransaction(campaignId, {
           txHash: contractInfo.transactionHash,
           txType: 'DEPLOY_CONTRACT',
@@ -597,7 +597,7 @@ export async function setupIPCHandlers() {
           blockNumber: contractInfo.blockNumber
         });
 
-        // 6. 更新活动信息（包含状态验证）
+        // 6. Update campaign information (includes status validation)
         await campaignService.updateCampaignContract(
           campaignId,
           contractInfo.contractAddress,
@@ -617,12 +617,12 @@ export async function setupIPCHandlers() {
         };
       } catch (error) {
         logger.error('Failed to deploy contract', error as Error, { campaignId });
-        throw new Error(`为活动部署合约失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        throw new Error(`Failed to deploy contract for campaign: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     });
   });
 
-  // 代币相关处理器
+  // Token-related handlers
   ipcMain.handle('token:getInfo', async (_event, tokenAddress: string, chainId: string) => {
     try {
       logger.debug('Getting token info', { tokenAddress, chainId });
@@ -630,7 +630,7 @@ export async function setupIPCHandlers() {
       return tokenInfo;
     } catch (error) {
       logger.error('Failed to get token info', error as Error, { tokenAddress });
-      throw new Error(`获取代币信息失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to get token information: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -641,7 +641,7 @@ export async function setupIPCHandlers() {
       return validation;
     } catch (error) {
       logger.error('Failed to validate token address', error as Error, { tokenAddress });
-      throw new Error(`验证代币地址失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to validate token address: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -652,7 +652,7 @@ export async function setupIPCHandlers() {
       return tokenInfos;
     } catch (error) {
       logger.error('Failed to get multiple token infos', error as Error);
-      throw new Error(`批量获取代币信息失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to batch get token information: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -668,7 +668,7 @@ export async function setupIPCHandlers() {
       }
 
       if (!campaign.walletPrivateKeyBase64) {
-        throw new Error('活动钱包信息缺失');
+        throw new Error('Campaign wallet information missing');
       }
 
       // Get chain config first
@@ -707,7 +707,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to withdraw tokens', error as Error, { campaignId });
-      throw new Error(`回收代币失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to withdraw tokens: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -723,7 +723,7 @@ export async function setupIPCHandlers() {
       }
 
       if (!campaign.walletPrivateKeyBase64) {
-        throw new Error('活动钱包信息缺失');
+        throw new Error('Campaign wallet information missing');
       }
 
       // Get chain config first
@@ -760,7 +760,7 @@ export async function setupIPCHandlers() {
       return result;
     } catch (error) {
       logger.error('Failed to withdraw native tokens', error as Error, { campaignId });
-      throw new Error(`回收原生代币失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to withdraw native tokens: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -772,7 +772,7 @@ export async function setupIPCHandlers() {
       return { success: true, privateKey };
     } catch (error) {
       logger.error('Failed to export EVM private key', error as Error);
-      throw new Error(`导出EVM私钥失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to export EVM private key: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -783,7 +783,7 @@ export async function setupIPCHandlers() {
       return { success: true, privateKey };
     } catch (error) {
       logger.error('Failed to export Solana private key', error as Error);
-      throw new Error(`导出Solana私钥失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      throw new Error(`Failed to export Solana private key: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -795,7 +795,7 @@ export async function setupIPCHandlers() {
       return version;
     } catch (error) {
       logger.error('Failed to get app version', error as Error);
-      throw new Error('获取应用版本失败');
+      throw new Error('Failed to get application version');
     }
   });
 
@@ -807,11 +807,11 @@ export async function setupIPCHandlers() {
       return locale;
     } catch (error) {
       logger.error('Failed to get system locale', error as Error);
-      throw new Error('获取系统语言失败');
+      throw new Error('Failed to get system locale');
     }
   });
 
-  // 错误处理
+  // Error handling
   ipcMain.on('error', (_event, error) => {
     logger.error('IPC error received', error);
   });

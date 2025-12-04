@@ -67,7 +67,7 @@ export default function History() {
   
   // Helper function to get chain icon based on chain name (dynamically generated)
   const getChainIcon = (chainName: string): string => {
-    // Solana特殊图标
+    // Solana special icon
     if (chainName.toLowerCase().includes('solana')) return '🔥';
 
     // Generate consistent icons based on chain name hash for dynamic chains
@@ -229,21 +229,21 @@ export default function History() {
   };
 
   const getChainBadge = (chainValue: string | number | undefined, chainId?: number) => {
-    // 通过多种方式查找链信息
+    // Find chain information through multiple methods
     const foundChain = chains.find(c => {
-      // 1. 通过 chainId 精确匹配
+      // 1. Exact match by chainId
       if (chainId && c.chainId === chainId) return true;
 
-      // 2. 通过 chainValue 匹配 chainId
+      // 2. Match chainId through chainValue
       if (chainValue && c.chainId?.toString() === chainValue?.toString()) return true;
 
-      // 3. 通过名称匹配
+      // 3. Match by name
       if (chainValue && c.name === chainValue) return true;
 
       return false;
     });
 
-    // 如果找到了链信息，直接使用
+    // If chain information is found, use it directly
     if (foundChain) {
       return (
         <div
@@ -259,7 +259,7 @@ export default function History() {
       );
     }
 
-    // 如果没找到，使用简单的显示名称
+    // If not found, use simple display name
     const displayName = getChainDisplayName(chainValue, chains);
     return (
       <div className="badge badge-neutral text-xs font-medium px-2 py-1">

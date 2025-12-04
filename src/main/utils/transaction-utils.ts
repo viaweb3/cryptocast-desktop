@@ -1,6 +1,6 @@
 /**
- * 智能交易确认工具
- * 根据网络状况动态调整等待时间和重试策略
+ * Smart transaction confirmation utility
+ * Dynamically adjust wait time and retry strategy based on network conditions
  */
 
 import { ChainUtils } from './chain-utils';
@@ -31,9 +31,9 @@ export interface ConfirmationResult {
 }
 
 export class TransactionUtils {
-  // 网络配置
+  // Network configuration
   private static readonly NETWORK_CONFIGS = {
-    // EVM 网络配置
+    // EVM network configuration
     ethereum: { averageBlockTime: 12000, baseTimeout: 300000 }, // 12s block time, 5min base timeout
     polygon: { averageBlockTime: 2000, baseTimeout: 120000 },   // 2s block time, 2min base timeout
     arbitrum: { averageBlockTime: 250, baseTimeout: 60000 },     // 0.25s block time, 1min base timeout
@@ -42,14 +42,14 @@ export class TransactionUtils {
     bsc: { averageBlockTime: 3000, baseTimeout: 180000 },       // 3s block time, 3min base timeout
     avalanche: { averageBlockTime: 2000, baseTimeout: 120000 },  // 2s block time, 2min base timeout
 
-    // Solana 网络配置
+    // Solana network configuration
     'solana-mainnet-beta': { averageBlockTime: 400, baseTimeout: 30000 }, // 0.4s slot time, 30s base timeout
     'solana-devnet': { averageBlockTime: 400, baseTimeout: 15000 },        // 0.4s slot time, 15s base timeout
     'solana-testnet': { averageBlockTime: 400, baseTimeout: 15000 },       // 0.4s slot time, 15s base timeout
   };
 
   /**
-   * 智能等待交易确认
+   * Smart wait for transaction confirmation
    */
   static async waitForTransactionConfirmation(
     chain: string,
@@ -61,7 +61,7 @@ export class TransactionUtils {
     const networkStatus = this.assessNetworkStatus(chain);
     const config = this.getNetworkConfig(chain);
 
-    // 自适应超时时间
+    // Adaptive timeout
     const maxWaitTime = options.adaptiveTimeout
       ? networkStatus.recommendedTimeout * (options.networkCongestionMultiplier || 1)
       : options.maxWaitTime || config.baseTimeout;
@@ -101,7 +101,7 @@ export class TransactionUtils {
           };
         }
 
-        // 动态调整检查间隔
+        // Dynamically adjust check interval
         const elapsed = Date.now() - startTime;
         const dynamicInterval = this.calculateDynamicCheckInterval(
           elapsed,
@@ -115,10 +115,10 @@ export class TransactionUtils {
       } catch (error) {
         console.warn(`[Transaction Confirmation] Check ${attempts} failed:`, error);
 
-        // 使用重试机制处理网络错误
+        // Use retry mechanism to handle network errors
         const retryResult = await RetryUtils.executeWithRetry(
           async () => {
-            // 等待后重试
+            // Wait and retry
             await this.sleep(checkInterval);
             return await getTransactionStatus(txHash);
           },
@@ -155,23 +155,23 @@ export class TransactionUtils {
   }
 
   /**
-   * 评估网络状态
+   * Assess network status
    */
   private static assessNetworkStatus(chain: string): NetworkStatus {
     const config = this.getNetworkConfig(chain);
 
-    // 简化的网络状态评估
-    // 在实际项目中，可以集成网络监控API获取实时状态
+    // Simplified network status assessment
+    // In real projects, can integrate network monitoring API for real-time status
     const isSolana = ChainUtils.isSolanaChain(chain);
 
-    // 模拟网络拥堵检测（基于时间等）
+    // Simulate network congestion detection (based on time, etc.)
     const currentHour = new Date().getHours();
     const isPeakHours = (currentHour >= 9 && currentHour <= 17) || (currentHour >= 20 && currentHour <= 23);
 
     const isCongested = isPeakHours;
     const gasPriceLevel = isCongested ? 'high' : isSolana ? 'low' : 'medium';
 
-    // 根据网络拥堵情况调整推荐超时时间
+    // Adjust recommended timeout based on network congestion
     const congestionMultiplier = isCongested ? 1.5 : 1.0;
     const recommendedTimeout = Math.round(config.baseTimeout * congestionMultiplier);
 
@@ -184,7 +184,7 @@ export class TransactionUtils {
   }
 
   /**
-   * 获取网络配置
+   * Get network configuration
    */
   private static getNetworkConfig(chain: string) {
     const normalizedChain = ChainUtils.normalizeChainIdentifier(chain);
@@ -193,10 +193,10 @@ export class TransactionUtils {
       return this.NETWORK_CONFIGS[normalizedChain as keyof typeof this.NETWORK_CONFIGS] || this.NETWORK_CONFIGS['solana-mainnet-beta'];
     }
 
-    // EVM链的配置映射
+    // EVM chain configuration mapping
     const evmChainMap: Record<string, keyof typeof this.NETWORK_CONFIGS> = {
       '1': 'ethereum',
-      '11155111': 'ethereum', // Sepolia使用相同的配置
+      '11155111': 'ethereum', // Sepolia uses same configuration
       '137': 'polygon',
       '80001': 'polygon',     // Mumbai
       '42161': 'arbitrum',
@@ -216,25 +216,25 @@ export class TransactionUtils {
   }
 
   /**
-   * 计算检查间隔
+   * Calculate check interval
    */
   private static calculateCheckInterval(chain: string, networkStatus: NetworkStatus): number {
     const baseInterval = networkStatus.averageBlockTime;
 
-    // 根据网络拥堵程度调整检查间隔
+    // Adjust check interval based on network congestion
     if (ChainUtils.isSolanaChain(chain)) {
-      // Solana 确认更快，但需要更多检查
+      // Solana confirms faster but needs more checks
       return networkStatus.isCongested ? 1000 : 500;
     }
 
-    // EVM链根据拥堵程度调整
+    // EVM chains adjust based on congestion
     return networkStatus.isCongested
-      ? baseInterval * 1.5  // 拥堵时减少检查频率
-      : baseInterval * 0.8; // 正常时增加检查频率
+      ? baseInterval * 1.5  // Reduce check frequency during congestion
+      : baseInterval * 0.8; // Increase check frequency normally
   }
 
   /**
-   * 计算动态检查间隔
+   * Calculate dynamic check interval
    */
   private static calculateDynamicCheckInterval(
     elapsed: number,
@@ -244,18 +244,18 @@ export class TransactionUtils {
   ): number {
     const progress = elapsed / maxWaitTime;
 
-    // 随着时间推移，逐渐增加检查间隔
+    // Gradually increase check interval over time
     let intervalMultiplier = 1.0;
 
     if (progress > 0.8) {
-      // 最后20%时间，减少检查频率
+      // Last 20% of time, reduce check frequency
       intervalMultiplier = 2.0;
     } else if (progress > 0.5) {
-      // 中间时间段，稍微增加间隔
+      // Middle time period, slightly increase interval
       intervalMultiplier = 1.5;
     }
 
-    // 网络拥堵时进一步调整
+    // Further adjust when network is congested
     if (networkStatus.isCongested) {
       intervalMultiplier *= 1.2;
     }
@@ -264,14 +264,14 @@ export class TransactionUtils {
   }
 
   /**
-   * 异步睡眠
+   * Async sleep
    */
   private static sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
-   * 批量等待交易确认
+   * Batch wait for transaction confirmation
    */
   static async waitForBatchTransactions(
     chain: string,
@@ -281,7 +281,7 @@ export class TransactionUtils {
   ): Promise<ConfirmationResult[]> {
     const results: ConfirmationResult[] = [];
 
-    // 并行等待，但限制并发数以避免过载
+    // Parallel waiting, but limit concurrency to avoid overload
     const concurrencyLimit = ChainUtils.isSolanaChain(chain) ? 5 : 3;
 
     for (let i = 0; i < txHashes.length; i += concurrencyLimit) {
@@ -294,7 +294,7 @@ export class TransactionUtils {
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
 
-      // 批次间稍作停顿
+      // Brief pause between batches
       if (i + concurrencyLimit < txHashes.length) {
         await this.sleep(1000);
       }

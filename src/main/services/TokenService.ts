@@ -28,9 +28,9 @@ export interface SolanaTokenInfo {
   chainType: 'solana';
 }
 
-// ERC-20 ABI (只包含需要的函数)
+// ERC-20 ABI (only includes required functions)
 const ERC20_ABI = [
-  // 获取代币名称
+  // Get token name
   {
     constant: true,
     inputs: [],
@@ -40,7 +40,7 @@ const ERC20_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
-  // 获取代币符号
+  // Get token symbol
   {
     constant: true,
     inputs: [],
@@ -50,7 +50,7 @@ const ERC20_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
-  // 获取代币精度
+  // Get token decimals
   {
     constant: true,
     inputs: [],
@@ -73,11 +73,11 @@ export class TokenService {
   }
 
   /**
-   * 获取代币信息（统一接口）
+   * Get token information (unified interface)
    */
   async getTokenInfo(tokenAddress: string, chainId: string): Promise<TokenInfo | null> {
     try {
-      // 获取链信息 (支持 EVM 和 Solana)
+      // Get chain information (supports EVM and Solana)
       const chain = await this.chainService.getChainById(parseInt(chainId));
 
       if (!chain) {
@@ -98,30 +98,30 @@ export class TokenService {
   }
 
   /**
-   * 获取EVM代币信息
+   * Get EVM token information
    */
   private async getEVMTokenInfo(tokenAddress: string, chain: any): Promise<EVMTokenInfo | null> {
     try {
-      // 验证地址格式
+      // Validate address format
       if (!ethers.isAddress(tokenAddress)) {
         throw new Error('Invalid EVM token address format');
       }
 
-      // 创建provider
+      // Create provider
       const provider = new ethers.JsonRpcProvider(chain.rpcUrl, undefined, {
         batchMaxCount: 1,
         polling: false,
       });
 
-      // 创建合约实例
+      // Create contract instance
       const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
 
-      // 设置超时Promise
+      // Set timeout promise
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Token info request timeout')), 10000);
       });
 
-      // 并行获取代币信息
+      // Fetch token information in parallel
       const [name, symbol, decimals] = await Promise.race([
         Promise.all([
           contract.name(),
@@ -145,28 +145,28 @@ export class TokenService {
   }
 
   /**
-   * 获取Solana代币信息
+   * Get Solana token information
    */
   private async getSolanaTokenInfo(tokenAddress: string, chain: any): Promise<SolanaTokenInfo | null> {
     try {
-      // 验证地址格式
+      // Validate address format
       try {
         new PublicKey(tokenAddress);
       } catch {
         throw new Error('Invalid Solana token address format');
       }
 
-      // 创建连接
+      // Create connection
       const connection = new Connection(chain.rpcUrl, 'confirmed');
 
-      // 获取mint账户信息
+      // Get mint account information
       const mintInfo = await connection.getParsedAccountInfo(new PublicKey(tokenAddress));
 
       if (!mintInfo?.value) {
         throw new Error('Token mint account not found');
       }
 
-      // 验证是否为mint账户
+      // Verify if it's a mint account
       const accountData = mintInfo.value.data as any;
       if (Buffer.isBuffer(accountData)) {
         throw new Error('Unable to parse mint account data');
@@ -179,7 +179,7 @@ export class TokenService {
       const parsedData = accountData.parsed.info;
       const decimals = parsedData.decimals || 0;
 
-      // 尝试获取 Metaplex token metadata
+      // Try to fetch Metaplex token metadata
       let name = 'SPL Token';
       let symbol = 'SPL';
 
@@ -187,7 +187,7 @@ export class TokenService {
         const umi = createUmi(chain.rpcUrl);
         const mint = publicKey(tokenAddress);
 
-        // 获取数字资产元数据
+        // Fetch digital asset metadata
         const asset = await fetchDigitalAsset(umi, mint);
 
         if (asset?.metadata) {
@@ -196,7 +196,7 @@ export class TokenService {
         }
       } catch (metadataError) {
         console.warn(`Failed to fetch token metadata for ${tokenAddress}, using defaults:`, metadataError);
-        // 如果获取元数据失败，尝试从已知列表获取
+        // If metadata fetch fails, try to get from known list
         const knownName = this.getTokenNameFromMint(tokenAddress);
         const knownSymbol = this.getTokenSymbolFromMint(tokenAddress);
         if (knownName) name = knownName;
@@ -217,10 +217,10 @@ export class TokenService {
   }
 
   /**
-   * 根据mint地址获取代币名称（简化版本，可以扩展）
+   * Get token name from mint address (simplified version, can be extended)
    */
   private getTokenNameFromMint(mintAddress: string): string | null {
-    // 常见SPL代币的硬编码映射
+    // Hardcoded mapping of common SPL tokens
     const knownTokens: { [key: string]: string } = {
       'So11111111111111111111111111111111111111112': 'Wrapped SOL',
       'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'USDC',
@@ -232,7 +232,7 @@ export class TokenService {
   }
 
   /**
-   * 根据mint地址获取代币符号（简化版本，可以扩展）
+   * Get token symbol from mint address (simplified version, can be extended)
    */
   private getTokenSymbolFromMint(mintAddress: string): string | null {
     const knownTokens: { [key: string]: string } = {
@@ -246,7 +246,7 @@ export class TokenService {
   }
 
   /**
-   * 批量获取代币信息
+   * Get multiple token information in batch
    */
   async getMultipleTokenInfos(tokenAddresses: string[], chainId: string): Promise<TokenInfo[]> {
     const results: TokenInfo[] = [];
@@ -259,7 +259,7 @@ export class TokenService {
         }
       } catch (error) {
         console.error(`Failed to get token info for ${address}:`, error);
-        // 继续处理其他代币
+        // Continue processing other tokens
       }
     }
 
@@ -267,7 +267,7 @@ export class TokenService {
   }
 
   /**
-   * 验证代币地址格式
+   * Validate token address format
    */
   validateTokenAddress(tokenAddress: string, chainType: 'evm' | 'solana'): boolean {
     if (chainType === 'evm') {
@@ -283,7 +283,7 @@ export class TokenService {
   }
 
   /**
-   * 根据链类型验证代币地址
+   * Validate token address for specific chain
    */
   async validateTokenAddressForChain(tokenAddress: string, chainId: string): Promise<{
     isValid: boolean;

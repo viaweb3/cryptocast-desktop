@@ -12,9 +12,9 @@ import type {
   CampaignProgress
 } from './types/ipc';
 
-// 暴露安全的API给渲染进程
+// Expose secure APIs to renderer process
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 活动操作
+  // Campaign operations
   campaign: {
     create: (data: CreateCampaignRequest): Promise<string> => ipcRenderer.invoke('campaign:create', data),
     list: (filters?: CampaignFilters): Promise<Campaign[]> => ipcRenderer.invoke('campaign:list', filters),
@@ -36,7 +36,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
   },
 
-  // Solana操作
+  // Solana operations
   solana: {
     getBalance: (rpcUrl: string, walletAddress: string, tokenAddress?: string): Promise<string> =>
       ipcRenderer.invoke('solana:getBalance', rpcUrl, walletAddress, tokenAddress),
@@ -48,7 +48,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('solana:getTokenInfo', rpcUrl, tokenAddress),
   },
 
-  // 钱包操作
+  // Wallet operations
   wallet: {
     create: (type?: 'evm' | 'solana'): Promise<unknown> => ipcRenderer.invoke('wallet:create', type),
     getBalance: (address: string, chain: string, tokenAddress?: string): Promise<string> =>
@@ -59,7 +59,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exportSolanaPrivateKey: (privateKeyBase64: string): Promise<string> => ipcRenderer.invoke('wallet:exportSolanaPrivateKey', privateKeyBase64),
   },
 
-  // 区块链操作
+  // Blockchain operations
   blockchain: {
     getBalance: (address: string, chain: string, tokenAddress?: string): Promise<string> =>
       ipcRenderer.invoke('wallet:getBalance', address, chain, tokenAddress),
@@ -69,7 +69,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('blockchain:getTransactionStatus', txHash, chain),
   },
 
-  // 链管理
+  // Chain management
   chain: {
     getAllChains: (): Promise<unknown[]> =>
       ipcRenderer.invoke('chain:getAllChains'),
@@ -95,26 +95,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('chain:deleteSolanaRPC', id),
   },
 
-  // 设置
+  // Settings
   settings: {
     get: (): Promise<Record<string, unknown>> => ipcRenderer.invoke('settings:get'),
     update: (settings: Record<string, unknown>): Promise<void> => ipcRenderer.invoke('settings:update', settings),
   },
 
-  // 应用信息
+  // App information
   app: {
     getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),
     getLocale: (): Promise<string> => ipcRenderer.invoke('app:getLocale'),
   },
 
-  // 文件操作
+  // File operations
   file: {
     readCSV: (filePath: string): Promise<unknown> => ipcRenderer.invoke('file:readCSV', filePath),
     exportReport: (campaignId: string): Promise<string> =>
       ipcRenderer.invoke('file:exportReport', campaignId),
   },
 
-  // 价格服务
+  // Price service
   price: {
     getPrice: (symbol: string): Promise<number> => ipcRenderer.invoke('price:getPrice', symbol),
     getPrices: (symbols: string[]): Promise<Record<string, number>> => ipcRenderer.invoke('price:getPrices', symbols),
@@ -122,7 +122,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getSummary: (): Promise<unknown> => ipcRenderer.invoke('price:getSummary'),
   },
 
-  // 代币服务
+  // Token service
   token: {
     getInfo: (tokenAddress: string, chainId: string): Promise<unknown> =>
       ipcRenderer.invoke('token:getInfo', tokenAddress, chainId),
