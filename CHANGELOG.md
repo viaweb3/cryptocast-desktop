@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-12-04
+
+### Added
+- **Code Formatting Standards**: Implemented Prettier configuration with consistent style guide
+- **Automated Code Quality**: Added `.prettierignore` and `.prettierrc` for standardized formatting
+
+### Changed
+- **Comprehensive Code Refactoring**: Reformatted and cleaned up 47 files across the entire codebase
+- **Service Layer Improvements**: Enhanced error handling and code structure in all main process services
+- **UI Component Standardization**: Improved React components and page layouts with consistent formatting
+
+### Improved
+- **Code Maintainability**: Standardized formatting across 3,774 insertions and 2,153 deletions
+- **Developer Experience**: Consistent code style reduces cognitive load and improves readability
+- **TypeScript Enhancement**: Better code organization and type safety improvements
+
+### Technical Details
+- **Service Updates**: BlockchainService, CampaignService, WalletService, PriceService refactored
+- **UI Enhancement**: Campaign pages, Dashboard, Settings, Wallet Management pages improved
+- **Build Process**: Enhanced TypeScript compilation and development workflow
+- **Quality Assurance**: Prettier integration for consistent code formatting
+
+---
+
 ## [1.5.0] - 2025-12-01
 
 ### Added
