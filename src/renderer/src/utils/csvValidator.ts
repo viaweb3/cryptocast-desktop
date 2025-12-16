@@ -203,9 +203,8 @@ export function parseCSV(content: string, options: CSVParseOptions = {}): CSVVal
       // Normalize address for duplicate detection
       // EVM addresses are case-insensitive, so normalize to lowercase
       // Solana addresses are case-sensitive, so keep as-is
-      const normalizedAddress = addressValidation.type === 'evm'
-        ? address.toLowerCase()
-        : address.trim();
+      const normalizedAddress =
+        addressValidation.type === 'evm' ? address.toLowerCase() : address.trim();
 
       // Check for duplicate addresses
       if (seenAddresses.has(normalizedAddress)) {

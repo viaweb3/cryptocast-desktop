@@ -405,6 +405,18 @@ export async function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle('chain:updateChain', async (_event, chainId, updates) => {
+    try {
+      logger.info('Updating chain', { chainId, updates });
+      await chainService.updateChain(chainId, updates);
+    } catch (error) {
+      logger.error('Failed to update chain', error as Error, { chainId });
+      throw new Error(
+        `Failed to update chain: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  });
+
   ipcMain.handle('chain:deleteEVMChain', async (_event, chainId) => {
     try {
       logger.info('Deleting EVM chain', { chainId });

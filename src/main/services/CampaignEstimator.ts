@@ -4,6 +4,7 @@ import { ChainUtils } from '../utils/chain-utils';
 import type { DatabaseManager } from '../database/sqlite-schema';
 import { Logger } from '../utils/logger';
 import { isNativeToken } from '../config/constants';
+import { DEFAULTS } from '../config/defaults';
 
 const logger = Logger.getInstance().child('CampaignEstimator');
 
@@ -199,16 +200,13 @@ export class CampaignEstimator {
       // Solana transaction fee estimation
       // Base fee: ~0.000005 SOL per signature
       // For token transfers: 1 signature for sender
-      // For ATA creation: Additional ~0.00203928 SOL rent-exempt minimum
+      // For ATA creation: Additional 0.0021 SOL per address (as requested)
       const BASE_FEE_PER_TX = 0.000005; // SOL per transaction
-      const ATA_CREATION_FEE = 0.00203928; // SOL for ATA creation (rent-exempt minimum)
+      const ATA_CREATION_FEE = DEFAULTS.SOLANA_FEES.ata_creation_fee_sol;
 
-      // Assume 20% of recipients might need ATA creation
-      const estimatedATACreations = Math.ceil(request.recipientCount * 0.2);
-
-      // Calculate total fees
+      // All recipients need ATA creation
+      const totalATAFees = request.recipientCount * ATA_CREATION_FEE;
       const totalTransferFees = request.recipientCount * BASE_FEE_PER_TX;
-      const totalATAFees = estimatedATACreations * ATA_CREATION_FEE;
       const totalFeesSOL = totalTransferFees + totalATAFees;
 
       // Duration estimation

@@ -211,6 +211,88 @@ export class ChainService {
     }
   }
 
+  async updateChain(chainId: number, updates: any): Promise<void> {
+    try {
+      // Get chain type first
+      const chain = (await this.db
+        .prepare('SELECT type, rpc_url FROM chains WHERE id = ?')
+        .get(chainId)) as any;
+
+      if (!chain) {
+        throw new Error('Chain not found');
+      }
+
+      const fields: string[] = [];
+      const params: any[] = [];
+
+      // Common fields
+      if (updates.name !== undefined) {
+        fields.push('name = ?');
+        params.push(updates.name);
+      }
+      if (updates.rpcUrl !== undefined) {
+        // Test RPC connection based on chain type
+        if (chain.type === 'evm') {
+          const testResult = await this.testEVMLatencyByUrl(updates.rpcUrl);
+          if (!testResult.success) {
+            throw new Error(`RPC connection failed: ${testResult.error}`);
+          }
+        } else if (chain.type === 'solana') {
+          // Test Solana RPC connection
+          const testResult = await this.testSolanaRPC(updates.rpcUrl);
+          if (!testResult.success) {
+            throw new Error(`Solana RPC connection failed: ${testResult.error}`);
+          }
+        }
+
+        fields.push('rpc_url = ?');
+        params.push(updates.rpcUrl);
+      }
+      if (updates.rpcBackup !== undefined) {
+        fields.push('rpc_backup = ?');
+        params.push(updates.rpcBackup);
+      }
+      if (updates.explorerUrl !== undefined) {
+        fields.push('explorer_url = ?');
+        params.push(updates.explorerUrl);
+      }
+      if (updates.symbol !== undefined) {
+        fields.push('symbol = ?');
+        params.push(updates.symbol);
+      }
+      if (updates.decimals !== undefined) {
+        fields.push('decimals = ?');
+        params.push(updates.decimals);
+      }
+      if (updates.color !== undefined) {
+        fields.push('color = ?');
+        params.push(updates.color);
+      }
+      if (updates.badgeColor !== undefined) {
+        fields.push('badge_color = ?');
+        params.push(updates.badgeColor);
+      }
+
+      if (fields.length === 0) {
+        return;
+      }
+
+      params.push(chainId);
+
+      const updateChain = this.db.prepare(`
+        UPDATE chains SET ${fields.join(', ')} WHERE id = ?
+      `);
+
+      updateChain.run(...params);
+    } catch (error) {
+      logger.error('[ChainService] Failed to update chain', error as Error, {
+        chainId,
+        updates
+      });
+      throw new Error('Chain update failed');
+    }
+  }
+
   async deleteEVMChain(chainId: number): Promise<void> {
     try {
       // Check if it's a built-in chain

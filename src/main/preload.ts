@@ -119,6 +119,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('chain:addEVMChain', chainData),
     updateEVMChain: (chainId: number, updates: Record<string, unknown>): Promise<void> =>
       ipcRenderer.invoke('chain:updateEVMChain', chainId, updates),
+    updateChain: (chainId: number, updates: Record<string, unknown>): Promise<void> =>
+      ipcRenderer.invoke('chain:updateChain', chainId, updates),
     deleteEVMChain: (chainId: number): Promise<void> =>
       ipcRenderer.invoke('chain:deleteEVMChain', chainId),
     testEVMLatency: (chainId: number): Promise<unknown> =>

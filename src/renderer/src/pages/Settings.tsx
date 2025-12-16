@@ -761,8 +761,8 @@ export default function Settings() {
   const handleSaveSolanaChain = async (chainData: SolanaChain) => {
     try {
       if (window.electronAPI?.chain && chainData.id) {
-        // Update Solana chain in database
-        await window.electronAPI.chain.updateEVMChain(chainData.id, chainData);
+        // Update Solana chain in database using the generic updateChain method
+        await window.electronAPI.chain.updateChain(chainData.id, chainData);
       }
 
       // Update local state

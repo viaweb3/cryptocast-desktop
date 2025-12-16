@@ -443,7 +443,7 @@ export class SolanaService {
 
       // Brief delay between batches
       if (i + CREATE_BATCH_SIZE < missingATAs.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
       }
     }
 
@@ -603,9 +603,9 @@ export class SolanaService {
         });
       }
 
-      // Delay between batches
+      // Brief delay between batches
       if (i + batchSize < ataList.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
       }
     }
 

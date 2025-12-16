@@ -784,10 +784,31 @@ export class CampaignExecutor {
 
   private async getRpcUrlForChain(chain: string): Promise<string> {
     if (ChainUtils.isSolanaChain(chain)) {
-      const rpc = (await this.db
-        .prepare('SELECT rpc_url FROM chains WHERE type = ? ORDER BY name ASC LIMIT 1')
-        .get('solana')) as { rpc_url: string } | undefined;
-      return rpc?.rpc_url || 'https://api.mainnet-beta.solana.com';
+      // Fix: Also use chain_id for Solana chains, just like EVM chains
+      const chainId = parseInt(chain);
+      let solanaChain;
+
+      if (!isNaN(chainId)) {
+        solanaChain = (await this.db
+          .prepare('SELECT rpc_url FROM chains WHERE type = ? AND chain_id = ?')
+          .get('solana', chainId)) as { rpc_url: string } | undefined;
+      }
+
+      // Fallback to name-based search
+      if (!solanaChain) {
+        solanaChain = (await this.db
+          .prepare('SELECT rpc_url FROM chains WHERE type = ? AND name LIKE ?')
+          .get('solana', `%${chain}%`)) as { rpc_url: string } | undefined;
+      }
+
+      // Final fallback to mainnet (preserve backward compatibility)
+      if (!solanaChain) {
+        solanaChain = (await this.db
+          .prepare('SELECT rpc_url FROM chains WHERE type = ? ORDER BY name ASC LIMIT 1')
+          .get('solana')) as { rpc_url: string } | undefined;
+      }
+
+      return solanaChain?.rpc_url || 'https://api.mainnet-beta.solana.com';
     } else {
       // Try to find chain by chain_id first (most reliable)
       const chainId = parseInt(chain);

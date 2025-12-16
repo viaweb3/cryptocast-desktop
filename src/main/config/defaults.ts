@@ -32,7 +32,8 @@ export const DEFAULTS = {
     // Solana fee configuration
     base_fee_per_signature: 5000,
     compute_unit_limit: 200000,
-    spl_account_creation_fee: 2039280
+    spl_account_creation_fee: 2039280,
+    ata_creation_fee_sol: 0.0021 // ATA creation fee in SOL (fixed per address)
   },
 
   TIMEOUTS: {

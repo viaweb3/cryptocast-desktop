@@ -133,6 +133,7 @@ export interface ElectronAPI {
       chainId: number,
       updates: Partial<import('../main/types/ipc').EVMChainData>
     ) => Promise<void>;
+    updateChain: (chainId: number, updates: any) => Promise<void>;
     deleteEVMChain: (chainId: number) => Promise<void>;
     testEVMLatency: (chainId: number) => Promise<import('../main/types/ipc').LatencyTestResult>;
     getSolanaRPCs: (network?: string, onlyEnabled?: boolean) => Promise<unknown[]>;

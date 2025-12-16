@@ -151,9 +151,8 @@ export class CampaignService {
           const batchNumber = Math.floor(i / (data.batchSize || 100)) + 1;
           // Normalize EVM addresses to lowercase for consistency
           // Solana addresses are case-sensitive, so keep them as-is
-          const normalizedAddress = chainType === 'evm'
-            ? recipient.address.toLowerCase()
-            : recipient.address;
+          const normalizedAddress =
+            chainType === 'evm' ? recipient.address.toLowerCase() : recipient.address;
           await insertRecipient.run(id, normalizedAddress, recipient.amount, batchNumber, now);
         }
       });
