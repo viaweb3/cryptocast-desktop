@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2025-12-18
+
+### Added
+- **Chain Management**: Enhanced chain update functionality with RPC connection validation
+- **Transaction Reliability**: Dynamic priority fee calculation based on real-time network conditions
+- **Helius API Integration**: Signed transaction support for Token-2022 transfer estimation
+- **Retry Mechanism**: Improved transaction replay with optimized retry timing (1s base, 1.3x multiplier)
+- **Pre-validation**: Recipient address validation to filter invalid entries before processing
+- **Enhanced Logging**: Comprehensive timing metrics and transaction state tracking
+
+### Fixed
+- **Signature Verification**: Resolved "Signature verification failed" error in transaction processing
+- **Integer Overflow**: Fixed critical calculation errors in compute unit limits and batch operations
+- **Total Amount Calculation**: Corrected total to use processed recipients instead of original array
+- **Blockhash Handling**: Eliminated redundant RPC calls by reusing transaction blockhash
+- **Expired Blockhash**: Better timeout handling and error recovery for expired transactions
+
+### Security
+- **Transaction Processing**: Fixed critical vulnerabilities in Solana transaction handling
+- **Double-spending Protection**: Added signature deduplication and atomic tracking
+- **Financial Precision**: Replaced unsafe parseFloat() with BigNumber.js for accurate calculations
+- **Input Validation**: Comprehensive validation for amount fields and batch operations
+- **Overflow Protection**: Bounds checking for batch sizes and compute unit calculations
+
+### Improved
+- **Transaction Building**: Unified buildTransactionWithPriorityFee method eliminates code duplication (~150 lines)
+- **Confirmation Flow**: Faster retry strategy with increased maxRetries from 0 to 3 for better reliability
+- **Code Simplification**: Removed complex helper methods while maintaining critical security features
+- **Priority Fee Management**: Simplified fee calculation with direct Helius API integration
+- **Campaign Execution**: Enhanced accuracy in estimation and execution across multiple services
+- **Batch Operations**: Optimized ATA creation (max 5) and transfer batching with reduced delays
+- **Error Handling**: Improved error messages and recovery mechanisms throughout transaction flow
+
+### Technical Details
+- **SolanaService**: Complete refactoring of transaction building and confirmation logic
+- **ChainService**: Added comprehensive chain update functionality with validation
+- **IPC Handlers**: Updated to support enhanced chain management features
+- **Compute Units**: Removed complex calculations in favor of network-based estimation
+- **Gas Tracking**: Better accumulation and reporting of transaction costs
+- **Database Operations**: Improved consistency in campaign and recipient tracking
+
+### Performance
+- **Transaction Speed**: Reduced confirmation wait time with optimized retry intervals
+- **Network Efficiency**: Eliminated redundant RPC calls for blockhash fetching
+- **Code Size**: Reduced SolanaService complexity by ~150 lines while improving functionality
+- **Priority Fee Accuracy**: Direct Helius API integration provides more accurate fee estimates
+
+---
+
 ## [1.6.1] - 2025-12-05
 
 ### Fixed
