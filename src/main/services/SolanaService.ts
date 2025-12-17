@@ -378,13 +378,17 @@ export class SolanaService {
         batchSize
       );
 
-      // Calculate total amount
-      const totalAmount = amounts.reduce((sum: BigNumber, amount: string) => {
-        return sum.plus(new BigNumber(amount || '0'));
-      }, new BigNumber(0));
-
       const allDetails = [...skippedDetails, ...results.details];
       const successCount = allDetails.filter(r => r.status === 'success').length;
+
+      // CRITICAL FIX: Calculate total amount from actually processed recipients, not input amounts
+      // This prevents incorrect totals when some recipients are skipped
+      const totalAmount = allDetails.reduce((sum: BigNumber, detail) => {
+        if (detail.status === 'success') {
+          return sum.plus(new BigNumber(detail.amount || '0'));
+        }
+        return sum;
+      }, new BigNumber(0));
 
       return {
         transactionHash: results.transactionHashes.join(','),
@@ -967,25 +971,62 @@ export class SolanaService {
 
   /**
    * Calculate compute unit limit based on operation type and batch size
+   * With overflow protection and bounds checking
    */
   private calculateComputeUnitLimit(
     operationType: 'ata_creation' | 'transfer',
     batchSize: number,
     isNativeSOL: boolean
   ): number {
+    // Validate and bounds check batchSize to prevent overflow
+    if (!Number.isInteger(batchSize) || batchSize < 1) {
+      logger.warn('[SolanaService] Invalid batchSize, using default', { batchSize });
+      batchSize = 1;
+    }
+
+    // Maximum reasonable batch size to prevent overflow
+    const MAX_SAFE_BATCH_SIZE = 10000;
+    if (batchSize > MAX_SAFE_BATCH_SIZE) {
+      logger.warn('[SolanaService] BatchSize too large, capping for safety', {
+        originalBatchSize: batchSize,
+        cappedBatchSize: MAX_SAFE_BATCH_SIZE
+      });
+      batchSize = MAX_SAFE_BATCH_SIZE;
+    }
+
+    let computeUnits: number;
     if (operationType === 'ata_creation') {
       // ATA creation is more expensive: ~40,000 per ATA
-      return Math.min(batchSize * 45000 + 50000, 1400000); // Max 1.4M units
+      // Use safe arithmetic to prevent overflow
+      const perAtaCost = 45000;
+      const baseCost = 50000;
+      computeUnits = Math.min(Number(batchSize) * perAtaCost + baseCost, 1400000);
     } else {
       // Transfer operations
       if (isNativeSOL) {
         // Native SOL transfers are cheap: ~300 per transfer
-        return Math.min(batchSize * 1000 + 20000, 400000);
+        const perTransferCost = 1000;
+        const baseCost = 20000;
+        computeUnits = Math.min(Number(batchSize) * perTransferCost + baseCost, 400000);
       } else {
         // SPL token transfers: ~25,000 per transfer
-        return Math.min(batchSize * 30000 + 50000, 1400000); // Max 1.4M units
+        const perTransferCost = 30000;
+        const baseCost = 50000;
+        computeUnits = Math.min(Number(batchSize) * perTransferCost + baseCost, 1400000);
       }
     }
+
+    // Final safety check
+    if (!Number.isFinite(computeUnits) || computeUnits <= 0) {
+      logger.error('[SolanaService] Invalid compute units calculated, using fallback', new Error(`Invalid compute units: ${computeUnits}`), {
+        computeUnits,
+        batchSize,
+        operationType
+      });
+      return operationType === 'ata_creation' ? 200000 : 100000;
+    }
+
+    return computeUnits;
   }
 
   /**
@@ -1156,7 +1197,7 @@ export class SolanaService {
     batchSize: number
   ): Promise<{
     transactionHashes: string[];
-    totalGasUsed: number;
+    totalGasUsed: bigint; // Use bigint to prevent overflow
     details: Array<{
       address: string;
       amount: string;
@@ -1197,7 +1238,7 @@ export class SolanaService {
       status: 'success' | 'failed';
       error?: string;
     }> = [];
-    let totalGasUsed = 0;
+    let totalGasUsed = 0n; // Use bigint for overflow protection
 
     // Sender's ATA (required for SPL tokens)
     let senderATA: PublicKey | undefined;
@@ -1340,7 +1381,7 @@ export class SolanaService {
           10 // Max 10 retries (increased for better success rate)
         );
 
-        totalGasUsed += gasUsed;
+        totalGasUsed += BigInt(gasUsed); // Convert to bigint for safe accumulation
         transactionHashes.push(signature);
 
         // Mark all valid addresses as successful
@@ -1386,7 +1427,7 @@ export class SolanaService {
 
     return {
       transactionHashes,
-      totalGasUsed,
+      totalGasUsed, // Return as bigint, caller will convert to string
       details
     };
   }
