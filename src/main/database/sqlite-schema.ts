@@ -432,7 +432,7 @@ export class DatabaseManager {
         type: 'solana',
         chain_id: 501,
         name: 'Solana Mainnet',
-        rpc_url: 'https://api.mainnet-beta.solana.com',
+        rpc_url: 'https://solana-rpc.publicnode.com',
         rpc_backup: null,
         explorer_url: 'https://solscan.io',
         symbol: 'SOL',

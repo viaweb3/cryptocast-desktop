@@ -298,7 +298,7 @@ NODE_ENV=development
 # 区块链 RPC
 ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/YOUR_PROJECT_ID
 POLYGON_RPC_URL=https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID
-SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+SOLANA_RPC_URL=https://solana-rpc.publicnode.com
 
 # API Keys (可选)
 COINGECKO_API_KEY=your_coingecko_api_key

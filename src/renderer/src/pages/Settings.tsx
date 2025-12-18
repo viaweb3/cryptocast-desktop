@@ -504,7 +504,7 @@ function SolanaEditModal({ isOpen, onClose, chain, onSave }: SolanaEditModalProp
                     }}
                     className="input input-bordered flex-1"
                     style={{ border: '1px solid #d1d5db', backgroundColor: '#ffffff' }}
-                    placeholder="https://api.mainnet-beta.solana.com"
+                    placeholder="https://solana-rpc.publicnode.com"
                     required
                   />
                   <button

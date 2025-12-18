@@ -808,7 +808,7 @@ export class CampaignExecutor {
           .get('solana')) as { rpc_url: string } | undefined;
       }
 
-      return solanaChain?.rpc_url || 'https://api.mainnet-beta.solana.com';
+      return solanaChain?.rpc_url || 'https://solana-rpc.publicnode.com';
     } else {
       // Try to find chain by chain_id first (most reliable)
       const chainId = parseInt(chain);
